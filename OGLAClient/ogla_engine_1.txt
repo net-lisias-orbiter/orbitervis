@@ -1,0 +1,287 @@
+//############################################################################//
+//############################################################################//
+//############################################################################//
+===Description:
+
+Fast graphics and Advanced graphics modes.
+No shaders and maximum compatibility in FG, maximum quality in AG.
+
+===3D model requirements:
+-Mesh, split into groups with one material and textureset per group
+-Material settings - ambient, diffuse, specular, emmissive, 
+-Diffuse texture
+
+
+Ideas:
+Caved landscape.
+Clean-up of it all, simple rendering, simple lv14+ handling.
+Put apart, tweak each part, put together.
+Find some better shadow mapping or similar technic.
+
+
+
+-Multiple camera views with tight locality.
+
+
+
+===Ambient light:
+-Baseline ambient value is defined by user.
+-In outer space the ambient is baseline.
+-Near planets the ambient grows as the vessel gets closer to the surface, taking 
+starlight into account. Ambient should not exceed 50%.
+
+-In advanced graphics mode ambient will decrease to 0 as illumination increase to 1.
+
+===Planets:
+-Planet textures
+Whole-sphere:
+Lv1: 1, 64x64
+Lv2: 1, 128x128
+Lv3: 1, 256x256
+Split-sphere:
+Lv4: 2, 256x256, semispheres
+Lv5: 8, 256x256, 4 per semisphere
+Lv6: 24, 256x256, 4 per upper semisphere, 16 per lower semisphere
+Lv7: 100, 256x256, 4 bands per hemisphere
+Lv8: 364, 256x256, 8 bands per hemisphere
+Total: 501 fixed textures.
+
+OverLOD:
+Surface, light and specular only. No terrain.
+Subdivides Lv8 tiles in 4, one 256x256 per tile.
+
+
+
+-Surface terrain
+-Cloud layers
+-Night lights
+-Ocean specular
+
+
+===Engine scheme:
+-Update state
+-Reupdate internal function call
+-Render scene function call for every camera
+-Get picking function call, if needed
+
+
+//############################################################################//
+
+
+
+//############################################################################//
+===Engine features flags (oglafeat):
+clouds		Draw clouds
+cloudshadows	Draw cloud shadows
+multilight		Multiple lights, custom light sources
+shadows		Shadows general switch
+mlight_terrain	Multilight affects terrain
+orulex		Terrain rendering
+advanced		Advanced graphics mode
+camera2		Second camera window (obsolete?)
+vcona			VC always ON (obsolete?)
+autores		Automatic screen resolution adjustment (WTF was that added for?)
+fxsky			Render stars into a cubemap, for in-system views
+advatm		Advanced atmospheric rendering
+wireframe		Wireframe rendering
+stereo            Anaglyph 3D
+postplane		Post-effects
+camera_light	Camera gives light
+
+===Engine features settings (oglafeat):      
+shres			Shadow resolution (0=Off, 1=Projective, 2=Low_Stencil, 3=Med_Stencil, 4=High_Stencil, 5=Mapped)
+shmres		Shadow map resolution
+cmtres		Camera resolution (obsolete?)
+orures		Terain mode (unused?)
+drwm			Drawing mode (Obsolete.)
+fxsky_res		Sky cubemap resolution
+max_plnt_lv		Upper planet LOD limit
+projection		Projection mode for all 3D
+
+//############################################################################//
+
+
+
+//############################################################################//
+===Rendering scheme (renderscene and all in ogladraw):
+0. Shadows are rendered or calculated in a prior pass.
+
+--No Z-buffer
+1. Stars
+Can be rendered real-time or into a cube map if they are not changing.
+Support for an array of star blocks. 
+Switch from cubemap to points if velocity exceeds given limit.
+
+2. Local stars
+Only one star gives light and shadows - the closest one to the camera.
+Each star is a default star texture with specific color and size, always facing the camera.
+Behind it is a default halo texture of the same properties.
+
+2.1 Object lights are positioned (or calculated) in the scene.
+
+--Z-buffer layer 1
+3. Planets
+Each planet is rendered in it's own Z-window, the planets are sorted from furthest 
+to closest before rendering.
+-Rings, if present. Drawn non-Z, only plane.
+-Air. If a planet have an atmosphere, the haze background is drawn. (Fast atmosphere)
+-Surface. Drawn with LOD type depending on given parameters and advanced atmosphere is applicable
+-Lights.
+-Cloud shadows, drawn if no terrain
+-Cloud layer. Only one is supported.
+-Air. If a planet have an atmosphere, the haze foreground is drawn. (Fast atmosphere)
+-Rings, if present:
+--Z-buffer filled with plane at jus over planet center distance
+--Rings plane drawn
+--Rings objects drawn, if present (?)
+
+--Z-buffer layer 2
+4. Terrain Z-level
+If terrain is enabled, the Z-buffer layer 2 is pre-filled with the terrain data.
+
+5. Objects
+2 render pases:
+A)Surface bases and external eshes
+B)Internal (VC) meshes
+-Ambient is calculated
+-for each group and mesh visibility is checked
+--Group is drawn or
+--Point is drawn if too small
+
+6. Particle systems
+-Particle systems are rendered
+-Exhaust streams are rendered
+
+7. Shadows for Low, Med, High are rendered
+Stencil modes are rendered last
+
+8. Post-effects applied, if defined
+//############################################################################//
+
+
+
+
+//############################################################################//
+===Internaly computed state (ogla_reupdatevals):
+-Camera-relative position, all objects
+
+Planets:
+-Relative starlight position, global coordinates.
+-Local coordinates camera position and direction.
+-Local coordinates on the star light.
+-Local coordinates of the camera in planet radiuses.
+
+Vessels:
+-Nearest planet id, global position and size.
+-Presence or absence of planet shadow.
+-Apparent size
+-If drawing is needed, visibility
+-Animation states update
+
+===User-defined part of a vessel/base state (oglas_smob):
+pos		Position, global coordinates
+rot		Rotation, euler angles
+vel		Velocity, global frame
+rad		Apparent radius
+mass		Total mass
+ob		Object pointer for reference (vessels)
+id		Object ID for the reference (surface bases)
+name		Name of the object
+
+===User-defined part of a vessel/base visual state (draw_rec):
+mshs			Meshes
+lights		Vessel lights
+semit			Transparency setting
+obj			Visual reference pointer
+mshv			Mesh visibility
+anim			Animations
+animstate		Animation states
+exh			Exhausts
+
+===User-defined part of a planet state (oglas_planet):
+pos		Position, global frame
+vel		Velocity, global frame
+rot		Rotation, euler angles
+rad		Physical radius
+rrad		Rendering radius
+mass		Planet mass
+obj		Object ID for the reference
+name		Planet name
+
+===User-defined part of a big star state (oglas_star):
+pos		Position, global frame
+vel		Velocity, global frame
+rad		Physical radius
+obj		Object ID for the reference
+//############################################################################//
+
+
+
+
+
+
+
+
+//############################################################################//
+===Light definition (draw_light_rec):
+ison:boolean;	Activation flag
+tp:integer;		Type
+spot:double;	Spot angle
+rad:double;		Distance to be seen from
+pwr:double;		Power
+setpwr:double;	Set power
+pos:vec;		Position, host-relative local coordinates
+dir:vec;   		Direction, host-relative local coordinates
+bndtp:integer;	Bound type
+bndob:dword;	Bound object
+col:crgba;		Color
+//############################################################################//
+
+
+
+
+//############################################################################//
+Internal content:
+
+===Generated textures:
+-Star
+-Galactic nebula
+-Star halo
+
+
+
+
+//############################################################################//
+
+
+
+//############################################################################//
+===Logging:
+-All logging goes to ogla.log
+-On start features and diagnostic is written, along with version info
+-
+
+===Error reporting:
+-Each potentially crashy subroutine is enclosed in try except.
+-Each error is logged
+-If the error is not critical, it is skipped, unless more than 20 accumulated
+-When critical error occurs (or 20 accumulated), the application is terminated, 
+and a separate thread reports the last error.
+-On a controlled crash a game state save is attempted.
+
+
+
+//############################################################################//
+
+
+//############################################################################//
+===Terrain engine description:
+
+
+//############################################################################//
+
+
+
+//############################################################################//
+//############################################################################//
+//############################################################################//

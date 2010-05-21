@@ -1,0 +1,39 @@
+--------------------------------------------------------------------------------
+Compiling OGLAClient:
+--------------------------------------------------------------------------------
+
+Requires Visual C++ 2005 or newer.
+If you got newer version, it should convert automatically, but no guarantees that it will compile without tweaking.
+
+1. Open src/OGLAClient.sln
+2. Compile
+
+--------------------------------------------------------------------------------
+Compiling OGLA:
+--------------------------------------------------------------------------------
+
+>>Compiling for client on Windows:
+1. Get FPC 2.4.0, for example from here:
+ftp://ftp.freepascal.org/pub/fpc/dist
+
+Version 2.4.0 was used, other version may or may not work.
+2. Link FPC to OGLAClient/fpc directory.
+3. Run build.bat script.
+
+>>Compiling Linux network client:
+1. Get FPC 2.4.0
+2. Use build_netclient script
+
+>>Compiling with Delphi:
+Only Delphi 7 was tested, no other versions are guaranteed to work.
+
+1. Open ogla.dpr.
+2. Set project as specified in the cap
+3. Compile.
+
+--------------------------------------------------------------------------------
+Defines:
+--------------------------------------------------------------------------------
+
+no_render - No rendering done, both client and ogla
+orulex - terrain rendering enabled, ogla only
