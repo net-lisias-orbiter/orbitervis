@@ -165,10 +165,11 @@ DWORD GDIPad::GetCharSize ()
 	return MAKELONG(tm.tmHeight-tm.tmInternalLeading, tm.tmAveCharWidth);
 }
 
-DWORD GDIPad::GetTextWidth (const char *str)
+DWORD GDIPad::GetTextWidth (const char *str, int len)
 {
 	SIZE size;
-	GetTextExtentPoint32 (hDC, str, (int)strlen(str), &size);
+	if (!len) len = (int)strlen(str);
+	GetTextExtentPoint32 (hDC, str, len, &size);
 	return (DWORD)size.cx;
 }
 
@@ -180,6 +181,16 @@ void GDIPad::SetOrigin (int x, int y)
 bool GDIPad::Text (int x, int y, const char *str, int len)
 {
 	return (TextOut (hDC, x, y, str, len) != FALSE);
+}
+
+bool GDIPad::TextBox (int x1, int y1, int x2, int y2, const char *str, int len)
+{
+	RECT r;
+	r.left =   x1;
+	r.top =    y1;
+	r.right =  x2;
+	r.bottom = y2;
+	return (DrawText (hDC, str, len, &r, DT_LEFT|DT_NOPREFIX|DT_WORDBREAK) != 0);
 }
 
 void GDIPad::Pixel (int x, int y, DWORD col)

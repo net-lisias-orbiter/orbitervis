@@ -190,10 +190,11 @@ public:
 	/**
 	 * \brief Returns the width of a text string in the currently selected font.
 	 * \param str text string
+	 * \param len string length, or 0 for auto (0-terminated string)
 	 * \return width of the string, drawn in the currently selected font [pixel]
 	 * \sa SetFont
 	 */
-	DWORD GetTextWidth (const char *str);
+	DWORD GetTextWidth (const char *str, int len = 0);
 
 	/**
 	 * \brief Set the position in the surface bitmap which is mapped to the
@@ -218,6 +219,18 @@ public:
 	 * \return \e true on success, \e false on failure.
 	 */
 	bool Text (int x, int y, const char *str, int len);
+
+	/**
+	 * \brief Draw a text string into a rectangle.
+	 * \param x1 left edge [pixel]
+	 * \param y1 top edge [pixel]
+	 * \param x2 right edge [pixel]
+	 * \param y2 bottom edge [pixel]
+	 * \param str text string
+	 * \param len string length for output
+	 * \return \e true on success, \e false on failure.
+	 */
+	bool TextBox (int x1, int y1, int x2, int y2, const char *str, int len);
 
 	/**
 	 * \brief Draws a single pixel in a specified colour.
