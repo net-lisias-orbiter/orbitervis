@@ -68,7 +68,7 @@ begin
  end else begin  
   tgt:=@scrsrf;
   assert(tgt.mag=SURFH_MAG);        
-  if fbonow<>0 then begin
+  //if fbonow<>0 then begin
    if gl_14_fbo_sup then begin 
     glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT,GL_COLOR_ATTACHMENT0_EXT,GL_TEXTURE_2D,0,0); 
     glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,0); 
@@ -76,10 +76,10 @@ begin
    end;  
    glViewport(0,0,tgt.w,tgt.h);
    glMatrixMode(GL_PROJECTION);glLoadIdentity;  
-   //glOrtho(-0.5,tgt.w-0.5,tgt.h-0.5,-0.5,-1,1);  
-   glOrtho(-0.5,tgt.w-0.5,-0.5,tgt.h-0.5,-1,1); 
+   glOrtho(-0.5,tgt.w-0.5,tgt.h-0.5,-0.5,-1,1);  
+   //glOrtho(-0.5,tgt.w-0.5,-0.5,tgt.h-0.5,-1,1); 
    glMatrixMode(GL_MODELVIEW);glLoadIdentity; 
-  end;
+  //end;
  end;  
  result:=true;
  if tgt<>nil then if tgt.tex<>0 then if tgt.f_clr then begin   
@@ -282,6 +282,7 @@ var pt:pivec2ar;
 i,j,c,o,ho:integer; 
 tgt:psurfinfo;
 on2,isnil:boolean;
+s:string;
 begin pt:=nil;
  result:=0;  
           
@@ -322,16 +323,18 @@ begin pt:=nil;
    glColor4f(tgt.d2.textcl[0]/255,tgt.d2.textcl[1]/255,tgt.d2.textcl[2]/255,tgt.d2.textcl[3]/255);   
    o:=0;
    ho:=0;
+   s:=fnam;
+   s:=copy(s,1,len);
 
         if tgt.d2.txalign=0 then o:=0
-   else if tgt.d2.txalign=1 then o:=text_width(tgt.d2.font,fnam) div 2
-   else if tgt.d2.txalign=2 then o:=text_width(tgt.d2.font,fnam);
+   else if tgt.d2.txalign=1 then o:=text_width(tgt.d2.font,pchar(s)) div 2
+   else if tgt.d2.txalign=2 then o:=text_width(tgt.d2.font,pchar(s));
         if tgt.d2.txvalign=0 then ho:=0
    else if tgt.d2.txvalign=1 then ho:=tgt.d2.font_height div 2
    else if tgt.d2.txvalign=2 then ho:=tgt.d2.font_height;
 
    glRasterPos3f(tgt.d2.prevx+x0-o,tgt.d2.prevy+y0+abs(tgt.d2.font_height-ho),0);
-   render_font(tgt.d2.font,fnam,ord(isnil)*99);           
+   render_font(tgt.d2.font,pchar(s),ord(isnil)*99);           
   end;
   1:begin tgt.d2.curx:=x0;tgt.d2.cury:=y0;end;
   //Nice
