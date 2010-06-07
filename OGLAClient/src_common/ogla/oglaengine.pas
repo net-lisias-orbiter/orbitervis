@@ -52,6 +52,8 @@ mx:double;
 begin      
  render_setfirst(scn);  
  glColorMask(true,true,true,true);
+           
+ scn.can_rayleigh:=false;
  
  //Sky color
  mi:=-1;
@@ -60,14 +62,22 @@ begin
  if mi=-1 then scn.skycolor:=gclaz else begin
   scn.skycolor:=getskycol(scn,scn.plnt[mi]);
   scn.skycolor_grnd:=getskycol(scn,scn.plnt[mi],true);
+  if scn.plnt[mi].name='Earth' then scn.can_rayleigh:=true;
  end;
+ if not scn.feat.rayleigh then scn.can_rayleigh:=false;
+ if scn.feat.advatm then scn.can_rayleigh:=false;
+ if not scn.feat.advanced then scn.can_rayleigh:=false;
+ if not gl_2_sup then scn.can_rayleigh:=false;
+ if scn.tx<>0 then scn.can_rayleigh:=false;
  
- if gl_2_sup and scn.feat.rayleigh and scn.feat.advanced then begin
+ if gl_2_sup and scn.feat.rayleigh and scn.feat.advanced and scn.can_rayleigh then begin
   scn.sky:=0;
   glClearColor(0,0,0,1); 
  end else begin
-  scn.sky:=scn.skycolor[3]/255;  
-  glClearColor(scn.skycolor[0]/255,scn.skycolor[1]/255,scn.skycolor[2]/255,1); 
+  //scn.sky:=scn.skycolor[3]/255;  
+  scn.sky:=min2(scn.skycolor[3]/255,max3(scn.skycolor[0],scn.skycolor[1],scn.skycolor[2]));  
+  if scn.sky<0.6 then glClearColor(scn.skycolor[0]/255,scn.skycolor[1]/255,scn.skycolor[2]/255,1)
+                 else glClearColor(0,0,0,1); 
  end;  
 
  if gl_14_fbo_sup then begin

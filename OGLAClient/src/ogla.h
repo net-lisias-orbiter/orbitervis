@@ -37,7 +37,7 @@ struct ogla_interface{
  int        (__stdcall *o2_op)   (int,SURFHANDLE,int,int,int,int,const char*,DWORD);
  
  //Out 
- void       (__cdecl *render_font)   (int fntn,char *str);
+ void       (__cdecl *render_font)   (int fntn,char *str,int mode);
  int        (__cdecl *text_width)    (int fntn,char *str);
  DWORD      (__cdecl *getbase)       (OBJHANDLE _hObj);
  void       (__cdecl *visop)         (int op,OBJHANDLE ob,VISHANDLE v);

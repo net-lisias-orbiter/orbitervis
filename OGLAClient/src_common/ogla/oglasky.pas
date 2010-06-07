@@ -95,7 +95,7 @@ begin i:=0;k:=0;try
   glEnable(GL_TEXTURE_2D);
   k:=2;  
   ctx:=0;
-  if scn.sky<0.9 then for i:=0 to scn.nebcnt-1 do if scn.nebs[i]<>nil then begin
+  if scn.sky<0.6 then for i:=0 to scn.nebcnt-1 do if scn.nebs[i]<>nil then begin
    neb:=scn.nebs[i]; 
    gp:=neb.gps;
    s:=neb.rad/2;  
@@ -126,7 +126,7 @@ begin i:=0;k:=0;try
  if not pick then glenable(GL_DEPTH_TEST);  
  
  //Sky and stars    
- if scn.sky<0.9 then if scn.stars<>nil then begin
+ if scn.sky<0.6 then if scn.stars<>nil then begin
   if pick then glpointsize(8) else glpointsize(1);           
   gldisable(GL_LIGHTING);
   gldisable(GL_DEPTH_TEST); 

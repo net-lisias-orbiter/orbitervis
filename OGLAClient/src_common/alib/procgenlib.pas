@@ -3,6 +3,7 @@
 // AlgorLib: Procedural graphics
 //############################################################################//
 unit procgenlib;
+{$ifdef FPC}{$MODE delphi}{$endif}
 interface
 uses asys,math,grph,grplib,maths,noise,noir;
 //############################################################################//
@@ -1348,8 +1349,8 @@ begin
 
  j:=0;
  for i:=0 to nsect-1 do begin
-	phi:=i*2*alpha;
-	cosp:=cos(phi);
+	 phi:=i*2*alpha;
+	 cosp:=cos(phi);
   sinp:=sin(phi);
 
   g.pnts[i*2  ].pos:=tmvec(nrad*cosp,0,nrad*sinp); 

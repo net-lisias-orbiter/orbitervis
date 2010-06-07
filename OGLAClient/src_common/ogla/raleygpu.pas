@@ -14,6 +14,7 @@ transmittanceTexture:dword;//unit 1,T table
 irradianceTexture:dword;   //unit 2,E table
 inscatterTexture:dword;    //unit 3,S table
 scatter_sh:ogl_shader;
+is_prec_loaded:boolean=false;
 //############################################################################//
 function precompute_gpu(trans,irr,ins:string):boolean;
 procedure load_precomp_gpu(trans,irr,ins:string);    
@@ -1112,6 +1113,8 @@ fb:file;
 p:pointer;
 xs,ys,zs:integer;
 begin       
+ if is_prec_loaded then exit;
+ is_prec_loaded:=true;
  if(not fileexists(trans))or(not fileexists(irr))or(not fileexists(ins))then exit;
  xs:=TRANSMITTANCE_W;
  ys:=TRANSMITTANCE_H;
@@ -1126,7 +1129,8 @@ begin
  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
  glBindBufferarb(GL_PIXEL_UNPACK_BUFFER_ARB,0);
  glTexImage2D(GL_TEXTURE_2D,0,GL_RGB16F_ARB,xs,ys,0,GL_RGB,GL_FLOAT,p); 
- freemem(p);
+ freemem(p);   
+ glBindTexture(GL_TEXTURE_2D,0);
          
  xs:=SKY_W;
  ys:=SKY_H;
@@ -1141,7 +1145,8 @@ begin
  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_CLAMP_TO_EDGE);
  glBindBufferarb(GL_PIXEL_UNPACK_BUFFER_ARB,0);
  glTexImage2D(GL_TEXTURE_2D,0,GL_RGB16F_ARB,xs,ys,0,GL_RGB,GL_FLOAT,p);
- freemem(p);
+ freemem(p);                                                            
+ glBindTexture(GL_TEXTURE_2D,0);
            
  xs:=RES_MU_S*RES_NU;
  ys:=RES_MU;
@@ -1158,7 +1163,8 @@ begin
  glTexParameteri(GL_TEXTURE_3D,GL_TEXTURE_WRAP_R,GL_CLAMP_TO_EDGE);
  glBindBufferarb(GL_PIXEL_UNPACK_BUFFER_ARB,0);
  glTexImage3D(GL_TEXTURE_3D,0,GL_RGBA16F_ARB,xs,ys,zs,0,GL_RGBA,GL_FLOAT,p);   
- freemem(p);
+ freemem(p);  
+ glBindTexture(GL_TEXTURE_3D,0);
 
  v:= 
  'varying vec3 ray;'#10+      

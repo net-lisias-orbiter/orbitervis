@@ -4,8 +4,9 @@
 //############################################################################//
 unit png;
 {$ifdef fpc}{$mode delphi}{$endif}
+{$ifdef ape3}{$define bgr}{$endif}
 interface
-uses asys,sysutils,grph,grplib,mzlib,math{$ifdef VFS},vfs,vfsutils{$endif}{$ifdef THEAPE},akernel,vfsint{$endif};
+uses asys,sysutils,grph,grplib,mzlib,math{$ifdef VFS},vfs,vfsutils{$endif}{$ifdef ape3},akernel,vfsint{$endif};
 {define pngdbg} 
 //############################################################################//
 function ldpngbuf(buf:pointer;bs:integer;wtx,wa:boolean;trc:crgb;var bx,by:integer;var p:pointer):pointer; 

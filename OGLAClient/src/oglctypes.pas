@@ -93,6 +93,7 @@ type evt_net_rec=packed record
 end;
 //############################################################################//  
 var feats:featsrec; 
+do_check_ng:boolean=true;
 use_udp:boolean=false;  
 use_comp:boolean=false;  
 net_buffer_size:integer=32*1024*1024;

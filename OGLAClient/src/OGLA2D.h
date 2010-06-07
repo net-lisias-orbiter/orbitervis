@@ -19,7 +19,7 @@ int font_mode=1;
 extern int font_mode;
 #endif
 //############################################################################//
-void render_font(int fntn,char *str);
+void render_font(int fntn,char *str,int mode);
 int text_width(int fntn,char *str);
 void init_o2d();
 //############################################################################//
@@ -27,7 +27,7 @@ void init_o2d();
 ///The OGLAPad class defines the context for Sketchpad 2D drawing using OGLA.
 class OGLAPad:public oapi::Sketchpad{
 public:
-	OGLAPad(SURFHANDLE s,DWORD opfnc);
+	OGLAPad(SURFHANDLE s,DWORD opfnc,DWORD gdc,DWORD rdc);
 	~OGLAPad();
 	oapi::Font *SetFont(oapi::Font *font) const;
 	oapi::Pen *SetPen(oapi::Pen *pen) const;
@@ -38,7 +38,7 @@ public:
 	DWORD SetBackgroundColor(DWORD col);
 	void SetBackgroundMode(BkgMode mode);
 	DWORD GetCharSize();
-	DWORD GetTextWidth(const char *str);
+	DWORD GetTextWidth(const char *str,int len=0);
 	
 	void SetOrigin(int x,int y);
 	bool Text     (int x,int y,const char *str,int len);
@@ -51,12 +51,18 @@ public:
 	void Polygon  (const oapi::IVECTOR2 *pt,int npt);
 	void Polyline (const oapi::IVECTOR2 *pt,int npt);
 
+ HDC GetDC() const;
+
+
 private:
 	UINT txalign;
  int bkmode;
  DWORD txcol,txbcol;
  SURFHANDLE sh;
- int (__stdcall *o2_op)(int tp,SURFHANDLE s,int x0,int y0,int x1,int y1,const char *fnam,DWORD len);
+ int (__stdcall *o2_op) (int tp,SURFHANDLE s,int x0,int y0,int x1,int y1,const char *fnam,DWORD len);       
+ HDC (__stdcall *getsdc)(SURFHANDLE s);
+ void(__stdcall *relsdc)(SURFHANDLE s,HDC dc);
+ HDC dc;
 
 	mutable oapi::Font *cfont;   ///currently selected font(NULL if none)
 	mutable oapi::Pen *cpen;     ///currently selected pen(NULL if none)

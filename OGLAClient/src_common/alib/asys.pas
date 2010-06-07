@@ -166,19 +166,21 @@ function DateTimeToUnix(ConvDate: TDateTime):Longint;
 function UnixToDateTime(USec:Longint):TDateTime; 
 {$endif}       
 //############################################################################//
-procedure fastMove(const source;var dest;count:integer);{$ifdef i386}assembler;{$endif}   
+procedure fastMove(const source;var dest;count:integer);{$ifndef ape3}{$ifdef i386}assembler;{$endif}{$endif}
 //##############################################################################
 implementation       
 //############################################################################//  
-{$ifndef i386}
-procedure fastMove(const source;var dest;count:integer);
-begin
- move(source,dest,count);
-end;    
-{$else}
-{$I i386.inc}
-{$I fastmove.inc}  
-{$endif}  
+{$ifdef ape3}procedure fastMove(const source;var dest;count:Integer);begin move(source,dest,count);end;{$else}
+ {$ifndef i386}
+ procedure fastMove(const source;var dest;count:integer);
+ begin
+  move(source,dest,count);
+ end;    
+ {$else}
+ {$I i386.inc}
+ {$I fastmove.inc}  
+ {$endif}  
+{$endif}
 //##############################################################################
 {$ifndef ape3}
 var UnixStartDate:TDateTime=25569.0;  
@@ -384,7 +386,8 @@ end;
 {$ifdef windows}    
 function mutex_create:mutex_typ;   
 begin              
- result:=CreateMutex(nil,true,nil);
+ result:=CreateSemaphore(nil,1,1,nil);
+ //result:=CreateMutex(nil,true,nil);
 end;
 procedure mutex_lock(var m:mutex_typ);  
 begin
@@ -392,13 +395,16 @@ begin
 end;
 procedure mutex_release(var m:mutex_typ); 
 begin
- releasemutex(m);  
+ //releasemutex(m); 
+ ReleaseSemaphore(m,1,nil); 
 end;   
 procedure mutex_free(var m:mutex_typ); 
 begin
+ CloseHandle(m);
 end;
 {$endif}
 {$ifdef unix}  
+//FIX!
 function mutex_create:mutex_typ;   
 begin
  pthread_mutex_init(@result,nil);

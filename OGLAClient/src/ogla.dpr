@@ -111,10 +111,11 @@ var tx:psurfinfo;
 begin result:=0; try 
  {$ifdef no_render}exit;{$else}
  if feats.gdiemu then begin
-  if s=nil then begin
-   settodc(@scrsrf);
-   textohdcclr(@scrsrf);  
-   result:=psurfgdi(scrsrf.gdi).dc;
+  if s=nil then begin   
+   exit;
+   //settodc(@scrsrf);
+   //textohdcclr(@scrsrf);  
+   //result:=psurfgdi(scrsrf.gdi).dc;
   end else begin   
    tx:=txget(s);  
    if tx=nil then exit;
@@ -135,7 +136,8 @@ begin try
  {$ifdef no_render}exit;{$else}
  if feats.gdiemu then begin
   if s=nil then begin
-   hdctotex(@scrsrf); 
+   //hdctotex(@scrsrf); 
+   exit;
   end else begin
    hdctotex(txget(s));     
   end;     
@@ -173,7 +175,8 @@ g:ptypmshgrp;
 ofs:vec;
 mat:pmaterial;
 ctx:dword;
-tx:psurfinfo;
+tx:psurfinfo;   
+se:pdraw_rec;
 function iii:integer;begin if ges.vIdx=nil then result:=i else result:=ges.vIdx[i];end;
 begin try   
  {$ifdef no_render}exit;{$else}
@@ -213,11 +216,20 @@ begin try
   3:begin
    ctx:=dword(tex);
    case idx of
+    EVENT_VESSEL_INSMESH:begin
+     se:=scene.smobs[vis-1].draw;
+     if integer(ctx)>=se.nmesh then begin
+      setlength(se.mshv,se.nmesh);
+      setlength(se.mshs,se.nmesh);
+     end else if se.mshs[ctx]<>nil then se.mshs[ctx].used:=false;
+     add_one_vessel_mesh(se,ctx,false);  
+    end;
     EVENT_VESSEL_DELMESH:if scene.smobs[vis-1].draw.mshs[ctx]<>nil then scene.smobs[vis-1].draw.mshs[ctx].used:=false;
     EVENT_VESSEL_MESHOFS:if scene.smobs[vis-1].draw.mshs[ctx]<>nil then begin
      vesGetMeshOffset(scene.smobs[vis-1].draw.obj,ctx,@ofs); 
      scene.smobs[vis-1].draw.mshs[ctx].off:=ofs;
     end;
+    EVENT_VESSEL_MESHVISMODE:if scene.smobs[vis-1].draw.mshs[ctx]<>nil then scene.smobs[vis-1].draw.mshv[ctx]:=vesGetMeshVisibilityMode(scene.smobs[vis-1].draw.obj,ctx);
    end;
   end;
   4:begin
@@ -484,7 +496,7 @@ end;
 //############################################################################//
 begin
  firstrun:=true;
- initstr :='';   
+ initstr :=''; 
 
  {$ifndef no_render}
  common_main_init_sys(@scene);     
@@ -494,7 +506,10 @@ begin
  {$else}
  load_ogla_feats_net;
  feats.server_on:=true;
- {$endif}
+ {$endif}   
+ if do_check_ng then if lowercase(copy(paramstr(0),length(paramstr(0))-25,26))<>lowercase('Modules\Server\orbiter.exe') then begin
+  messagebox(0,'Hi, it''s OGLAClient.'#13#10'You appear to have enabled me from orbiter.exe instead of orbiter_ng.exe.'#13#10'If i''m mistaken or so is your plan, disable this check in video tab.','Message',MB_OK);
+ end;
 
  lrndseed:=65774;  
 end. 

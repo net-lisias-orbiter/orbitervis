@@ -381,6 +381,7 @@ GRPEDIT_VTX         =(GRPEDIT_VTXCRD or GRPEDIT_VTXNML or GRPEDIT_VTXTEX); ///< 
 EVENT_VESSEL_INSMESH     =0; ///< Insert a mesh (context: mesh index)
 EVENT_VESSEL_DELMESH     =1; ///< Delete a mesh (context: mesh index, or -1 for all)
 EVENT_VESSEL_MESHVISMODE =2; ///< Set mesh visibility mode (context: mesh index)
+EVENT_VESSEL_RESETANIM   =3; ///< Reset animations
 EVENT_VESSEL_CLEARANIM   =4; ///< Clear all animations (context: UINT (1=reset animations, 0=leave animations at current state)
 EVENT_VESSEL_DELANIM     =5; ///< Delete an animation (context: animation index)
 EVENT_VESSEL_NEWANIM     =6; ///< Create a new animation (context: animation index)

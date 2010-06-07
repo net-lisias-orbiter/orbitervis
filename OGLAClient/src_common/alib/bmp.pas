@@ -3,8 +3,10 @@
 // AlgorLib: BMP Loader
 //############################################################################//
 unit bmp;
+{$ifdef FPC}{$MODE delphi}{$endif}
+{$ifdef ape3}{$define bgr}{$endif}
 interface
-uses grph{$ifndef ape3},grplib{$else},vfsint{$endif},asys{$ifdef VFS},vfs,vfsutils{$endif};      
+uses grph{$ifdef ape3},vfsint{$endif},grplib,asys{$ifdef VFS},vfs,vfsutils{$endif};      
 //############################################################################//
 
 type
@@ -679,6 +681,6 @@ begin
 end;
 //############################################################################//
 begin   
- {$ifndef ape3}register_grfmt(isbmp8,isbmp,ldbmp8,ldbmp32,nil,nil,nil,nil);{$endif}
+ register_grfmt(isbmp8,isbmp,ldbmp8,ldbmp32,nil,nil,nil,nil);
 end.  
 //############################################################################//

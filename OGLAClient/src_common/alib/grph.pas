@@ -4,6 +4,7 @@
 //############################################################################//
 unit grph;
 {$ifdef fpc}{$mode delphi}{$endif}
+{$ifdef ape3}{$define bgr}{$endif}
 interface 
 uses asys,maths;
 type TShiftState=set of(ssShift,sslShift,ssrShift,ssAlt,sslAlt,ssrAlt,ssCtrl,sslCtrl,ssrCtrl,ssLeft,ssRight,ssMiddle,ssDouble,ssup,ssdown);

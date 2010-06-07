@@ -65,7 +65,8 @@ procedure glgr_set3d(glw:pglwin;ap,l,h:double);
 procedure glgr_set2d(glw:pglwin);                    
 procedure glgr_set_unit2d(glw:pglwin);
 procedure glgr_setdefault3d(glw:pglwin;xres:integer=0;yres:integer=0);  
-procedure glgr_screenshot(win:pglwin);  
+procedure glgr_screenshot(win:pglwin);
+procedure glgr_surf_screenshot(tex:dword;w,h:integer);  
 procedure glgr_vsync(en:boolean);      
 //############################################################################//
 implementation  
@@ -835,6 +836,16 @@ begin
 
  storeBMP32('screenshot-'+getdatestamp+'.bmp',p,win.wid,win.hei,false,false);
 
+ freemem(p);
+end;     
+//############################################################################//
+procedure glgr_surf_screenshot(tex:dword;w,h:integer);
+var p:pointer;
+begin 
+ getmem(p,w*h*4); 
+ glBindTexture(GL_TEXTURE_2D,tex);
+ glGetTexImage(GL_TEXTURE_2D,0,GL_BGRA,GL_UNSIGNED_BYTE,p);   
+ storeBMP32('surf-'+stri(tex)+'-'+getdatestamp+'.bmp',p,w,h,false,false);
  freemem(p);
 end;          
 //############################################################################//

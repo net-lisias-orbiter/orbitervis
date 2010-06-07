@@ -669,15 +669,15 @@ begin n:=0;result:=0;i:=0; try
    
   end;
   if lt then wr_log('PLNTR',s);
- end;
 
- pln.draw.ringmsh.grc:=1;
- setlength(pln.draw.ringmsh.grp,pln.draw.ringmsh.grc);
+  pln.draw.ringmsh.grc:=1;
+  setlength(pln.draw.ringmsh.grp,pln.draw.ringmsh.grc);
    
- pln.draw.ringmsh.grp[0].col:=tcrgba(255,255,255,255);
- pln.draw.ringmsh.grp[0].dif.tx:=pln.draw.ringtx[2];
- mk_ringmsh(@pln.draw.ringmsh.grp[0],pln.draw.ringmin,pln.draw.ringmax,8+4*2);
- pln.draw.ringmsh.used:=true;     
+  pln.draw.ringmsh.grp[0].col:=tcrgba(255,255,255,255);
+  pln.draw.ringmsh.grp[0].dif.tx:=pln.draw.ringtx[2];
+  mk_ringmsh(@pln.draw.ringmsh.grp[0],pln.draw.ringmin,pln.draw.ringmax,8+4*2);
+  pln.draw.ringmsh.used:=true;    
+ end;
 
  n:=-1;
  except 
@@ -728,7 +728,7 @@ begin result:=0;try
  end;  
              
  if(pln.draw.hazmsh.grc=0)and(pln.draw.haze<>nil)then mk_hazemsh(@pln.draw.hazmsh,HORIZON_HAZE_NSEG);
- updoplanetring(scn,pln);
+ if pln.draw.ringex then updoplanetring(scn,pln);
  result:=transopmesh(scn,pln,@pln.draw.grnd,pln.name,'');
 
  except stderr('ORBGL','Error in updoplanet_grnd'); end; 
@@ -757,6 +757,7 @@ ee,newstate,ds,mm:double;
 d:vec; 
 anim:panimationa; 
 cl:crgba;
+c:double;
 begin try  
  scn.cam.rot:=tamat(scn.cam.rtmat);           
  scn.cam.dir:=tvec(0,0,1); 
@@ -833,9 +834,10 @@ begin try
     ee:=line2sph(scn.smobs[i].pos,scn.plnt[scn.smobs[i].near_plnt].starlightpos,scn.smobs[i].pgpos,scn.smobs[i].pgsiz,d); 
     d:=subv(scn.smobs[i].pgpos,d);
     if (ee>0)and(smulv(subv(scn.smobs[i].pgpos,scn.smobs[i].pos),subv(scn.smobs[i].pgpos,scn.plnt[scn.smobs[i].near_plnt].starlightpos))<=0) then begin
-     scn.smobs[i].draw.lt0:=tquat(gl_amb.x,gl_amb.y,gl_amb.z,1);
-    end else begin
-     //scn.smobs[i].draw.lt0:=tquat(min2(1-modv(d)-scn.smobs[i].pgsiz,1),0,0,0);
+     //scn.smobs[i].draw.lt0:=tquat(gl_amb.x,gl_amb.y,gl_amb.z,1);
+    //end else begin
+     c:=min2(1-(scn.smobs[i].pgsiz-modv(d))/33000,1);
+     scn.smobs[i].draw.lt0:=tquat(gl_amb.x+c,gl_amb.y+c,gl_amb.z+c,1);
     end;
    end;
       

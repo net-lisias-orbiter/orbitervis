@@ -60,7 +60,9 @@ vcsurf:function(tp,n:integer;mf:pointer):pinteger;cdecl;
 //############################################################################//    
 
 //Vessel and base state update              
-procedure proc_smob(scn:poglascene);  
+procedure proc_smob(scn:poglascene);
+//Add vessel mesh
+procedure add_one_vessel_mesh(se:pdraw_rec;i:integer;dgfix:boolean);  
 //Planet state update
 procedure procplanets(scn:poglascene);
 //Planet loading
@@ -69,9 +71,9 @@ procedure initplanets(scn:poglascene);
 procedure addpstrm(scn:poglascene;tp:integer;es:dword;pss:pPARTICLESTREAMSPEC;hVessel:ohnd;lvl:pdouble;ref,dir:pvec);
 {$endif}
 //############################################################################//
-function ldmsh(m:pointer;msmit:boolean=true;dgfix:boolean=false):ptypmsh;
+function  ldmsh(m:pointer;msmit:boolean=true;dgfix:boolean=false):ptypmsh;
 procedure gethaze(h:poplhazetyp;po:ohnd;n:string);  
-function getmsh(m:pointer):ptypmsh;        
+function  getmsh(m:pointer):ptypmsh;        
 procedure freemsh(var m:ptypmsh);
 //############################################################################//
 implementation  
@@ -301,12 +303,36 @@ begin
   se.lights[i].dir:=tvec(0,0,1);
   se.lights[i].col:=tcrgba(128+random(128),random(255),random(255),255);    
  end; 
+end;          
+//############################################################################// 
+procedure add_one_vessel_mesh(se:pdraw_rec;i:integer;dgfix:boolean);
+var hmesh:pointer;  
+msh:ptypmsh;  
+ofs:vec;
+begin
+ hMesh:=vesGetMeshTemplate(se.obj,i);
+ msh:=getmsh(hMesh); 
+          
+ if(hmesh<>nil)and(msh<>nil)then begin
+  //copy from preloaded template
+  copy_msh(se.mshs[i]^,msh^);                                                                    
+  vesGetMeshOffset(se.obj,i,@ofs); 
+  se.mshs[i].off:=ofs;
+ end else begin
+  //load on the fly and discard after copying        
+  hMesh:=vesCopyMeshFromTemplate(se.obj,i);
+  if hMesh=nil then exit;                                                                         
+  vesGetMeshOffset(se.obj,i,@ofs); 
+  se.mshs[i]:=ldmsh(hMesh,true,dgfix);            
+  se.mshs[i].off:=ofs;
+  //oapiDeleteMesh(hMesh);
+ end;   
+ se.mshv[i]:=vesGetMeshVisibilityMode(se.obj,i);
 end;
 //############################################################################// 
 //Vessels processing - load mesh from Orbiter    
 function prcsmobmsh(v:pointer;nam,cnam:string;base:boolean):pdraw_rec;
 var hmesh:pointer;
-ofs:vec;
 i:integer;
 se:pdraw_rec;
 anim:panimationa;
@@ -364,27 +390,7 @@ begin i:=0; result:=nil; try
    se.mshv[bt.nsbs+dword(i)]:=MESHVIS_ALWAYS;
   end;   
  end else begin
-  for i:=0 to se.nmesh-1 do begin
-   hMesh:=vesGetMeshTemplate(se.obj,i);
-   msh:=getmsh(hMesh); 
-          
-   if(hmesh<>nil)and(msh<>nil)then begin
-    //copy from preloaded template
-    copy_msh(se.mshs[i]^,msh^);                                                                    
-    vesGetMeshOffset(se.obj,i,@ofs); 
-    se.mshs[i].off:=ofs;
-   end else begin
-    //load on the fly and discard after copying        
-    hMesh:=vesCopyMeshFromTemplate(se.obj,i);
-    if hMesh=nil then continue;                                                                         
-    vesGetMeshOffset(se.obj,i,@ofs); 
-    se.mshs[i]:=ldmsh(hMesh,true,(lowercase(cnam)='deltaglider')or(lowercase(cnam)='dg-s'));            
-    se.mshs[i].off:=ofs;
-    //oapiDeleteMesh(hMesh);
-   end;   
-   se.mshv[i]:=vesGetMeshVisibilityMode(se.obj,i);
-  end; 
-
+  for i:=0 to se.nmesh-1 do add_one_vessel_mesh(se,i,(lowercase(cnam)='deltaglider')or(lowercase(cnam)='dg-s'));
   se.nanim:=vesGetAnimPtr(se.obj,@anim);
   if se.nanim<>0 then begin 
    setlength(se.animstate,se.nanim);

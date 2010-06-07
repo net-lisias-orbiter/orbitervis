@@ -26,7 +26,7 @@ vessh_shm,plnsh_ml,plnsh_shm:boolean;
 
 ves_sh:array[0..7]of ogl_shader;
 pln_sh:array[0..15]of ogl_shader;
-haz_sh:ogl_shader;
+haz_sh,ring_sh:ogl_shader;
 
 lights_count,lights_limit:integer;
 
@@ -40,7 +40,7 @@ procedure fill_common;
 implementation          
 //############################################################################//
 var frag_ves_hdr,vert_ves,vert_haz,vert_plnt,shm,fixdlt_a_ves,fixdlt_b_ves,fixdlt_a1_plnt,fixdlt_subtx_plnt,fixdlt_a2_plnt,fixdlt_b_plnt,fixdlt_a_haz,fixdlt_b_haz,airshade:string;
-frag_haz_hdr,frag_plnt_hdr_airsh,frag_plnt_hdr,nvis,ml2,ml2_pl:string;
+frag_haz_hdr,frag_plnt_hdr_airsh,frag_plnt_hdr,nvis,ml2,ml2_pl,vert_ring,frag_ring:string;
 frag_hdr_ml:array[0..9]of string;
 ml,ml_pl:array[0..15]of string;
 //############################################################################//
@@ -108,11 +108,22 @@ begin
  ' gl_TexCoord[0]=gl_TextureMatrix[0]*gl_MultiTexCoord0;'+#10+
  '}'+#10;
 
+ vert_ring:=
+ 'varying vec3 normal,lightDir;'+#10+
+ 'void main(void)'+#10+
+ '{'+#10+
+ ' lightDir=normalize(vec3(gl_LightSource[0].position));'+#10+
+ ' normal=normalize(gl_NormalMatrix*gl_Normal);'+#10+
+ ' '+#10+
+ ' gl_Position=gl_ModelViewProjectionMatrix*gl_Vertex;'+#10+ 
+ ' gl_TexCoord[0]=gl_TextureMatrix[0]*gl_MultiTexCoord0;'+#10+
+ '}'+#10;
+
  frag_ves_hdr:=
  'uniform sampler2D tex,ltex,nstex;'+#10+
  'uniform sampler2DShadow smap;'+#10+
  'uniform vec4 crgba;'+#10+
- 'uniform float tex0,ltex0,ltex1,nstex0;'+#10+ 
+ 'uniform float tex0,ltex0,ltex1,nstex0,nlight;'+#10+ 
  'varying vec3 v_nml,halfVec,ecPos,lv,hv;'+#10+    
  'varying mat3 tsp;'+#10+  
  'varying vec4 ProjShadow;'+#10;   
@@ -178,7 +189,7 @@ begin
  ' //Specular'+#10+
  ' spec=vec4(0.0,0.0,0.0,0.0);'+#10+        
  ' if(intensity>0.0){'+#10+
- '  spec=max(cs*vec4(1.0,1.0,1.0,1.0),gl_FrontMaterial.specular)*pow(max(0.0,dot(normal,halfVector)),max(cs*15.0,gl_FrontMaterial.shininess));'+#10+
+ '  spec=max(cs*vec4(1.0,1.0,1.0,1.0)*nlight,gl_FrontMaterial.specular)*pow(max(0.0,dot(normal,halfVector)),max(cs*15.0,gl_FrontMaterial.shininess));'+#10+
  //' spec*=clamp(intensity*100.0,0.0,1.0);'+#10+
  ' }'+#10+
  ''+#10+
@@ -349,6 +360,51 @@ begin
  ' '+#10+    
  ' color.rgb=mix(FogColor.rgb,color.rgb,fog_factor);'+#10;    
   
+
+ frag_ring:=
+ 'varying vec3 normal,lightDir;'+#10+
+ 'uniform vec3 pov;'+#10+
+ 'uniform sampler2D tex,tex1;   '+#10+
+ 'uniform float sdist,fdist;'+#10+
+ ''+#10+
+ 'vec4 rngblur()'+#10+
+ '{'+#10+
+ ' vec3 ct,cf,n;'+#10+
+ ' vec4 texel,texeln,amb,dif;'+#10+
+ ' float intensity,at,af,NdotHV;'+#10+
+ ''+#10+
+ ' n=normalize(normal);'+#10+
+ ' intensity=max(dot(lightDir,n),0.0);'+#10+
+ ''+#10+
+ ' amb=gl_FrontMaterial.ambient*gl_LightSource[0].ambient+gl_LightModel.ambient*gl_FrontMaterial.ambient;'+#10+
+ ' dif=gl_Color*gl_LightSource[0].diffuse+gl_FrontMaterial.diffuse*gl_LightSource[0].diffuse;'+#10+
+ ' af=gl_Color.a*gl_FrontMaterial.diffuse.a;'+#10+
+ ' cf=dif.rgb*intensity+amb.rgb;'+#10+
+ ''+#10+
+ ' texel=texture2D(tex1,gl_TexCoord[0].st);'+#10+
+ ''+#10+
+ ' float dst=pov.y;'+#10+
+ ''+#10+  
+ ' if(abs(dst)<fdist){'+#10+
+ '  float f=abs(dst)/fdist;'+#10+
+ '  texeln=texture2D(tex,gl_TexCoord[0].st*128.0);'+#10+
+ '  ct=texel.rgb*texeln.rgb;'+#10+
+ '  at=texel.a*texeln.a*f;'+#10+
+ ' }else if(abs(dst)<(sdist-fdist)){'+#10+
+ '  texeln=texture2D(tex,gl_TexCoord[0].st*128.0);'+#10+
+ '  ct=texel.rgb*texeln.rgb;'+#10+
+ '  at=texel.a*texeln.a;'+#10+
+ ' }else if(abs(dst)<sdist){'+#10+
+ '  float f=(abs(dst)-sdist+fdist)/fdist;'+#10+
+ '  texeln=texture2D(tex,gl_TexCoord[0].st*128.0);'+#10+
+ '  texeln+=(1.0-texeln)*f;'+#10+
+ '  ct=texel.rgb*texeln.rgb;'+#10+
+ '  at=texel.a*texeln.a;'+#10+
+ ' }else{'+#10+
+ '  ct=texel.rgb;at=texel.a;'+#10+
+ ' }'+#10+
+ ' return vec4(cf*ct,at*af);'+#10+
+ '}'+#10;
 end;   
 //############################################################################//
 procedure fill_common;
@@ -404,7 +460,7 @@ begin
   //write_shader_to_file(f,i);
  
   if mkshader(pchar(v),pchar(f),nil,ves_sh[i],'Vessel program '+stri(i)+':') then begin
-   setlength(ves_sh[i].unis,17);
+   setlength(ves_sh[i].unis,18);
    ves_sh[i].unis[0]:=glGetUniformLocation(ves_sh[i].prg,'shadmap');    
    ves_sh[i].unis[1]:=glGetUniformLocation(ves_sh[i].prg,'crgba');  
    ves_sh[i].unis[2]:=glGetUniformLocation(ves_sh[i].prg,'tex0');
@@ -424,6 +480,7 @@ begin
 
    ves_sh[i].unis[15]:=glGetAttribLocationARB(ves_sh[i].prg,'tangent');  
    ves_sh[i].unis[16]:=glGetUniformLocation(ves_sh[i].prg,'ltex1');
+   ves_sh[i].unis[17]:=glGetUniformLocation(ves_sh[i].prg,'nlight');
   end;
  end;
 end;                                                                 
@@ -521,6 +578,33 @@ begin
   haz_sh.unis[ 5]:=glGetUniformLocation(haz_sh.prg,'FogDensity');   
   haz_sh.unis[ 6]:=glGetUniformLocation(haz_sh.prg,'cufo'); 
  end;
+end;                                                     
+//############################################################################//
+procedure mk_ring_shader;
+var v,f:string;
+begin
+ v:=vert_ring;
+ f:=frag_ring;
+ f:=f+
+ 'void main()'+#10+ 
+ '{'+#10+
+ ' gl_FragColor=rngblur();'+#10+
+ '}'+#10;
+
+ //write_shader_to_file(v,0);
+ //write_shader_to_file(f,0);
+ 
+ if mkshader(pchar(v),pchar(f),nil,ring_sh,'Ring program:') then begin    
+  setlength(ring_sh.unis,5);                           
+  glUniform1i(glGetUniformLocation(ring_sh.prg,'tex'),0);
+  glUniform1i(glGetUniformLocation(ring_sh.prg,'tex1'),1);  
+  ring_sh.unis[ 0]:=glGetUniformLocation(ring_sh.prg,'tex');
+  ring_sh.unis[ 1]:=glGetUniformLocation(ring_sh.prg,'tex1');
+
+  ring_sh.unis[ 2]:=glGetUniformLocation(ring_sh.prg,'sdist');
+  ring_sh.unis[ 3]:=glGetUniformLocation(ring_sh.prg,'fdist');
+  ring_sh.unis[ 4]:=glGetUniformLocation(ring_sh.prg,'pov');  
+ end;
 end;
 //############################################################################//
 procedure oglaset_shaders(scn:poglascene);
@@ -528,24 +612,15 @@ begin
  if gl_2_sup and scn.feat.advanced then begin 
   mk_vessel_shader(scn.feat.multilight,(scn.feat.shres=5)and(scn.feat.shadows));   
   mk_planet_shader(scn.feat.multilight and scn.feat.mlight_terrain,(scn.feat.shres=5)and(scn.feat.shadows));
-  mk_haze_shader;   
+  mk_haze_shader; 
+  mk_ring_shader;  
   load_precomp_gpu('textures/transmittance.bin','textures/irradiance.bin','textures/inscatter.bin');
  end;
+ glMatrixMode(GL_TEXTURE);
+ glLoadIdentity;  
+ glMatrixMode(GL_MODELVIEW); 
  
 {
- if gl_2_sup then begin
-                     
-  if mkshader(vsr,fsr,vr,fr,ringsh,'ring','Ring program:')then begin
-   glUniform1i(glGetUniformLocation(ringsh,'tex'),0);
-   glUniform1i(glGetUniformLocation(ringsh,'tex1'),1);
-   
-   ringsh_tex:=glGetUniformLocation(ringsh,'tex');
-   ringsh_tex1:=glGetUniformLocation(ringsh,'tex1');
-   ringsh_sdist:=glGetUniformLocation(ringsh,'sdist');
-   ringsh_fdist:=glGetUniformLocation(ringsh,'fdist');
-   ringsh_pov:=glGetUniformLocation(ringsh,'pov');
-  end;                        
-  
   if mkshader(vsc,fsc,vc,fc,cldsh,'clouds','Clouds program:')then begin
    glUniform1i(glGetUniformLocation(cldsh,'tex'),0);
    glUniform1i(glGetUniformLocation(cldsh,'tex1'),1);
@@ -556,12 +631,6 @@ begin
    cldsh_fdist:=glGetUniformLocation(cldsh,'fdist');
    cldsh_dst:=glGetUniformLocation(cldsh,'dst');
   end;
-  
-  if mkshader(vss,fss,vs,fs,starsh,'star','Star program:')then begin
-   glUniform1i(glGetUniformLocation(starsh,'tex'),0);
-   glUniform1i(glGetUniformLocation(starsh,'tex1'),1);
-   starsh_drwm:=glGetUniformLocation(starsh,'drwm');
-  end; 
   }
 end;    
 //############################################################################//

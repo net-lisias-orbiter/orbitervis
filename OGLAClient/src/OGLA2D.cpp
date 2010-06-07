@@ -21,19 +21,22 @@ void init_o2d()
  for(i=0;i<100;i++)ftfnt[i]=NULL;
 } 
 //############################################################################//
-void render_font(int fntn,char *str)
+void render_font(int fntn,char *str,int mode)
 {
- if(fntn!=-1)ftfnt[fntn]->Render(str);
+ if(mode==0)mode=FTGL::RENDER_ALL;
+ if(fntn!=-1)if(ftfnt[fntn])ftfnt[fntn]->Render(str,-1,FTPoint(),FTPoint(),mode);
 }
 //############################################################################//
 int text_width(int fntn,char *str)
 {
- if(fntn!=-1)return ftfnt[fntn]->Advance(str);else return 1;
+ if(fntn!=-1)if(ftfnt[fntn])return ftfnt[fntn]->Advance(str);else return 1;
 }
 //############################################################################//
 //############################################################################//
+SURFHANDLE dcs[1000];
+int dcc=0;
 //############################################################################//
-OGLAPad::OGLAPad(SURFHANDLE s,DWORD opfnc):Sketchpad(s)
+OGLAPad::OGLAPad(SURFHANDLE s,DWORD opfnc,DWORD gdc,DWORD rdc):Sketchpad(s)
 {
  cfont =NULL;
  cpen  =NULL;
@@ -41,15 +44,35 @@ OGLAPad::OGLAPad(SURFHANDLE s,DWORD opfnc):Sketchpad(s)
 
  sh=s;
  bkmode=0;
- o2_op=(int(__stdcall *)(int,SURFHANDLE,int,int,int,int,const char*,DWORD))opfnc;
+ o2_op= (int (__stdcall *)(int,SURFHANDLE,int,int,int,int,const char*,DWORD))opfnc;          
+ getsdc=(HDC (__stdcall *)(SURFHANDLE s))gdc;
+ relsdc=(void(__stdcall *)(SURFHANDLE s,HDC dc))rdc;
+ dc=0;
+
+ int c=-1;
+ for(int i=0;i<dcc;i++)if(dcs[i]==sh){c=i;break;}
+ if(c!=-1)dc=getsdc(sh);
  
  o2_op(99,sh,bkmode,0,0,0,0,0);
  // Default initial drawing settings
  // transparent text background
  // no fill
  // no outline
+}  
+//############################################################################//
+OGLAPad::~OGLAPad()
+{
+ if(dc)relsdc(sh,dc);
+ o2_op(98,sh,0,0,0,0,0,0);
 }
-OGLAPad::~OGLAPad(){o2_op(98,sh,0,0,0,0,0,0);}
+//############################################################################//
+HDC OGLAPad::GetDC()const
+{
+ int c=-1;
+ for(int i=0;i<dcc;i++)if(dcs[i]==sh){c=i;break;}
+ if(c==-1){dcs[dcc]=sh;dcc++;}
+ return dc;
+}
 //############################################################################//
 Font *OGLAPad::SetFont(Font *font)const
 {
@@ -113,7 +136,7 @@ void  OGLAPad::SetBackgroundMode(BkgMode mode)
  }
 }
 DWORD OGLAPad::GetCharSize(){return o2_op(19,sh,0,0,0,0,0,0);}
-DWORD OGLAPad::GetTextWidth(const char *str){return o2_op(18,sh,0,0,0,0,str,0);}
+DWORD OGLAPad::GetTextWidth(const char *str,int len){if(!len)len=(int)strlen(str);return o2_op(18,sh,len,0,0,0,str,0);}
 void  OGLAPad::SetOrigin(int x,int y){o2_op(14,sh,x,y,0,0,0,0);}
 //############################################################################//
 bool OGLAPad::Text     (int x ,int y,const char *str,int len){return (o2_op(0,sh,x ,y ,0,0,str,len)!=0);}
@@ -166,11 +189,14 @@ OGLAFont::OGLAFont(int height,bool prop,char *face,Style style,int orientation):
  if(font_mode==1)ftfnt[fntn]=new FTBufferFont(facei);
  if(font_mode==2)ftfnt[fntn]=new FTGLPolygonFont(facei); 
  if(font_mode==3)ftfnt[fntn]=new FTGLBitmapFont(facei); 
- if(ftfnt[fntn]->Error())return;
+ if(ftfnt[fntn]->Error()){
+  ftfnt[fntn]=NULL;
+  return;
+ }
  ftfnt[fntn]->FaceSize(abs(height));
 }
 //############################################################################//
-OGLAFont::~OGLAFont(){ftfnt[fntn]->~FTFont();ftfnt[fntn]=NULL;} 
+OGLAFont::~OGLAFont(){if(ftfnt[fntn])ftfnt[fntn]->~FTFont();ftfnt[fntn]=NULL;} 
 //############################################################################//
 //############################################################################//
 OGLAPen::OGLAPen(int style,int width,DWORD col):oapi::Pen (style,width,col)

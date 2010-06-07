@@ -1,7 +1,9 @@
 //############################################################################//
 unit jpg;
+{$ifdef FPC}{$MODE delphi}{$endif}
+{$ifdef ape3}{$define bgr}{$endif}
 interface
-uses asys,grph,grplib,strval,tim{$ifdef VFS},vfs,vfsutils{$endif};
+uses asys,grph,grplib,strval,tim{$ifdef VFS},vfs,vfsutils{$endif}{$ifdef ape3},vfsint,akernel{$endif};
 //############################################################################//      
 function ldjpgbuf(ibuf:pointer;ibs:integer;wtx,wa:boolean;trc:crgb;var bx,by:integer;var p:pointer):pointer;     
 function isjpgbuf(ibuf:pointer;ibs:integer):boolean; 
@@ -116,19 +118,19 @@ IDCT_transform:procedure(j:pjpg_dec_rec;var incoeff:a63s;var outcoeff:a63b;Q_nr:
 {$ifdef jpg_stat}t_h,t_i:int64;{$endif}
 //############################################################################//  
 //############################################################################//
-function read_byte(j:pjpg_dec_rec):byte; {$ifdef fpc}inline;{$endif}
+function read_byte(j:pjpg_dec_rec):byte; {$ifndef ape3}{$ifdef fpc}inline;{$endif}{$endif}
 begin
  result:=j.buf[j.byte_pos];
  inc(j.byte_pos);
 end;   
 //############################################################################//  
-function read_word(j:pjpg_dec_rec):word; {$ifdef fpc}inline;{$endif}
+function read_word(j:pjpg_dec_rec):word; {$ifndef ape3}{$ifdef fpc}inline;{$endif}{$endif}
 begin
  result:=j.buf[j.byte_pos] shl 8+j.buf[j.byte_pos+1]; 
  j.byte_pos:=j.byte_pos+2
 end;
 //############################################################################//  
-function RIGHT_SHIFT(x,shft:integer):integer;{$ifdef fpc}inline;{$endif}  
+function RIGHT_SHIFT(x,shft:integer):integer;{$ifndef ape3}{$ifdef fpc}inline;{$endif}{$endif}
 var shift_temp:integer;  
 begin
  shift_temp:=x;
@@ -136,15 +138,15 @@ begin
   result:=(shift_temp shr shft)or((not 0) shl (32-(shft))) else
   result:=(shift_temp shr shft)
 end;
-function idescale(x,n:integer):integer;{$ifdef fpc}inline;{$endif}begin result:=RIGHT_SHIFT(x+(1 shl (n-1)),n);end; 
-function descale(x,n:integer):integer;{$ifdef fpc}inline;{$endif}begin result:=RIGHT_SHIFT(x,n);end; 
-//function descale(x,n:integer):dword;{$ifdef fpc}inline;{$endif}begin result:=(x+(1 shl (n-1)))shr n;end; 
-function lookKbits(j:pjpg_dec_rec;k:byte):word;{$ifdef fpc}inline;{$endif}
+function idescale(x,n:integer):integer;{$ifndef ape3}{$ifdef fpc}inline;{$endif}{$endif}begin result:=RIGHT_SHIFT(x+(1 shl (n-1)),n);end; 
+function descale(x,n:integer):integer;{$ifndef ape3}{$ifdef fpc}inline;{$endif}{$endif}begin result:=RIGHT_SHIFT(x,n);end; 
+//function descale(x,n:integer):dword;{$ifndef ape3}{$ifdef fpc}inline;{$endif}{$endif}begin result:=(x+(1 shl (n-1)))shr n;end; 
+function lookKbits(j:pjpg_dec_rec;k:byte):word;{$ifndef ape3}{$ifdef fpc}inline;{$endif}{$endif}
 begin 
  result:=j.wordval shr (16-k);
  //writeln('j.wordval=',j.wordval,' k=',k);
 end;
-function WORD_hi_lo(bhigh,blow:byte):word;{$ifdef fpc}inline;{$endif}begin result:=blow+bhigh shl 8;end;
+function WORD_hi_lo(bhigh,blow:byte):word;{$ifndef ape3}{$ifdef fpc}inline;{$endif}{$endif}begin result:=blow+bhigh shl 8;end;
 //############################################################################//  
 // k>0 always
 // Takes k bits out of the BIT stream (wordval), and makes them a signed value
@@ -187,7 +189,7 @@ begin
  j.wordval:=(((j.w1 shl 16)+j.w2)shl j.d_k)shr 16; 
 end;
 //############################################################################//  
-function getKbits(j:pjpg_dec_rec;k:byte):smallint;{$ifdef fpc}inline;{$endif}
+function getKbits(j:pjpg_dec_rec;k:byte):smallint;{$ifndef ape3}{$ifdef fpc}inline;{$endif}{$endif}
 begin
  result:=get_svalue(j,k);
  skipKbits(j,k);

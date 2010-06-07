@@ -6,7 +6,7 @@
 //############################################################################//
 unit glras_gdi;
 interface 
-uses windows,asys,glgr,opengl1x,dogl,glras_surface;  
+uses windows,asys,glgr,opengl1x,dogl,glras_surface;//,bmp,strval;  
 //############################################################################//     
 type
 surfgdi=record
@@ -43,7 +43,8 @@ begin
   glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,0);
  end;  
 
- GetDIBits(gdi.dc,gdi.bm,0,tex.h,gdi.buf,gdi.bmi,DIB_RGB_Colors);//gdierr:=GetLastError;  
+ GetDIBits(gdi.dc,gdi.bm,0,tex.h,gdi.buf,gdi.bmi,DIB_RGB_Colors);//gdierr:=GetLastError;     
+ //storeBMP32('gdito-'+stri(tex.tex)+'-'+getdatestamp+'.bmp',gdi.buf,tex.w,tex.h,false,false);
  glgr_remake_texbgr(tex.tex,tex.w,tex.h,gdi.buf,false,false,false); 
 end;    
 //############################################################################// 
@@ -59,7 +60,8 @@ begin
  SelectObject(gdi.dc,gdi.bm);//gdierr:=GetLastError;  
                         
  glBindTexture(GL_TEXTURE_2D,tex.tex);
- glGetTexImage(GL_TEXTURE_2D,0,GL_BGRA,GL_UNSIGNED_BYTE,gdi.buf);
+ glGetTexImage(GL_TEXTURE_2D,0,GL_BGRA,GL_UNSIGNED_BYTE,gdi.buf);           
+ //storeBMP32('togdi-'+stri(tex.tex)+'-'+getdatestamp+'.bmp',gdi.buf,tex.w,tex.h,false,false);
  SetDIBits(gdi.dc,gdi.bm,0,tex.h,gdi.buf,gdi.bmi,DIB_RGB_Colors);//gdierr:=GetLastError; 
 end;   
 //############################################################################// 
@@ -103,6 +105,10 @@ begin
  gdi.bmi.bmiHeader.biCompression:=BI_RGB;
  gdi.bmi.bmiHeader.biBitCount   :=32;  
  tex.gdi:=gdi;
+
+	SetBkMode(gdi.dc,TRANSPARENT); // transparent text background
+	SelectObject(gdi.dc,GetStockObject(NULL_BRUSH)); // no fill
+	SelectObject(gdi.dc,GetStockObject(NULL_PEN));   // no outline
 end;  
 //############################################################################//
 begin

@@ -3,8 +3,9 @@
 // AlgorLib: Graphics Lib 
 //############################################################################//
 unit grplib;
+{$ifdef FPC}{$MODE delphi}{$endif}
 interface
-uses asys,grph,maths,sysutils,strval{$ifdef VFS},vfs,vfsutils{$endif};
+uses asys,grph,maths,sysutils,strval{$ifdef VFS},vfs,vfsutils{$endif}{$ifdef ape3},vfsint,akernel{$endif};
 //############################################################################//
 function LoadBitmap (filename:string;var width,height:integer;var pdata:pointer):pointer; overload; 
 function LoadBitmap_mem(b:pointer;bs:integer;var width,height:integer;var pdata:pointer):pointer;

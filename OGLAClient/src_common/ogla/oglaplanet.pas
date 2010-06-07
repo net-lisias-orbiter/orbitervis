@@ -29,7 +29,7 @@ begin
 
 
  h:=modv(position)-Rg;
- proj:=proj_matrix_transp(0.1*h,1e5*h,scn.camapr*2*180/pi,scrx/scry);
+ proj:=proj_matrix_transp(0.1*h,1e5*h,scn.camapr*(ord(scn.feat.projection=1)+1)*2*180/pi,scrx/scry);
               
  iproj:=matq2mmatq(inv_matq(proj));
  iview:=inv_matq(view);
@@ -48,7 +48,7 @@ begin
  glUniform3f(scatter_sh.unis[5],pgp.x,pgp.y,pgp.z);
  glUniformMatrix4fv(scatter_sh.unis[6],1,true,@iproj);
  glUniformMatrix4fv(scatter_sh.unis[7],1,true,@iviewf);        
- glUniform1f(scatter_sh.unis[8],0.3);
+ glUniform1f(scatter_sh.unis[8],0.4);
  glActiveTexturearb(GL_TEXTURE0_ARB+transmittanceUnit);glBindTexture(GL_TEXTURE_2D,transmittanceTexture);
  glActiveTexturearb(GL_TEXTURE0_ARB+irradianceUnit);glBindTexture(GL_TEXTURE_2D,irradianceTexture);
  glActiveTexturearb(GL_TEXTURE0_ARB+inscatterUnit);glBindTexture(GL_TEXTURE_3D,inscatterTexture);   
@@ -94,7 +94,7 @@ begin try
  camrpos:=nmulv(camrpos,-1);
  cdist:=modv(camrpos)/h.rad;    
   
- if gl_2_sup and scn.feat.rayleigh and scn.feat.advanced then begin
+ if scn.can_rayleigh then begin
   if dual then raytraced_haze_render(scn,camrpos,pgp,h.rad);
   exit;
  end;
@@ -221,77 +221,69 @@ var i:integer;
 rot,camrpos:vec;
 cpt:vec;
 begin i:=0; try  
+ if not pln.draw.ringmsh.used then exit;
  rot:=nmulv(pln.rot,-180/pi);
- {          
- if gl_2_sup and scn.feat.advanced then begin
-
-  glUseProgram(ringsh); 
-  glUniform1i(ringsh_drwm,scn.feat.drwm);
-
-  glActiveTextureARB(GL_TEXTURE0_ARB);glEnable(GL_TEXTURE_2D);
-  glBindTexture(GL_TEXTURE_2D,noitx);
-  glActiveTextureARB(GL_TEXTURE1_ARB);glEnable(GL_TEXTURE_2D);
- end;
- }
- gldisable(GL_CULL_FACE);
-
    
- camrpos:=pln.cpos;
- vrotx(camrpos,-rot.x/180*pi);   
- vroty(camrpos,-rot.y/180*pi); 
- vrotz(camrpos,-rot.z/180*pi);    
-
  cpt:=subv(scn.cam.pos,pln.pos);   
  vrotx(cpt,-rot.x/180*pi);   
  vroty(cpt,-rot.y/180*pi); 
- vrotz(cpt,-rot.z/180*pi);    
- {
- if gl_2_sup and scn.feat.advanced then if ringsh<>0 then begin
-  glUniform1i(ringsh_tex,0);
-  glUniform1i(ringsh_tex1,1);
-  glUniform1f(ringsh_sdist,1e6);
-  glUniform1f(ringsh_fdist,5e5);
-  //glUniform3f(ringsh_pov,pln.cpos.x,pln.cpos.y,pln.cpos.z);
-  glUniform3f(ringsh_pov,camrpos.x,camrpos.y,camrpos.z);
+ vrotz(cpt,-rot.z/180*pi);   
+ camrpos:=pln.cpos;
+ vrotx(camrpos,-rot.x/180*pi);   
+ vroty(camrpos,-rot.y/180*pi); 
+ vrotz(camrpos,-rot.z/180*pi); 
+     
+ if scn.feat.realrings then begin
+  if gl_2_sup and scn.feat.advanced then if ring_sh.prg<>0 then begin         
+   glUseProgram(ring_sh.prg); 
+   
+   glActiveTextureARB(GL_TEXTURE0_ARB);glEnable(GL_TEXTURE_2D);
+   glBindTexture(GL_TEXTURE_2D,noitx);
+   glActiveTextureARB(GL_TEXTURE1_ARB);glEnable(GL_TEXTURE_2D);
+               
+   glUniform1i(ring_sh.unis[0],0);//tex
+   glUniform1i(ring_sh.unis[1],1);//tex1
+   glUniform1f(ring_sh.unis[2],1e6);//sdist
+   glUniform1f(ring_sh.unis[3],5e5);//fdist
+   glUniform3f(ring_sh.unis[4],camrpos.x,camrpos.y,camrpos.z);//pov
+  end;
  end;
-  }       
- camrpos:=nmulv(camrpos,-1/pln.rad);
- if abs(cpt.y)<5e5 then pln.draw.ringmsh.grp[0].col[3]:=round(255*((abs(cpt.y)-1e5)/4e5)) else pln.draw.ringmsh.grp[0].col[3]:=255;
- if abs(cpt.y)<1e5 then pln.draw.ringmsh.grp[0].col[3]:=0;
- 
+    
+ camrpos:=nmulv(camrpos,-1/pln.rad);  
+ if scn.feat.realrings then begin
+  if abs(cpt.y)<5e5 then pln.draw.ringmsh.grp[0].col[3]:=round(255*((abs(cpt.y)-1e5)/4e5)) else pln.draw.ringmsh.grp[0].col[3]:=255;
+  if abs(cpt.y)<1e5 then pln.draw.ringmsh.grp[0].col[3]:=0;
+ end else pln.draw.ringmsh.grp[0].col[3]:=255;
+       
+ gldisable(GL_CULL_FACE);
  glPushMatrix; 
   glTranslatef(pln.cpos.x,pln.cpos.y,pln.cpos.z);    
   glrotatef(rot.x,1,0,0);   
   glrotatef(rot.y,0,1,0);   
   glrotatef(rot.z,0,0,1);  
-  putmsh(@pln.draw.ringmsh,zvec,zvec,tvec(pln.rad,-ord(camrpos.y<0)*pln.rad,pln.rad)); 
- glPopMatrix; 
- {
+  putmsh(@pln.draw.ringmsh,zvec,zvec,tvec(pln.rad,1-ord(camrpos.y<0)*pln.rad,pln.rad)); 
+ glPopMatrix;  
+ glenable(GL_CULL_FACE);
+
  if gl_2_sup and scn.feat.advanced then begin 
   glUseProgram(0);
- 
   glActiveTextureARB(GL_TEXTURE1_ARB);glDisable(GL_TEXTURE_2D);
   glBindTexture(GL_TEXTURE_2D,0);
   glActiveTextureARB(GL_TEXTURE0_ARB);glEnable(GL_TEXTURE_2D);
+ end;    
+
+ if scn.feat.realrings then begin
+  glDisable(GL_TEXTURE_2D);
+  glPushMatrix; 
+   glTranslatef(pln.cpos.x,pln.cpos.y,pln.cpos.z);    
+   glrotatef(rot.x,1,0,0);   
+   glrotatef(rot.y,0,1,0);   
+   glrotatef(rot.z,0,0,1);  
+   if abs(cpt.y)<2e6 then drdpring(pln.draw.rng,cpt,2,0);
+   if abs(cpt.y)<5e5 then drdpring(pln.draw.rng,cpt,1,1-(abs(cpt.y)-2e5)/3e5);                                               
+  glPopMatrix; 
+  glEnable(GL_TEXTURE_2D); 
  end;
- }       
- glenable(GL_CULL_FACE);
- 
- glDisable(GL_TEXTURE_2D);
-                    
- glPushMatrix; 
-  glTranslatef(pln.cpos.x,pln.cpos.y,pln.cpos.z);    
-  glrotatef(rot.x,1,0,0);   
-  glrotatef(rot.y,0,1,0);   
-  glrotatef(rot.z,0,0,1);  
-  if abs(cpt.y)<2e6 then drdpring(pln.draw.rng,cpt,2,0);
-  if abs(cpt.y)<5e5 then drdpring(pln.draw.rng,cpt,1,1-(abs(cpt.y)-2e5)/3e5);
-  //drdpring(pln.draw.rng,cpt,2,0);
-  //drdpring(pln.draw.rng,cpt,1,1);                                                 
- glPopMatrix; 
-                
- glEnable(GL_TEXTURE_2D);
-     
        
  i:=-1;
  except stderr('ORBGL','Error in pldrawrings (i='+stri(i)+')'); end; 
@@ -494,7 +486,7 @@ begin try
  hfo:=1/(20000/10);
  alt:=modv(pln.cpos)-pln.rad;
  cufo:=exp((-hfo*alt)*ln(2));
- haz:=scn.feat.advatm and(not scn.feat.rayleigh) and pln.draw.atm and(cufo>0.000001);
+ haz:=scn.feat.advatm and(not scn.can_rayleigh) and pln.draw.atm and(cufo>0.000001);
  if gl_shm4 then k:=((lights_count-1) div 10+ord(((lights_count-1) mod 10)<>0))+5*ord(haz) 
             else k:=lights_count-1+8*ord(haz);   
              
@@ -584,7 +576,7 @@ begin try
  if (not isz) or ishz then begin
   if oru_unavl or(not oru_predone)then ground_lowtill(scn,pln,@pln.draw.lgts,0,0,2,false,isz,ishz);
          
-  if gl_2_sup and pln.draw.atm and scn.feat.rayleigh and scn.feat.advanced then begin
+  if pln.draw.atm and scn.can_rayleigh then begin
    glBindTexture(GL_TEXTURE_2D,haztxz);
    glCopyTexSubImage2D(GL_TEXTURE_2D,0,0,0,0,0,scrx,scry);
    glBindTexture(GL_TEXTURE_2D,0);  

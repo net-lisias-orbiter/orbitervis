@@ -43,7 +43,7 @@ orb_texdir,orb_mshdir:string;
 scrsrf:surfinfo; 
 
 //In  
-render_font:procedure(fn:integer;str:pchar);cdecl; 
+render_font:procedure(fn:integer;str:pchar;mode:integer);cdecl; 
 text_width:function(fn:integer;str:pchar):integer;cdecl; 
 //############################################################################//  
 // "Texture manager"      
@@ -190,10 +190,23 @@ begin
  srf.h:=h; 
  srf.xmit:=false;   
 
- new(scrsrf.d2);
- scrsrf.d2.on2d:=false; 
- scrsrf.d2.fbo:=0;  
- scrsrf.d2.font_height:=1;
+ new(srf.d2);
+ srf.d2.on2d:=false; 
+ srf.d2.fbo:=0;  
+ srf.d2.font_height:=1;
+ srf.d2.curx:=0;
+ srf.d2.cury:=0;  
+ srf.d2.prevx:=0;
+ srf.d2.prevy:=0;
+ srf.d2.font:=-1;
+ srf.d2.font_height:=1;
+ srf.d2.brushcl:=gclaz;
+ srf.d2.pencl:=gclaz;
+ srf.d2.textcl:=gclwhite;
+ srf.d2.textbckcl:=gclaz;  
+ srf.d2.on2d:=true; 
+ srf.d2.txalign:=0;
+ srf.d2.txvalign:=0;
    
  result:=txadd(srf); 
 end;

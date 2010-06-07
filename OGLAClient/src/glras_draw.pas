@@ -6,7 +6,7 @@
 //############################################################################//
 unit glras_draw;
 interface
-uses sysutils,asys,strval,maths,log,glras_surface,opengl1x,grph,glgr;                         
+uses sysutils,asys,strval,maths,log,glras_surface,opengl1x,grph,glgr;//,dogl;                         
 //############################################################################// 
 function o2_op(tp:integer;srf:pinteger;x0,y0,x1,y1:integer;fnam:pchar;len:dword):integer;stdcall;
 function oglc_blit(tp:integer;tgt:psurfinfo;tgtx,tgty,tgtw,tgth:dword;src:psurfinfo;srcx,srcy,srcw,srch,flag:dword):boolean;
@@ -75,8 +75,9 @@ begin
     fbonow:=0;   
    end;  
    glViewport(0,0,tgt.w,tgt.h);
-   glMatrixMode(GL_PROJECTION);glLoadIdentity; 
-   glOrtho(-0.5,tgt.w-0.5,tgt.h-0.5,-0.5,-1,1);     
+   glMatrixMode(GL_PROJECTION);glLoadIdentity;  
+   //glOrtho(-0.5,tgt.w-0.5,tgt.h-0.5,-0.5,-1,1);  
+   glOrtho(-0.5,tgt.w-0.5,-0.5,tgt.h-0.5,-1,1); 
    glMatrixMode(GL_MODELVIEW);glLoadIdentity; 
   end;
  end;  
@@ -195,11 +196,11 @@ end;
 //############################################################################// 
 function get2dsys(s:psurfinfo):boolean;
 begin
- result:=false;
- if s=nil then exit;   
+ result:=false;    
+ if not set_fbo(s,0)then exit;
+ if s=nil then s:=@scrsrf;
  assert(s.mag=SURFH_MAG);  
  
- if not set_fbo(s,0)then exit;
  
  s.d2.curx:=0;
  s.d2.cury:=0;  
@@ -269,7 +270,7 @@ begin
   15:result:=result+'txt_color('+stri(len and $FF)+','+stri((len and $FF00) shr 8)+','+stri((len and $FF0000) shr 16)+')';
   16:result:=result+'txt_bck_color('+stri(len and $FF)+','+stri((len and $FF00) shr 8)+','+stri((len and $FF0000) shr 16)+')';
   17:result:=result+'gen_font('+stri(x0)+',['+stri(len and $FF)+','+stri((len and $FF00) shr 8)+','+stri((len and $FF0000) shr 16)+'])';
-  18:result:=result+'text_len('+fnam+')';
+  18:result:=result+'text_len';//+fnam+')';
   19:result:=result+'text_hei';    
   20:result:=result+'align('+stri(x0)+','+stri(y0)+')';
   else result:=result+'etc('+stri(tp)+')';
@@ -280,7 +281,7 @@ function o2_op(tp:integer;srf:pinteger;x0,y0,x1,y1:integer;fnam:pchar;len:dword)
 var pt:pivec2ar;
 i,j,c,o,ho:integer; 
 tgt:psurfinfo;
-on2:boolean;
+on2,isnil:boolean;
 begin pt:=nil;
  result:=0;  
           
@@ -288,6 +289,7 @@ begin pt:=nil;
  
  tgt:=txget(srf); 
  if(tgt=nil)and(srf<>nil)then exit;
+ isnil:=tgt=nil;
  
  //wr_log('o2_op',o2o_dbgtxt(tp,tgt,x0,y0,x1,y1,fnam,len));   
 
@@ -306,8 +308,9 @@ begin pt:=nil;
 
  on2:=false;
  if tgt<>nil then on2:=tgt.d2.on2d;
- if tp<10 then if(on2)or(tgt=nil)then if not set_fbo(tgt,0) then exit;
- if tgt=nil then tgt:=@scrsrf;
+ if tp<10 then if(on2)or(tgt=nil)then if not set_fbo(tgt,0) then exit;    
+ if tgt=nil then if tp<98 then if not set_fbo(tgt,0) then exit;
+ if tgt=nil then if tp<98 then tgt:=@scrsrf;
  
  if(tp>=6)and(tp<=7)then pt:=pointer(len);
  case tp of 
@@ -326,9 +329,9 @@ begin pt:=nil;
         if tgt.d2.txvalign=0 then ho:=0
    else if tgt.d2.txvalign=1 then ho:=tgt.d2.font_height div 2
    else if tgt.d2.txvalign=2 then ho:=tgt.d2.font_height;
-    
+
    glRasterPos3f(tgt.d2.prevx+x0-o,tgt.d2.prevy+y0+abs(tgt.d2.font_height-ho),0);
-   render_font(tgt.d2.font,fnam);           
+   render_font(tgt.d2.font,fnam,ord(isnil)*99);           
   end;
   1:begin tgt.d2.curx:=x0;tgt.d2.cury:=y0;end;
   //Nice
@@ -359,7 +362,7 @@ begin pt:=nil;
   15:tgt.d2.textcl:=tcrgba(len and $FF,(len and $FF00) shr 8,(len and $FF0000) shr 16,255);
   16:tgt.d2.textbckcl:=tcrgba(len and $FF,(len and $FF00) shr 8,(len and $FF0000) shr 16,255);
   17:begin tgt.d2.font_height:=len;tgt.d2.font:=x0;end;
-  18:if tgt.d2.font<>-1 then result:=text_width(tgt.d2.font,fnam);
+  18:if tgt.d2.font<>-1 then result:=text_width(tgt.d2.font,pchar(copy(fnam,1,x0)));
   19:if tgt.d2.font<>-1 then result:=abs(tgt.d2.font_height)+(text_width(tgt.d2.font,'askdbv76587yuKJVHSKJFGIBREGF68') div 30) shl 16;    
   20:begin tgt.d2.txalign:=x0;tgt.d2.txvalign:=y0;end;
  end;   
@@ -387,6 +390,8 @@ begin result:=false; try
  gldisable(GL_CULL_FACE);   
  gldisable(GL_STENCIL_TEST);   
 
+ 
+ //glgr_surf_screenshot(src.tex,src.w,src.h);
  try
  case tp of
   0:puttx2Dsh(src.tex,tgtx,tgty,src.w,src.h,0,0,1,1,false,gclwhite);

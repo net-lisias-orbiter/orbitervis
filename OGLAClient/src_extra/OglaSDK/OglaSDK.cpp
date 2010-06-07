@@ -1,6 +1,6 @@
 //############################################################################//
 //OGLAClient interface calls
-//Made by Artlav in 2007-2010
+//Made by Artlav in 2007-2009
 //############################################################################//
 //To force orbitersdk.h to use <fstream> in any compiler version
 #pragma include_alias( <fstream.h>,<fstream> )

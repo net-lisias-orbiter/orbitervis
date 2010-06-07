@@ -129,8 +129,8 @@ begin i:=0; try
    draw_planet(scn,pln);
 
   end else putpnt(pln.cpos,pln.rot,pln.draw.apr+0.5);
-        
-  if scn.sky>0.5 then if i=1 then begin
+  
+  if scn.sky>0.6 then if i=1 then begin
    glMatrixMode(GL_PROJECTION);glPushMatrix;
    glMatrixMode(GL_MODELVIEW); glPushMatrix;
    glMatrixMode(GL_PROJECTION);glLoadIdentity; 
@@ -143,7 +143,8 @@ begin i:=0; try
    
    glPopMatrix;glMatrixMode(GL_PROJECTION); 
    glPopMatrix;glMatrixMode(GL_MODELVIEW);  
-  end;     
+  end; 
+  
  end;  
  i:=-1;
  glenable(GL_DEPTH_TEST);
@@ -289,14 +290,14 @@ begin
  end;
 end;
 //############################################################################//
-function smob_sunlight(scn:poglascene;dr:pdraw_rec;i,sh:integer):boolean;
+function smob_sunlight(scn:poglascene;dr:pdraw_rec;i,sh:integer):double;
 var ltp:mquat; 
 amc:vec;     
 l:double;
 begin
  //Sunlight in planet shadow
  ltp:=tmquat(dr.lt0.x,dr.lt0.y,dr.lt0.z,dr.lt0.w);
- result:=modv(dr.lt0)>1.1;
+ result:=max3(dr.lt0.x,dr.lt0.y,dr.lt0.z);
  glLightfv(GL_LIGHT0,GL_DIFFUSE,@ltp);
  glLightfv(GL_LIGHT0,GL_SPECULAR,@ltp);  
  ltp:=tmquat(gl_amb.x,gl_amb.y,gl_amb.z,1);glLightfv(GL_LIGHT0,GL_AMBIENT,@ltp);glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT,@ltp); 
@@ -312,7 +313,8 @@ begin
    end;
    l:=sqr(scn.smobs[i].pgsiz/modv(subv(scn.smobs[i].pgpos,scn.smobs[i].pos)));
    if l>1 then l:=1;
-   amc:=nmulv(subv(evec,nmulv(subv(evec,amc),0.2)),0.5*l);
+   amc:=nmulv(subv(evec,nmulv(subv(evec,amc),0.2)),0.5*l); 
+   if not scn.feat.planet_light then amc:=zvec;
    ltp:=tmquat(amc.x*dr.lt0.x,amc.y*dr.lt0.y,amc.z*dr.lt0.z,1);glLightfv(GL_LIGHT0,GL_AMBIENT,@ltp);glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT,@ltp);
   end;
  end;
@@ -365,13 +367,13 @@ procedure smobs_render(scn:poglascene;for_shadow,pick,ax:boolean);
 var i,j,p,k,sh:integer;
 tan_att,tan_attp,shmtexp:dword;
 cmmat:tmatrix4f;
-light:boolean;
+light:double;
 g:ptypmshgrp;
 dr:pdraw_rec;
 begin i:=0; try   
  tan_att:=$FFFFFFFF;
  sh:=0;
- light:=true; 
+ light:=1; 
  
  if not for_shadow then smob_shaderlight_init(scn,sh,tan_att,cmmat);  
  
@@ -407,7 +409,8 @@ begin i:=0; try
      if(not ax)and(not blink_group_render(scn,g,i,j,k,for_shadow))then begin       
       if gl_2_sup and scn.feat.advanced then begin
        glUniform4f(ves_sh[sh].unis[1],g.col[0]/255,g.col[1]/255,g.col[2]/255,(g.col[3]-dr.semit)/255); 
-       if(dr.semit=0)or(not pick)then if(dr.lt0.w<>0)or(not for_shadow)then putfullmshgrp(g,for_shadow,dr.semit,cmmat,shmapmat,shmtexp,tan_attp,light);
+       glUniform1f(ves_sh[sh].unis[17],light); 
+       if(dr.semit=0)or(not pick)then if(dr.lt0.w<>0)or(not for_shadow)then putfullmshgrp(g,for_shadow,dr.semit,cmmat,shmapmat,shmtexp,tan_attp,light>0.1);
       end else putmshgrp(g,zvec,zvec,evec,false,for_shadow,notx-1,false,$FFFFFFFF,dr.semit);
      end;
      
@@ -489,7 +492,7 @@ begin
  l:=modv(scn.cam.pos)/1e8;
  f:=2*arctan(2*scn.smobs[mi].rad/l)*1.1;
  r:=10*scn.smobs[mi].rad*1.1;
- 
+   
  glMatrixMode(GL_PROJECTION);glLoadIdentity;
   gluPerspective(f*180/pi,1,l-r,l+r);
  glMatrixMode(GL_MODELVIEW);glLoadIdentity;           
@@ -515,12 +518,12 @@ begin
  glEnable(GL_CULL_FACE);//orbitergl uses that.
  glCullFace(GL_BACK);
  glFrontFace(GL_CW); 
- 
+  
  //Left-handed coordinates
  glScalef(1,1,-1);
  glColor4f(0.5,0,0,1);    
      
- glPushMatrix;    
+ glPushMatrix;  
   av:=tamat(getrtmat1(nmulv(scn.cam.pos,-1)));             
   av:=tvec(-av.y,av.z,0);
       
@@ -533,22 +536,23 @@ begin
   //Matrix aquisition
   glBindTexture(GL_TEXTURE_2D,shmtex);
   glMatrixMode(GL_TEXTURE);
-  glLoadIdentity;     
+  glLoadIdentity; 
   glTranslatef(0.5,0.5,0.5);
   glScalef(0.5,0.5,0.5);
   glGetFloatv(GL_PROJECTION_MATRIX,@shmapmat);glMultMatrixf(@shmapmat);       
   glGetFloatv(GL_MODELVIEW_MATRIX ,@shmapmat);glMultMatrixf(@shmapmat);    
   glGetFloatv(GL_TEXTURE_MATRIX,@shmapmat); 
-  glLoadIdentity;     
+  glLoadIdentity;  
   glMatrixMode(GL_MODELVIEW); 
   glBindTexture(GL_TEXTURE_2D,0); 
-
+  
   extract_frustum;
   //Planet Z layer
   planets_render(scn,scn.tx<>0,true,true);
   smobs_render(scn,true,false,false); 
- glPopMatrix; 
 
+ glPopMatrix; 
+                              
  glShadeModel(GL_SMOOTH);
  glColorMask(TRUE,TRUE,TRUE,TRUE); 
  glDisable(GL_POLYGON_OFFSET_FILL);   
@@ -602,16 +606,16 @@ begin
   putmshvshset(0);
   for i:=0 to length(shi)-1 do if scn.smobs[shi[i]]<>nil then begin
   glPushMatrix;                       
-   //FIXME: WTF? Shadow offset.
-   //glTranslatef(scn.smobs[shi[i]].cpos.x,scn.smobs[shi[i]].cpos.y,scn.smobs[shi[i]].cpos.z);       
-   glTranslatef(scn.smobs[shi[i]].cpos.x+scn.smobs[shi[i]].draw.mshs[shj[i]].off.x,scn.smobs[shi[i]].cpos.y+scn.smobs[shi[i]].draw.mshs[shj[i]].off.y,scn.smobs[shi[i]].cpos.z+scn.smobs[shi[i]].draw.mshs[shj[i]].off.z); 
-   x_glrotatef(scn.smobs[shi[i]].rot,-1);   
+   glTranslatef(scn.smobs[shi[i]].cpos.x,scn.smobs[shi[i]].cpos.y,scn.smobs[shi[i]].cpos.z);       
+   x_glrotatef(scn.smobs[shi[i]].rot,-1); 
+   glTranslatef(scn.smobs[shi[i]].draw.mshs[shj[i]].off.x,scn.smobs[shi[i]].draw.mshs[shj[i]].off.y,scn.smobs[shi[i]].draw.mshs[shj[i]].off.z);   
     
    if (modv(scn.smobs[shi[i]].draw.lt0)<>0) then begin
     lp:=nmulv(scn.smobs[shi[i]].pos,-1);
     vrotx(lp,scn.smobs[shi[i]].rot.x); 
     vroty(lp,scn.smobs[shi[i]].rot.y);     
     vrotz(lp,scn.smobs[shi[i]].rot.z);
+    
      
     if scn.smobs[shi[i]].draw.mshs[shj[i]]<>nil then putmshvsh(scn.smobs[shi[i]].draw.mshs[shj[i]],zvec,zvec,evec,lp,0);
    end;  
@@ -620,15 +624,15 @@ begin
   end;
   for i:=0 to length(shi)-1 do if scn.smobs[shi[i]]<>nil then begin
   glPushMatrix;                       
-   //glTranslatef(scn.smobs[shi[i]].cpos.x,scn.smobs[shi[i]].cpos.y,scn.smobs[shi[i]].cpos.z); 
-   glTranslatef(scn.smobs[shi[i]].cpos.x+scn.smobs[shi[i]].draw.mshs[shj[i]].off.x,scn.smobs[shi[i]].cpos.y+scn.smobs[shi[i]].draw.mshs[shj[i]].off.y,scn.smobs[shi[i]].cpos.z+scn.smobs[shi[i]].draw.mshs[shj[i]].off.z); 
+   glTranslatef(scn.smobs[shi[i]].cpos.x,scn.smobs[shi[i]].cpos.y,scn.smobs[shi[i]].cpos.z); 
    x_glrotatef(scn.smobs[shi[i]].rot,-1);  
+   glTranslatef(scn.smobs[shi[i]].draw.mshs[shj[i]].off.x,scn.smobs[shi[i]].draw.mshs[shj[i]].off.y,scn.smobs[shi[i]].draw.mshs[shj[i]].off.z); 
     
    if (modv(scn.smobs[shi[i]].draw.lt0)<>0) then begin
     lp:=nmulv(scn.smobs[shi[i]].pos,-1);
     vrotx(lp,scn.smobs[shi[i]].rot.x); 
     vroty(lp,scn.smobs[shi[i]].rot.y);     
-    vrotz(lp,scn.smobs[shi[i]].rot.z);
+    vrotz(lp,scn.smobs[shi[i]].rot.z);  
      
     if scn.smobs[shi[i]].draw.mshs[shj[i]]<>nil then putmshvsh(scn.smobs[shi[i]].draw.mshs[shj[i]],zvec,zvec,evec,lp,1);
    end;  

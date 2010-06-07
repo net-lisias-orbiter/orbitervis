@@ -1391,7 +1391,7 @@ begin
   if light then begin
    if grp^.spow<>0 then begin v:=tmquat(grp^.cols[0]/255,grp^.cols[1]/255,grp^.cols[2]/255, grp^.cols[3]/255);       glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,@v.x);end;
    glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,grp^.spow/2);
-  end;
+  end else begin v:=tmquat(0,0,0,0);glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,@v.x);end;
  end;  
 
  vbon:=-1;
@@ -1428,10 +1428,11 @@ begin
    glBindBufferARB(GL_ARRAY_BUFFER_ARB,vbostk[vbon].tex2);   //2
    glTexCoordPointer(2,GL_FLOAT,0,nil);
   end else glTexCoordPointer(2,GL_FLOAT,SizeOf(pntyp),@pn^[0].tx2.x);
- end;
+ end;                        
+ glActiveTextureARB(GL_TEXTURE2_ARB);glEnable(GL_TEXTURE_2D);glBindTexture(GL_TEXTURE_2D,0);
  if shmtex<>$FFFFFFFF then begin     
   //glClientActiveTextureARB(GL_TEXTURE2_ARB);
-  glActiveTextureARB(GL_TEXTURE2_ARB);glEnable(GL_TEXTURE_2D);glBindTexture(GL_TEXTURE_2D,shmtex);
+  glBindTexture(GL_TEXTURE_2D,shmtex);
   glMatrixMode(GL_TEXTURE);
   glLoadMatrixf(@shmat);
   mat:=invert_matrix4f(cmmat);
@@ -1509,7 +1510,8 @@ begin
    {$ifndef use_zgl}if gl_2_sup and (crgba_sh<>$FFFFFFFF) then glUniform4f(crgba_sh,grp^.col[0]/255,grp^.col[1]/255,grp^.col[2]/255,(grp^.col[3]-semit)/255);{$endif}
    v:=tmquat(grp^.cole[0]/255,grp^.cole[1]/255,grp^.cole[2]/255,grp^.cole[3]/255);glMaterialfv(GL_FRONT_AND_BACK,GL_EMISSION,@v.x);
    glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,grp^.spow/2);
-   if grp^.spow<>0 then begin v:=tmquat(grp^.cols[0]/255,grp^.cols[1]/255,grp^.cols[2]/255,grp^.cols[3]/255);glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,@v.x);end;
+   if grp^.spow<>0 then begin v:=tmquat(grp^.cols[0]/255,grp^.cols[1]/255,grp^.cols[2]/255,grp^.cols[3]/255);glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,@v.x);end
+                   else begin v:=tmquat(0,0,0,0);glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,@v.x);end;
    glcolor4f(grp^.col[0]/255,grp^.col[1]/255,grp^.col[2]/255,(grp^.col[3]-semit)/255);   
   end;
  end;

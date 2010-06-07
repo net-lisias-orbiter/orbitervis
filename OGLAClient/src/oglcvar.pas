@@ -33,7 +33,7 @@ type ogla_interface=record
  o2_op   :function (tp:integer;srf:pinteger;x0,y0,x1,y1:integer;fnam:pchar;len:dword):integer;stdcall;
  
  //In
- render_font   :procedure(fn:integer;str:pchar);cdecl; 
+ render_font   :procedure(fn:integer;str:pchar;mode:integer);cdecl; 
  text_width    :function (fn:integer;str:pchar):integer;cdecl; 
  getbase       :function (id:ohnd):pbasetp;cdecl; 
  visop         :procedure(tp:integer;ob:ohnd;vis:pointer);cdecl; 

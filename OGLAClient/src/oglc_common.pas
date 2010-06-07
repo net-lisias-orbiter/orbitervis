@@ -55,8 +55,8 @@ begin
  //Options menu
  gx:=scn.sys.gwin.wid-210;gy:=scn.sys.gwin.hei div 2-200;
  if scn.cmdmod then begin
-  wrtxt2d('F7-I Aux info'       ,1,gx+5,gy+30+20*15,cl_tx);if feats.auxinfo then s:='On ' else s:='Off'; wrtxt2d(s,1,gx+175,gy+30+20*15,cl_tx);
-  wrtxt2d('F7-0 Camera-2 toggle',1,gx+5,gy+30+20*16,cl_tx);if feats.camdir=0 then s:='R ' else s:='L';   wrtxt2d(s,1,gx+175,gy+30+20*16,cl_tx);
+  wrtxt2d('F7-I Aux info'       ,1,gx+5,gy+30+20*17,cl_tx);if feats.auxinfo then s:='On ' else s:='Off'; wrtxt2d(s,1,gx+175,gy+30+20*17,cl_tx);
+  wrtxt2d('F7-0 Camera-2 toggle',1,gx+5,gy+30+20*18,cl_tx);if feats.camdir=0 then s:='R ' else s:='L';   wrtxt2d(s,1,gx+175,gy+30+20*18,cl_tx);
  end else if feats.auxinfo then wrtxtcnt2d('F7 for options',1,gx+100,gy+10,cl_tx);  
  
  glBindTexture(GL_TEXTURE_2D,0);  
@@ -76,7 +76,8 @@ begin
  writeln(f,'      //Landing, Retro');
  writeln(f,'Aux_Info=',ord(feats.auxinfo));
  writeln(f,'GDI_Emulation=',ord(feats.gdiemu));  
- writeln(f,'Server_mode=',ord(feats.server_on));      
+ writeln(f,'Server_mode=',ord(feats.server_on));        
+ writeln(f,'Check_for_NG=',ord(do_check_ng));   
  writeln(f,'Use_UDP=',ord(use_udp));      
  writeln(f,' ');     
  writeln(f,'//Scene');
@@ -103,7 +104,10 @@ begin
  writeln(f,'Second_Camera_Resolution=',scn.feat.cmtres); 
  writeln(f,'Wireframe=',ord(scn.feat.wireframe));
  writeln(f,'Stereo=',ord(scn.feat.stereo));
- writeln(f,'Stereo_distance=',stre(scn.feat.angl_dist));
+ writeln(f,'Stereo_distance=',stre(scn.feat.angl_dist)); 
+ writeln(f,'Planet_light=',ord(scn.feat.planet_light));  
+ writeln(f,'Real_rings=',ord(scn.feat.realrings));   
+  
  closefile(f);
 end;
 //############################################################################// 
@@ -121,7 +125,8 @@ begin p:=nil;
   if par='Aux_Info' then begin feats.auxinfo:=propb;continue;end;
   if par='GDI_Emulation' then begin feats.gdiemu:=propb;continue;end;   
   if par='Server_mode' then begin feats.server_on:=propb;continue;end;        
-  if par='Use_UDP' then begin use_udp:=propb;continue;end;
+  if par='Use_UDP' then begin use_udp:=propb;continue;end;       
+  if par='Check_for_NG' then begin do_check_ng:=propb;continue;end;     
   if par='Smooth_textures' then begin scn.feat.tx_smooth:=propb;continue;end;
   if par='Compress_textures' then begin scn.feat.tx_compress:=propb;continue;end;
   if par='MipMaps' then begin scn.feat.tx_mipmap:=propb;continue;end;
@@ -151,6 +156,8 @@ begin p:=nil;
   if par='Wireframe' then begin scn.feat.wireframe:=propb;continue;end;
   if par='Stereo' then begin scn.feat.stereo:=propb;continue;end;
   if par='Stereo_distance' then begin scn.feat.angl_dist:=propd;continue;end;
+  if par='Planet_light' then begin scn.feat.planet_light:=propb;continue;end; 
+  if par='Real_rings' then begin scn.feat.realrings:=propb;continue;end;
  end;
 end;
 //############################################################################//
@@ -162,7 +169,7 @@ begin
  
  feats.camdir:=0;
  feats.auxinfo:=true;
- feats.gdiemu:=false;
+ feats.gdiemu:=true;
  
  ogla_clrinit_scene(scn);
     

@@ -792,16 +792,17 @@ begin
    56:begin scn.feat.mlight_terrain:=not scn.feat.mlight_terrain;oglaset_shaders(scn);end;  //8   
    57:begin scn.feat.rayleigh:=not scn.feat.rayleigh;if scn.feat.advatm then scn.feat.advatm:=false; oglaset_shaders(scn);end; //9
    192:begin gvsync:=not gvsync; glgr_vsync(gvsync); end;  //~
-   //{$ifdef orulex}80:orutes:=not orutes;{$endif}  //P
    85:begin scn.feat.advanced:=not scn.feat.advanced;oglaset_shaders(scn);end;  //U
    77:scn.feat.wireframe:=not scn.feat.wireframe;  //M
-   80:scn.feat.postplane:=not scn.feat.postplane;  //P
+   80:scn.feat.planet_light:=not scn.feat.planet_light;  //P
    76:scn.feat.camera_light:=not scn.feat.camera_light;  //L
+   65:scn.feat.stereo:=not scn.feat.stereo;  //A
    
    83:ogla_savescene(@scn,'scn.oglascn');    //S
   end;
   if scn.feat.rayleigh then if not fileexists('textures\inscatter.bin')then begin
    scn.feat.rayleigh:=false;
+   scn.can_rayleigh:=false;
    wr_log('RNDR','Warning: Raytraced haze requested, but no tables found. Run scatter_gen.exe.'); 
   end;
  
@@ -837,9 +838,8 @@ begin
 
  //Options menu
  gx:=scn.sys.gwin.wid-210;gy:=scn.sys.gwin.hei div 2-200;
- if scn.cmdmod then begin
-  //putcsqr2D(gx,gy,200,400,4,gclblack,gclgreen);    
-  putcsqr2D(gx,gy,200,400,4,tcrgba(0,0,0,128),tcrgba(200,200,200,255));
+ if scn.cmdmod then begin  
+  putcsqr2D(gx,gy,200,420,4,tcrgba(0,0,0,128),tcrgba(200,200,200,255));
   
   wrtxtcnt2d('Features:',1,gx+100,gy+10,cl_tx);
   
@@ -865,6 +865,8 @@ begin
   wrtxt2d(scn.cmdmpref+'-9 Raytraced air'          ,1,gx+5,gy+30+i*20,cl_tx);if scn.feat.rayleigh       then s:='On ' else s:='Off'; wrtxt2d(s,1,gx+175,gy+30+i*20,cl_tx);i:=i+1;
   wrtxt2d(scn.cmdmpref+'-~ Vsync'                  ,1,gx+5,gy+30+i*20,cl_tx);if gvsync                  then s:='On ' else s:='Off'; wrtxt2d(s,1,gx+175,gy+30+i*20,cl_tx);i:=i+1;
   wrtxt2d(scn.cmdmpref+'-U Advanced grp'           ,1,gx+5,gy+30+i*20,cl_tx);if scn.feat.advanced       then s:='On ' else s:='Off'; wrtxt2d(s,1,gx+175,gy+30+i*20,cl_tx);i:=i+1;
+  wrtxt2d(scn.cmdmpref+'-A Stereo 3D'              ,1,gx+5,gy+30+i*20,cl_tx);if scn.feat.stereo         then s:='On ' else s:='Off'; wrtxt2d(s,1,gx+175,gy+30+i*20,cl_tx);i:=i+1;
+  wrtxt2d(scn.cmdmpref+'-P EarthLight'             ,1,gx+5,gy+30+i*20,cl_tx);if scn.feat.planet_light   then s:='On ' else s:='Off'; wrtxt2d(s,1,gx+175,gy+30+i*20,cl_tx);i:=i+1;
   wrtxt2d(scn.cmdmpref+'-M Wireframe'              ,1,gx+5,gy+30+i*20,cl_tx);if scn.feat.wireframe      then s:='On ' else s:='Off'; wrtxt2d(s,1,gx+175,gy+30+i*20,cl_tx);i:=i+1;
   wrtxt2d(scn.cmdmpref+'-L Camera light'           ,1,gx+5,gy+30+i*20,cl_tx);if scn.feat.camera_light   then s:='On ' else s:='Off'; wrtxt2d(s,1,gx+175,gy+30+i*20,cl_tx);i:=i+1;
   wrtxt2d(scn.cmdmpref+'-S Save scene to file'     ,1,gx+5,gy+30+i*20,cl_tx);i:=i+1;
@@ -911,7 +913,11 @@ begin
  scn.feat.starlight_colored:=true;
  scn.feat.stereo:=false;
  scn.feat.rayleigh:=false;
- scn.feat.angl_dist:=0.5;
+ scn.feat.angl_dist:=0.05;
+ scn.feat.planet_light:=false;
+ scn.feat.realrings:=true;
+
+ scn.can_rayleigh:=false;
 
  scn.cmdmod:=false;
  scn.cmdmkey:=122;

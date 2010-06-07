@@ -8,7 +8,7 @@ unit ogladata;
 interface
 uses asys,grph,maths{$ifndef no_render},dogl,glpars,dpringbs,{$ifdef orulex}dynplntbase,{$endif}grpcam,opengl1x{$endif};
 //############################################################################// 
-const oglaver='100515';
+const oglaver='100608';
 //############################################################################// 
 const 
 MAXPATCHRES=8;
@@ -248,7 +248,7 @@ poglas_pstrm=^oglas_pstrm;
 {$endif}
 oglafeat=record  
  tx_smooth,tx_compress,tx_mipmap:boolean;
- clouds,cloudshadows,multilight,shadows,mlight_terrain,orulex,advanced,camera2,autores,fxsky,advatm,wireframe,postplane,camera_light,starlight_colored,stereo,rayleigh:boolean;       
+ clouds,cloudshadows,multilight,shadows,mlight_terrain,orulex,advanced,camera2,autores,fxsky,advatm,wireframe,postplane,camera_light,starlight_colored,stereo,rayleigh,planet_light,realrings:boolean;       
  shres,shmres,cmtres,orures,drwm,fxsky_res:dword;
  angl_dist:double;
  max_plnt_lv,projection:integer;
@@ -295,6 +295,7 @@ oglascene=record
  
  sys:poglainf;
  feat:oglafeat;
+ can_rayleigh:boolean;
 end;
 poglascene=^oglascene;
 

@@ -4,7 +4,7 @@
 // Released under GNU General Public License
 // Made in 2007-2010 by Artlav
 //############################################################################//
-#define build "100506"
+#define build "100608"
 #define debug 0
 //############################################################################//
 #define ORBITER_MODULE
@@ -193,7 +193,7 @@ void OGLAClient::clbkReleaseSurfaceDC(SURFHANDLE surf,HDC hDC){WriteDbg("clbkRel
 //############################################################################//
 //############################## OGLA 2D #####################################//
 //############################################################################//
-oapi::Sketchpad *OGLAClient::clbkGetSketchpad(SURFHANDLE surf)        {WriteDbg("clbkGetSketchpad");    return new OGLAPad(surf,(DWORD)ogla.o2_op);}
+oapi::Sketchpad *OGLAClient::clbkGetSketchpad(SURFHANDLE surf)        {WriteDbg("clbkGetSketchpad");    return new OGLAPad(surf,(DWORD)ogla.o2_op,(DWORD)ogla.getsdc,(DWORD)ogla.relsdc);}
 void             OGLAClient::clbkReleaseSketchpad(oapi::Sketchpad *sp){WriteDbg("clbkReleaseSketchpad");if(sp){delete sp;}}
 Font  *OGLAClient::clbkCreateFont  (int height,bool prop,char *face,Font::Style style,int orientation)const{WriteDbg("clbkCreateFont");return new OGLAFont(height,prop,face,style,orientation);}
 void   OGLAClient::clbkReleaseFont (Font *font)const                                {WriteDbg("clbkReleaseFont"); delete font;}

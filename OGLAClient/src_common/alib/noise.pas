@@ -1,6 +1,6 @@
 //############################################################################//
-// Made in 2003-2010 by Artyom Litvinovich
-// AlgorLib: Perlin Noise
+//Made in 2002-2010 by Artyom Litvinovich
+//AlgorLib: Perlin Noise
 //############################################################################//
 unit noise;
 {$ifdef fpc}{$mode delphi}{$endif}

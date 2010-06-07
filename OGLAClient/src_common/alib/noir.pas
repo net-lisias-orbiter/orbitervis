@@ -1,8 +1,9 @@
 //############################################################################//
-// Made in 2003-2010 by Artyom Litvinovich
-// AlgorLib: Noise and fractals
+//Made in 2002-2010 by Artyom Litvinovich
+//AlgorLib: Noise and fractals
 //############################################################################//
 unit noir;
+{$ifdef FPC}{$MODE delphi}{$endif}
 interface
 uses asys,grph,maths,math,noise;   
 //############################################################################//
