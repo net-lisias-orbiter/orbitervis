@@ -30,7 +30,7 @@ cv,ta:vec;
 alt,xa,ya:double;
 r:mat;
 mat:tmatrix4f;
-begin
+begin
  if pln=nil then exit; 
  if tp=-1 then exit;
  if not pln.used then exit;  
@@ -118,7 +118,7 @@ begin
      glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,pln.ospecpow);
      v:=tmquat(pln.ospeccol.x,pln.ospeccol.y,pln.ospeccol.z,1);glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,@v.x); 
     end;
-    glDrawElements(GL_triangles,rplspcount,GL_UNSIGNED_SHORT,@d.tr.refpts[0]);  
+    glDrawElements(GL_triangles,rplspcount,GL_UNSIGNED_SHORT,@d.tr.refpts[0]);  
     if(not isz)or iszh then begin
      glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,pln.specpow);
      v:=tmquat(pln.speccol.x,pln.speccol.y,pln.speccol.z,1);glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,@v.x); 
@@ -266,6 +266,7 @@ begin result:=0; try
    orutes:=false;
    oruclr:=false;
   end;
+  sleep(1)
  until false; 
    
  except wr_log('MainCall','Undefined error, thr-1');end;
@@ -317,6 +318,7 @@ begin
  {$I dynplnt_defcfg.inc}
  readorucfg;
  ocfg.multithreaded:=true;
+ //ocfg.multithreaded:=false;
  //{$ifndef win32}ocfg.multithreaded:=false;{$endif}
  //ocfg.multithreaded:=ocfg.multithreaded and mt;
  

@@ -386,8 +386,8 @@ end;
 {$ifdef windows}    
 function mutex_create:mutex_typ;   
 begin              
- result:=CreateSemaphore(nil,1,1,nil);
- //result:=CreateMutex(nil,true,nil);
+ //result:=CreateSemaphore(nil,1,1,nil);
+ result:=CreateMutex(nil,true,nil);
 end;
 procedure mutex_lock(var m:mutex_typ);  
 begin
@@ -395,8 +395,8 @@ begin
 end;
 procedure mutex_release(var m:mutex_typ); 
 begin
- //releasemutex(m); 
- ReleaseSemaphore(m,1,nil); 
+ releasemutex(m); 
+ //ReleaseSemaphore(m,1,nil); 
 end;   
 procedure mutex_free(var m:mutex_typ); 
 begin

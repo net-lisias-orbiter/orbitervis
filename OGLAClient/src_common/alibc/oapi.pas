@@ -320,6 +320,7 @@ VIDEODATA=record
  forceenum:boolean;   ///< enforce device enumeration flag
  trystencil:boolean;  ///< stencil buffer flag
  novsync:boolean;     ///< no vsync flag
+ pageflip:boolean;     ///< no vsync flag
  deviceidx:integer;   ///< video device index
  modeidx:integer;     ///< video mode index
  winw:integer;        ///< window width

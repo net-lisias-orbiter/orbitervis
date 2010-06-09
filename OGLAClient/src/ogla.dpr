@@ -16,7 +16,7 @@
 // Made in 2007-2010 by Artlav
 //############################################################################//
 library ogla;
-uses sysutils,windows,asys,grph,maths,strval,tim,log,orbitergl,oapi,parser,
+uses sysutils,windows,asys,grph,maths,strval,tim,log,orbitergl,oapi,parser,gputools,
 oglctypes,glras_draw,glras_surface,oglcvar,oglcnet
 {$ifndef no_render},dynplntbase,ogladata,oglcsdk,oglc_common,oglcbase,glras_gdi,opengl1x,grplib,glgr,dogl,oglautil,oglashaders,ogladraw,dynplntutil{$endif};
 //############################################################################// 
@@ -374,7 +374,16 @@ begin try
  SetWindowText(hwnd,'Loading...');  
  glgr_init;     
  shaderlog_name:='ogla.log'; 
- orulexlog_name:='ogla.log'; 
+ orulexlog_name:='ogla.log';  
+ if dbg_gpu_info_write then begin
+  wr_log('GPU INFO','Name='+get_gpu_string('Name'));  
+  wr_log('GPU INFO','Description='+get_gpu_string('Description'));
+  wr_log('GPU INFO','AdapterCompatibility='+get_gpu_string('AdapterCompatibility')); 
+  wr_log('GPU INFO','AdapterRAM='+stri(get_gpu_dword('AdapterRAM')div 1048576)+' Mb');  
+  wr_log('GPU INFO','VideoModeDescription='+get_gpu_string('VideoModeDescription'));
+  wr_log('GPU INFO','VideoProcessor='+get_gpu_string('VideoProcessor'));
+  wr_log('GPU INFO','DriverVersion='+get_gpu_string('DriverVersion'));  
+ end;
  if gl_12_sup then wr_log('INIT','GPU supports OpenGL 1.2') else wr_log('INIT','GPU does not support OpenGL 1.2 (Problem)');
  if gl_14_fbo_sup then wr_log('INIT','GPU supports OpenGL 1.4') else wr_log('INIT','GPU does not support OpenGL 1.4 (No MFDs and panels)');
  if gl_2_sup then wr_log('INIT','GPU supports OpenGL 2.0') else wr_log('INIT','GPU does not support OpenGL 2.0 (No advanced graphics)');
@@ -418,6 +427,7 @@ begin //try
  initstr:=initstrs;
  {$ifndef no_render}
  set_log('ogla.log');
+ wr_log('START','-------------------------------------------------------');
  if use_zgl then wr_log('INIT','OGLA v'+oglaver+' (ZGL)')
             else wr_log('INIT','OGLA v'+oglaver+' (GLGR)');
  {$endif}  

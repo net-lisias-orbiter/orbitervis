@@ -129,7 +129,7 @@ begin
           
  glBindTexture(GL_TEXTURE_2D,s.tex);
  glGetTexImage(GL_TEXTURE_2D,0,GL_RGBA,GL_UNSIGNED_BYTE,buf);
- glgr_remake_tex(s.tex,s.w,s.h,buf,false,false,true);  
+ glgr_remake_tex(s.tex,s.w,s.h,buf,false,true,true);  
  freemem(buf); 
 end;          
 //############################################################################// 
@@ -376,6 +376,7 @@ end;
 //############################################################################// 
 //Texture blitting
 function oglc_blit(tp:integer;tgt:psurfinfo;tgtx,tgty,tgtw,tgth:dword;src:psurfinfo;srcx,srcy,srcw,srch,flag:dword):boolean;
+var cw,ch:double;
 begin result:=false; try      
  //wr_log('oglc_blit','begin('+stri(tp)+','+dbg_xtex(src)+' to '+dbg_xtex(tgt)+')');   
   
@@ -395,11 +396,13 @@ begin result:=false; try
 
  
  //glgr_surf_screenshot(src.tex,src.w,src.h);
+ cw:=(srcx+srcw)/src.w;
+ ch:=(srcy+srch)/src.h;
  try
  case tp of
   0:puttx2Dsh(src.tex,tgtx,tgty,src.w,src.h,0,0,1,1,false,gclwhite);
-  1:puttx2Dsh(src.tex,tgtx,tgty,srcw,srch,srcx/src.w,srcy/src.h,(srcx+srcw)/src.w,(srcy+srch)/src.h,false,gclwhite);
-  2:puttx2Dsh(src.tex,tgtx,tgty,tgtw,tgth,srcx/src.w,srcy/src.h,(srcx+srcw)/src.w,(srcy+srch)/src.h,false,gclwhite);
+  1:puttx2Dsh(src.tex,tgtx,tgty,srcw,srch,srcx/src.w,srcy/src.h,cw,ch,false,gclwhite);
+  2:puttx2Dsh(src.tex,tgtx,tgty,tgtw,tgth,srcx/src.w,srcy/src.h,cw,ch,false,gclwhite);
  end;        
  except 
   if tgt<>nil then wr_log('oglc_blit','puttx2Dsh(fail tgt.srcn='+tgt.srcn+')')

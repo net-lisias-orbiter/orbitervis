@@ -208,8 +208,11 @@ begin
  if scn.smobs[i]=nil then exit;
  cp:=scn.smobs[i].draw.cp;
  vc:=cp and scn.invc;
- v:=scn.smobs[i].draw.mshv[j];
-
+ 
+ 
+ v:=scn.smobs[i].draw.mshv[j];  
+ if(v and MESHVIS_NEVER)<>0 then exit;
+ 
  if cp then begin
   if(p=1)and((v and MESHVIS_EXTPASS)<>0)then exit;
   if not((v and MESHVIS_COCKPIT)<>0)then begin
@@ -218,26 +221,19 @@ begin
  end else begin
   if not((v and MESHVIS_EXTERNAL)<>0)then exit;
  end; 
- result:=true;
-
-
-  {
- result:=false; 
- if scn.smobs[i]=nil then exit;
- cp:=scn.smobs[i].draw.cp;
- vc:=cp and scn.invc;
- if(scn.smobs[i].draw.mshv[j] and MESHVIS_NEVER)<>0 then exit;
+ 
+ {
  if p=0 then begin
   if cp then exit;
-  if((scn.smobs[i].draw.mshv[j] and MESHVIS_EXTERNAL)=0)and((scn.smobs[i].draw.mshv[j] and MESHVIS_EXTPASS)=0) then exit;
+  if((v and MESHVIS_EXTERNAL)=0)and((v and MESHVIS_EXTPASS)=0) then exit;
  end;  
  if p=1 then begin
   if not cp then exit;
-  if(scn.smobs[i].draw.mshv[j] and MESHVIS_EXTPASS)<>0 then exit;
-  if((scn.smobs[i].draw.mshv[j] and MESHVIS_COCKPIT)=0)and(((not vc)and(not vcon))or((scn.smobs[i].draw.mshv[j] and MESHVIS_VC)=0)) then exit;
+  if(v and MESHVIS_EXTPASS)<>0 then exit;
+  if((v and MESHVIS_COCKPIT)=0)and((not vc)or((v and MESHVIS_VC)=0)) then exit;
  end; 
- result:=true;
  }
+ result:=true;
 end;
 //############################################################################// 
 begin

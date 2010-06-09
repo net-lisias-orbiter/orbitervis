@@ -838,6 +838,17 @@ begin try
     //end else begin
      c:=min2(1-(scn.smobs[i].pgsiz-modv(d))/33000,1);
      scn.smobs[i].draw.lt0:=tquat(gl_amb.x+c,gl_amb.y+c,gl_amb.z+c,1);
+     
+     if scn.smobs[i].draw.lt0.x<gl_amb.x then scn.smobs[i].draw.lt0.x:=gl_amb.x;
+     if scn.smobs[i].draw.lt0.y<gl_amb.y then scn.smobs[i].draw.lt0.y:=gl_amb.y;
+     if scn.smobs[i].draw.lt0.z<gl_amb.z then scn.smobs[i].draw.lt0.z:=gl_amb.z;  
+     if scn.smobs[i].draw.lt0.w<0 then scn.smobs[i].draw.lt0.w:=0;  
+        
+     if scn.smobs[i].draw.lt0.x>1 then scn.smobs[i].draw.lt0.x:=1;
+     if scn.smobs[i].draw.lt0.y>1 then scn.smobs[i].draw.lt0.y:=1;
+     if scn.smobs[i].draw.lt0.z>1 then scn.smobs[i].draw.lt0.z:=1;
+     if scn.smobs[i].draw.lt0.w>1 then scn.smobs[i].draw.lt0.w:=1;
+     
     end;
    end;
       

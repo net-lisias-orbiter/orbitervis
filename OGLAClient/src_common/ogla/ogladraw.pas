@@ -377,8 +377,9 @@ begin i:=0; try
  
  if not for_shadow then smob_shaderlight_init(scn,sh,tan_att,cmmat);  
  
- for p:=0 to 1 do for i:={$ifdef reverse_smobs}length(scn.smobs)-1 downto 0{$else}0 to length(scn.smobs)-1{$endif} do if scn.smobs[i]<>nil then if scn.smobs[i].draw<>nil then begin
-  if(p=1)and(scn.smobs[i].tp<>SMOB_VESSEL)then continue;
+ for p:=-1 to 1 do for i:={$ifdef reverse_smobs}length(scn.smobs)-1 downto 0{$else}0 to length(scn.smobs)-1{$endif} do if scn.smobs[i]<>nil then if scn.smobs[i].draw<>nil then begin
+  if(p=-1)and(scn.smobs[i].tp=SMOB_VESSEL)then continue;
+  if(p>-1)and(scn.smobs[i].tp<>SMOB_VESSEL)then continue;
   dr:=scn.smobs[i].draw;
         
   //Sunlight in planet shadow

@@ -96,6 +96,7 @@ var feats:featsrec;
 do_check_ng:boolean=true;
 use_udp:boolean=false;  
 use_comp:boolean=false;  
+dbg_gpu_info_write:boolean=true;
 net_buffer_size:integer=32*1024*1024;
 net_med_buffer_size:integer=1024*1024;
 net_sml_buffer_size:integer=64*1024;

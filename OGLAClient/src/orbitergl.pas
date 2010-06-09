@@ -203,7 +203,7 @@ begin i:=0;gc:=0; result:=nil; try
     gr.dif.tx:=tx.tex;    
     gr.dif.xs:=tx.w;    
     gr.dif.ys:=tx.h;   
-    gr.dif.p:=nil;    
+    gr.dif.p:=nil;   
    end;   
    gr.siz:=gr.siz*sqrt(2); 
   
@@ -514,6 +514,7 @@ begin for i:=0 to 255 do p[i]:=#0; i:=0;typ:=0; vs:=nil; try
    end;
            
    if (oapiCockpitMode=COCKPIT_VIRTUAL)and smb.draw.cp then begin
+    hudspec:=nil;
     sHUD:=txget(vcsurf(0,0,@hudspec));
     for mfd:=0 to 9 do sMFD[mfd]:=txget(vcsurf(1,mfd,@mfdspec[mfd]));
 
