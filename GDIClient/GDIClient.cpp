@@ -27,7 +27,7 @@ void GDIClient::clbkReleaseSketchpad (oapi::Sketchpad *sp)
 	}
 }
 
-Font *GDIClient::clbkCreateFont (int height, bool prop, char *face, Font::Style style, int orientation) const
+Font *GDIClient::clbkCreateFont (int height, bool prop, const char *face, Font::Style style, int orientation) const
 {
 	return new GDIFont (height, prop, face, style, orientation);
 }
@@ -248,7 +248,7 @@ void GDIPad::PolyPolyline (const IVECTOR2 *pt, const int *npt, const int nline)
 // class GDIFont
 // ======================================================================
 
-GDIFont::GDIFont (int height, bool prop, char *face, Style style, int orientation): oapi::Font (height, prop, face, style, orientation)
+GDIFont::GDIFont (int height, bool prop, const char *face, Style style, int orientation): oapi::Font (height, prop, face, style, orientation)
 {
 	char *def_fixedface = "Courier New";
 	char *def_sansface = "Arial";

@@ -25,7 +25,7 @@ class GDICLIENTEXPORT GDIClient: public oapi::GraphicsClient {
 public:
 	/**
 	 * \brief Create a GDI graphics object.
-	 * \param hInstance module instance handle (as passed to opcDLLInit)
+	 * \param hInstance module instance handle (as passed to InitModule)
 	 */
 	GDIClient (HINSTANCE hInstance);
 
@@ -61,7 +61,7 @@ public:
 	 *   \ref oapi::Font::Font
 	 * \sa clbkReleaseFont, GDIFont
 	 */
-	oapi::Font *clbkCreateFont (int height, bool prop, char *face, oapi::Font::Style style = oapi::Font::NORMAL, int orientation = 0) const;
+	oapi::Font *clbkCreateFont (int height, bool prop, const char *face, oapi::Font::Style style = oapi::Font::NORMAL, int orientation = 0) const;
 
 	/**
 	 * \brief De-allocates a font resource.
@@ -342,7 +342,7 @@ public:
 	 */
 	void PolyPolyline (const oapi::IVECTOR2 *pt, const int *npt, const int nline);
 
-	HDC GetDC() const { return hDC; }
+	HDC GetDC() { return hDC; }
 
 private:
 	HDC hDC;
@@ -363,6 +363,7 @@ private:
  */
 class GDICLIENTEXPORT GDIFont: public oapi::Font {
 	friend class GDIPad;
+	friend class GDIClient;
 
 public:
 	/**
@@ -382,7 +383,7 @@ public:
 	 * \note If the specified face name is not recognised, then 'sans' is
 	 *   selected for \e prop==true, and 'fixed' is selected for \e prop==false.
 	 */
-	GDIFont (int height, bool prop, char *face, Style style=NORMAL, int orientation=0);
+	GDIFont (int height, bool prop, const char *face, Style style=NORMAL, int orientation=0);
 
 	/**
 	 * \brief Font destructor.
@@ -409,6 +410,7 @@ private:
  */
 class GDICLIENTEXPORT GDIPen: public oapi::Pen {
 	friend class GDIPad;
+	friend class GDIClient;
 
 public:
 	/**
@@ -439,6 +441,7 @@ private:
  */
 class GDICLIENTEXPORT GDIBrush: public oapi::Brush {
 	friend class GDIPad;
+	friend class GDIClient;
 
 public:
 	/**

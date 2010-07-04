@@ -62,11 +62,12 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="orbiter.lib orbitersdk.lib"
-				OutputFile="$(SolutionDir)..\..\Modules\Server\$(ProjectName).dll"
+				OutputFile="$(ProjectDir)..\..\Modules\Server\$(ProjectName).dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="c:\mssdk\lib,..\..\Orbitersdk\lib;C:\dx7asdk\DXF\lib"
 				GenerateDebugInformation="true"
 				SubSystem="2"
+				ImportLibrary="$(SolutionDir)Orbitersdk\lib\$(TargetName).lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -139,12 +140,14 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="orbiter.lib orbitersdk.lib"
+				OutputFile="$(ProjectDir)..\..\Modules\Server\$(ProjectName).dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="c:\mssdk\lib,..\..\Orbitersdk\lib;C:\dx7asdk\DXF\lib"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
+				ImportLibrary="$(SolutionDir)Orbitersdk\lib\$(TargetName).lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -170,7 +173,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy $(TargetPath) $(SolutionDir)Modules\Server"
+				CommandLine=""
 			/>
 		</Configuration>
 	</Configurations>
