@@ -54,13 +54,18 @@ void CelestialSphere::LoadStars ()
 	StarRenderPrm *prm = (StarRenderPrm*)gc->GetConfigParam (CFGPRM_STARRENDERPRM);
 
 	double a, b, xz;
-	if (prm->map_log) {
-		// scaling factors for logarithmic brightness mapping
-		a = -log(prm->brt_min)/(prm->mag_lo-prm->mag_hi);
+
+	if (prm->mag_lo > prm->mag_hi) {
+		if (prm->map_log) {
+			// scaling factors for logarithmic brightness mapping
+			a = -log(prm->brt_min)/(prm->mag_lo-prm->mag_hi);
+		} else {
+			// scaling factors for linear brightness mapping
+			a = (1.0-prm->brt_min)/(prm->mag_hi-prm->mag_lo);
+			b = prm->brt_min - prm->mag_lo*a;
+		}
 	} else {
-		// scaling factors for linear brightness mapping
-		a = (1.0-prm->brt_min)/(prm->mag_hi-prm->mag_lo);
-		b = prm->brt_min - prm->mag_lo*a;
+		oapiWriteLog("WARNING: Inconsistent magnitude limits for background star brightness. Disabling background stars.");
 	}
 
 	float c;
@@ -78,6 +83,8 @@ void CelestialSphere::LoadStars ()
 	struct StarRec {
 		float lng, lat, mag;
 	} *data = new StarRec[buflen];
+
+	if (prm->mag_lo <= prm->mag_hi) return;
 
 	// Read binary data from file
 	FILE *f = fopen ("Star.bin", "rb");
