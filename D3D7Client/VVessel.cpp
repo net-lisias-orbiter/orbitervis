@@ -638,13 +638,14 @@ bool vVessel::ModLighting (LPD3DLIGHT7 light)
 			const ATMCONST *atm = (oapiGetObjectType(hP)==OBJTP_PLANET ? oapiGetPlanetAtmConstants (hP) : NULL);
 			if (atm) {  // case 1: planet has atmosphere
 				double alt = p-psize;                // vessel altitude
-				double ap1 = ap * atm->radlimit/psize; 
-				if (alt < atm->altlimit) {
+				double altlimit = *(double*)oapiGetObjectParam (hP, OBJPRM_PLANET_ATTENUATIONALT);
+				double ap1 = ap * (altlimit+psize)/psize; 
+				if (alt < altlimit) {
 					static const double delta0 = RAD*100.0;
 					// This is the angular separation between planet centre and star below which
 					// the atmosphere affects lighting when on the planet surface. (100: when sun
 					// is 10 deg above horizon). Should possibly be made atmosphere-specific.
-					ap1 = delta0 / (1.0 + alt*(delta0-ap1)/(atm->altlimit*ap1));
+					ap1 = delta0 / (1.0 + alt*(delta0-ap1)/(altlimit*ap1));
 				}
 
 				if (as+ap1 >= phi && ap/as > 0.1) {       // overlap and significant planet size

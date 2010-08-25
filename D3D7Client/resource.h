@@ -6,7 +6,9 @@
 #define IDD_DIALOG1                     101
 #define IDD_EXTRA_PLANETRENDER          102
 #define IDC_EDIT1                       1000
+#define IDS_INFO                        1000
 #define IDC_COMBO1                      1001
+#define IDS_TYPE                        1001
 #define IDC_RADIO1                      1100
 #define IDC_RADIO2                      1101
 #define IDC_RADIO3                      1102

@@ -24,7 +24,7 @@ int SURF_MAX_PATCHLEVEL = 14;
 const DWORD NOTILE = (DWORD)-1; // "no tile" flag
 
 static float TEX2_MULTIPLIER = 4.0f; // microtexture multiplier
-static LPDIRECT3DVERTEXBUFFER7 bbtarget;  // target buffer for bounding box transformation
+LPDIRECT3DVERTEXBUFFER7 bbtarget;  // target buffer for bounding box transformation
 
 D3DMATERIAL7 pmat;
 D3DMATERIAL7 watermat = {{1,1,1,1},{1,1,1,1},{1,1,1,1},{0,0,0,0},20.0f};

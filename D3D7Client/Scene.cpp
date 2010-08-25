@@ -4,6 +4,7 @@
 #include "VVessel.h"
 #include "VBase.h"
 #include "Particle.h"
+#include "CSphereMgr.h"
 
 using namespace oapi;
 
@@ -35,8 +36,13 @@ Scene::Scene (D3D7Client *_gc, DWORD w, DWORD h)
 	vobjFirst = vobjLast = NULL;
 	nstream = 0;
 	iVCheck = 0;
+	maxlight = *(int*)gc->GetConfigParam (CFGPRM_MAXLIGHT);
+	locallight = *(bool*)gc->GetConfigParam (CFGPRM_LOCALLIGHT);
+	if (locallight)
+		lightlist = new LIGHTLIST[maxlight];
 	memset (&bg_rgba, 0, sizeof (D3DCOLOR));
 	InitGDIResources();
+	cspheremgr = new CSphereManager (_gc, this);
 }
 
 Scene::~Scene ()
@@ -45,11 +51,13 @@ Scene::~Scene ()
 	delete cam;
 	delete csphere;
 	delete light;
+	delete cspheremgr;
 	if (nstream) {
 		for (DWORD j = 0; j < nstream; j++)
 			delete pstream[j];
 		delete []pstream;
 	}
+	if (locallight) delete []lightlist;
 	ExitGDIResources();
 }
 
@@ -155,6 +163,63 @@ Scene::VOBJREC *Scene::AddVisualRec (OBJHANDLE hObj)
 	return pv;
 }
 
+void Scene::AddLocalLight (const LightEmitter *le, const vObject *vo, DWORD idx)
+{
+	D3DLIGHT7 lght;
+	switch (le->GetType()) {
+	case LightEmitter::LT_POINT: {
+		lght.dltType = D3DLIGHT_POINT;
+		lght.dvRange = (float)((PointLight*)le)->GetRange();
+		const double *att = ((PointLight*)le)->GetAttenuation();
+		lght.dvAttenuation0 = (float)att[0];
+		lght.dvAttenuation1 = (float)att[1];
+		lght.dvAttenuation2 = (float)att[2];
+		} break;
+	case LightEmitter::LT_SPOT: {
+		lght.dltType = D3DLIGHT_SPOT;
+		lght.dvRange = (float)((SpotLight*)le)->GetRange();
+		const double *att = ((SpotLight*)le)->GetAttenuation();
+		lght.dvAttenuation0 = (float)att[0];
+		lght.dvAttenuation1 = (float)att[1];
+		lght.dvAttenuation2 = (float)att[2];
+		lght.dvFalloff = 1.0f;
+		lght.dvTheta = (float)((SpotLight*)le)->GetUmbra();
+		lght.dvPhi = (float)((SpotLight*)le)->GetPenumbra();
+		} break;
+	}
+	double intens = le->GetIntensity();
+	const COLOUR4 &col_d = le->GetDiffuseColour();
+	lght.dcvDiffuse.dvR = (float)(col_d.r*intens);
+	lght.dcvDiffuse.dvG = (float)(col_d.g*intens);
+	lght.dcvDiffuse.dvB = (float)(col_d.b*intens);
+	lght.dcvDiffuse.dvA = (float)(col_d.a*intens);
+	const COLOUR4 &col_s = le->GetSpecularColour();
+	lght.dcvSpecular.dvR = (float)(col_s.r*intens);
+	lght.dcvSpecular.dvG = (float)(col_s.g*intens);
+	lght.dcvSpecular.dvB = (float)(col_s.b*intens);
+	lght.dcvSpecular.dvA = (float)(col_s.a*intens);
+	const COLOUR4 &col_a = le->GetAmbientColour();
+	lght.dcvAmbient.dvR = (float)(col_a.r*intens);
+	lght.dcvAmbient.dvG = (float)(col_a.g*intens);
+	lght.dcvAmbient.dvB = (float)(col_a.b*intens);
+	lght.dcvAmbient.dvA = (float)(col_a.a*intens);
+	if (lght.dltType != D3DLIGHT_DIRECTIONAL) {
+		const VECTOR3 pos = le->GetPosition();
+		D3DVECTOR p = { (float)pos.x, (float)pos.y, (float)pos.z }; 
+		D3DMAT_VectorMatrixMultiply (&lght.dvPosition, &p, &vo->MWorld());
+	}
+	if (lght.dltType != D3DLIGHT_POINT) {
+		MATRIX3 grot;
+		oapiGetRotationMatrix (vo->Object(), &grot);
+		VECTOR3 d = mul (grot, le->GetDirection());
+		lght.dvDirection.dvX = (float)d.x;
+		lght.dvDirection.dvY = (float)d.y;
+		lght.dvDirection.dvZ = (float)d.z;
+	}
+	dev->SetLight (idx, &lght);
+	dev->LightEnable (idx, TRUE);
+}
+
 void Scene::Update ()
 {
 	cam->Update (); // update camera parameters
@@ -216,12 +281,18 @@ void Scene::Render ()
 {
 	int i, j;
 	DWORD n;
+	VOBJREC *pv;
 
 	Update (); // update camera and visuals
 
 	VECTOR3 bgcol = SkyColour();
 	double skybrt = (bgcol.x+bgcol.y+bgcol.z)/3.0;
 	bg_rgba = D3DRGBA (bgcol.x, bgcol.y, bgcol.z, 1);
+	int bglvl = 0;
+	if (bg_rgba) { // suppress stars darker than the background
+		bglvl = (bg_rgba & 0xff) + ((bg_rgba >> 8) & 0xff) + ((bg_rgba >> 16) & 0xff);
+		bglvl = min (bglvl/2, 255);
+	}
 
 	// Clear the viewport
 	dev->Clear (0, NULL, D3DCLEAR_TARGET|zclearflag, bg_rgba, 1.0f, 0L);
@@ -229,6 +300,43 @@ void Scene::Render ()
 	if (FAILED (dev->BeginScene ())) return;
 
 	light->SetLight (dev);
+
+	int nlight = 1;
+	if (locallight) {
+		DWORD j, k;
+		for (pv = vobjFirst; pv; pv = pv->next) {
+			if (!pv->vobj->IsActive()) continue;
+			OBJHANDLE hObj = pv->vobj->Object();
+			if (oapiGetObjectType (hObj) == OBJTP_VESSEL) {
+				VESSEL *vessel = oapiGetVesselInterface (hObj);
+				DWORD nemitter = vessel->LightEmitterCount();
+				for (j = 0; j < nemitter; j++) {
+					const LightEmitter *em = vessel->GetLightEmitter(j);
+					if (!em->IsActive() || !em->GetIntensity()) continue;
+					const VECTOR3 *pos = em->GetPositionRef();
+					D3DVECTOR q, p = {(float)pos->x, (float)pos->y, (float)pos->z};
+					D3DMAT_VectorMatrixMultiply (&q, &p, &pv->vobj->MWorld());
+					double dst2 = q.x*q.x + q.y*q.y + q.z*q.z;
+					for (k = nlight-1; k >= 1; k--) {
+						if (lightlist[k].camdist2 < dst2) {
+							break;
+						} else if (k < maxlight-1) {
+							lightlist[k+1] = lightlist[k]; // shift entries to make space
+						} else
+							nlight--;
+					}
+					if (k == maxlight-1) continue;
+					lightlist[k+1].plight = em;
+					lightlist[k+1].vobj = pv->vobj;
+					lightlist[k+1].camdist2 = dst2;
+					nlight++;
+				}
+			}
+		}
+		for (i = 1; i < nlight; i++)
+			AddLocalLight (lightlist[i].plight, lightlist[i].vobj, i);
+	}
+
 	dev->SetMaterial (&def_mat);
 	dev->SetTexture (0, 0);
 
@@ -313,13 +421,13 @@ void Scene::Render ()
 	dev->SetTextureStageState (0, D3DTSS_COLOROP, D3DTOP_MODULATE);
 
 	csphere->RenderStars (dev, (DWORD)-1, &bgcol);
+	cspheremgr->Render (dev, 8, bglvl);
 
 	// turn on lighting
 	dev->SetRenderState (D3DRENDERSTATE_LIGHTING, TRUE);
 
 	// render solar system celestial objects (planets and moons)
 	// we render without z-buffer, so need to distance-sort the objects
-	VOBJREC *pv;
 	int np;
 	const int MAXPLANET = 512; // hard limit; should be fixed
 	static PList plist[MAXPLANET];
@@ -438,6 +546,10 @@ void Scene::Render ()
 		pstream[n]->Render (dev, ptex);
 	if (ptex) dev->SetTexture (0, 0);
 	if (!alpha) dev->SetRenderState (D3DRENDERSTATE_ALPHABLENDENABLE, FALSE);
+
+	if (locallight)
+		for (i = 1; i < nlight; i++)
+			dev->LightEnable (i, FALSE);
 
 	// render the internal parts of the focus object in a separate render pass
 	if (oapiCameraInternal() && vFocus) {

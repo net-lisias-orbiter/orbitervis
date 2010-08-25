@@ -67,6 +67,7 @@ class vPlanet;
 
 class TileManager {
 	friend class TileBuffer;
+	friend class CSphereManager;
 
 public:
 	TileManager (const oapi::D3D7Client *gclient, const vPlanet *vplanet);

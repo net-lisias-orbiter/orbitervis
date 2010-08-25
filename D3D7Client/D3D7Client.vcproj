@@ -263,6 +263,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\CSphereMgr.cpp"
+				>
+			</File>
+			<File
 				RelativePath="D3D7Client.cpp"
 				>
 				<FileConfiguration
@@ -727,6 +731,10 @@
 			</File>
 			<File
 				RelativePath="CloudMgr.h"
+				>
+			</File>
+			<File
+				RelativePath=".\CSphereMgr.h"
 				>
 			</File>
 			<File

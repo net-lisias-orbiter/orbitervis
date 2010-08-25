@@ -100,6 +100,8 @@ public:
 	 */
 	inline const OBJHANDLE Object() const { return hObj; }
 
+	inline const D3DMATRIX &MWorld() const { return mWorld; }
+
 	/**
 	 * \brief Returns one of the visual's meshes, given by its index.
 	 * \param idx mesh index (>= 0)

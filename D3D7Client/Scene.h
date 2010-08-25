@@ -24,6 +24,7 @@
 #include "VObject.h"
 #include "Light.h"
 
+class CSphereManager;
 class vObject;
 class D3D7ParticleStream;
 
@@ -119,6 +120,8 @@ protected:
 	 */
 	void RenderObjectMarker (HDC hDC, const VECTOR3 &gpos, const char *label1, const char *label2, int mode, int scale);
 
+	void AddLocalLight (const LightEmitter *le, const vObject *vo, DWORD idx);
+
 private:
 	oapi::D3D7Client *gc;
 	LPDIRECT3DDEVICE7 dev;     // render device
@@ -134,11 +137,19 @@ private:
 
 	D3D7Light *light;          // only one for now
 	D3DCOLOR bg_rgba;          // ambient background colour
+	bool locallight;           // enable local light sources
+	int maxlight;              // max number of light sources
 
 	struct VOBJREC {           // linked list of object visuals
 		vObject *vobj;         // visual instance
 		VOBJREC *prev, *next;  // previous and next list entry
 	} *vobjFirst, *vobjLast;   // first and last list entry
+
+	struct LIGHTLIST {
+		const LightEmitter *plight;
+		vObject *vobj;
+		double camdist2;
+	} *lightlist;
 
 	VOBJREC *FindVisual (OBJHANDLE hObj);
 	// Locate the visual for hObj in the list if present, or return
@@ -161,6 +172,8 @@ private:
 
 	void InitGDIResources();
 	void ExitGDIResources();
+
+	CSphereManager *cspheremgr;
 };
 
 #endif // !__SCENE_H

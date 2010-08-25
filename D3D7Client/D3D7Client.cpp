@@ -14,6 +14,7 @@
 #include "TileMgr.h"
 #include "RingMgr.h"
 #include "HazeMgr.h"
+#include "CSphereMgr.h"
 
 using namespace oapi;
 
@@ -434,6 +435,7 @@ HRESULT D3D7Client::Initialise3DEnvironment ()
 		TileManager::GlobalInit (this);
 		RingManager::GlobalInit (this);
 		HazeManager::GlobalInit (this);
+		CSphereManager::GlobalInit (this);
 		D3D7ParticleStream::GlobalInit (this);
 		vObject::GlobalInit (this);
 		vVessel::GlobalInit (this);
