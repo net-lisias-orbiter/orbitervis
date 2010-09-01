@@ -138,7 +138,7 @@ private:
 	D3D7Light *light;          // only one for now
 	D3DCOLOR bg_rgba;          // ambient background colour
 	bool locallight;           // enable local light sources
-	int maxlight;              // max number of light sources
+	DWORD maxlight;            // max number of light sources
 
 	struct VOBJREC {           // linked list of object visuals
 		vObject *vobj;         // visual instance

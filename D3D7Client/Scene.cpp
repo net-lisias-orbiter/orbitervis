@@ -36,7 +36,9 @@ Scene::Scene (D3D7Client *_gc, DWORD w, DWORD h)
 	vobjFirst = vobjLast = NULL;
 	nstream = 0;
 	iVCheck = 0;
-	maxlight = *(int*)gc->GetConfigParam (CFGPRM_MAXLIGHT);
+	if (!gc->clbkGetRenderParam (RP_MAXLIGHTS, &maxlight)) maxlight = 8;
+	DWORD maxlight_request = *(DWORD*)gc->GetConfigParam (CFGPRM_MAXLIGHT);
+	if (maxlight_request) maxlight = min (maxlight, maxlight_request);
 	locallight = *(bool*)gc->GetConfigParam (CFGPRM_LOCALLIGHT);
 	if (locallight)
 		lightlist = new LIGHTLIST[maxlight];

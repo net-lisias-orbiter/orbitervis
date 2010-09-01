@@ -611,6 +611,9 @@ bool D3D7Client::clbkGetRenderParam (DWORD prm, DWORD *value) const
 	case RP_STENCILDEPTH:
 		*value = GetFramework()->GetStencilBitDepth();
 		return true;
+	case RP_MAXLIGHTS:
+		*value = GetFramework()->GetMaxLights();
+		return true;
 	}
 	return false;
 }
@@ -705,6 +708,10 @@ void D3D7Client::LogRenderParams () const
 	}
 	if (GetFramework()->GetStencilBitDepth()) {
 		sprintf (cbuf, "Stencil buffer depth: %d bit", GetFramework()->GetStencilBitDepth());
+		WriteLog (cbuf);
+	}
+	if (GetFramework()->GetMaxLights()) {
+		sprintf (cbuf, "Active lights supported: %d", GetFramework()->GetMaxLights());
 		WriteLog (cbuf);
 	}
 }

@@ -144,7 +144,6 @@ protected:
 	DWORD ntex;                      // total number of loaded textures for levels <= 8
 	DWORD nhitex;                    // number of textures for levels > 8
 	DWORD nhispec;                   // number of specular reflection masks (level > 8)
-	double hipatchrad;               // angular aperture fraction at which to downgrade patch resolution
 	double lightfac;                 // city light intensity factor
 	double microlvl;                 // intensity of microtexture
 	DWORD nmask;                     // number of specular reflection masks/light maps (level <= 8)

@@ -28,6 +28,7 @@ CD3DFramework7::CD3DFramework7 ()
 	m_dwRenderHeight     = 0L;
 	m_dwZBufferBitDepth  = 0L;
 	m_dwStencilBitDepth  = 0L;
+	m_dwMaxLights        = 8L;
 
 	m_pddsFrontBuffer    = NULL;
 	m_pddsBackBuffer     = NULL;
@@ -407,10 +408,14 @@ HRESULT CD3DFramework7::CreateDirect3D (GUID* pDeviceGUID)
     ZeroMemory (&d3dDesc, sizeof(D3DDEVICEDESC7));
     m_pd3dDevice->GetCaps (&d3dDesc);
 	pdpcTriCaps = &d3dDesc.dpcTriCaps;
+
 	// check if device supports mipmaping 
 	m_bSupportsMipmaps = 
 		((pdpcTriCaps->dwTextureFilterCaps & D3DPTFILTERCAPS_MIPNEAREST | 
 		  pdpcTriCaps->dwTextureFilterCaps & D3DPTFILTERCAPS_MIPLINEAR) ? TRUE : FALSE);
+
+	// max number of simultaneously active light sources
+	m_dwMaxLights = d3dDesc.dwMaxActiveLights;
 
     // Finally, set the viewport for the newly created device
     D3DVIEWPORT7 vp = { 0, 0, m_dwRenderWidth, m_dwRenderHeight, 0.0f, 1.0f };

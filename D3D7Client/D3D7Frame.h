@@ -49,6 +49,7 @@ class CD3DFramework7
 	DDPIXELFORMAT		 m_ddpfBackBufferPixelFormat;
 	DWORD				 m_dwZBufferBitDepth;  // Bit depth of z-buffer
 	DWORD                m_dwStencilBitDepth;  // Bit depth of stencil buffer (0 if none)
+	DWORD				 m_dwMaxLights;        // max number of light sources supported
 	DWORD                m_ddFlipFlag;
 
     // Internal functions for the framework class
@@ -73,6 +74,7 @@ public:
 	inline DWORD                GetDeviceMemType() const     { return m_dwDeviceMemType; }
 	inline DWORD                GetZBufferBitDepth() const   { return m_dwZBufferBitDepth; }
 	inline DWORD                GetStencilBitDepth() const   { return m_dwStencilBitDepth; }
+	inline DWORD				GetMaxLights() const         { return m_dwMaxLights; }
 	inline BOOL                 SupportsMipmaps() const      { return m_bSupportsMipmaps; }
 	inline const RECT          &GetScreenRect() const        { return m_rcScreenRect; }
 
