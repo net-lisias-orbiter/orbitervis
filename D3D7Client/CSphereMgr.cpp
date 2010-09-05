@@ -109,6 +109,12 @@ CSphereManager::~CSphereManager ()
 
 	DWORD i, maxidx = patchidx[maxbaselvl];
 
+	if (ntex) {
+		for (i = 0; i < ntex; i++)
+			texbuf[i]->Release();
+		delete []texbuf;
+	}
+
 	for (i = 0; i < maxidx; i++) {
 		if (tiledesc[i].vtx) tiledesc[i].vtx->Release();
 	}
