@@ -363,7 +363,11 @@ void D3D7Mesh::Render (LPDIRECT3DDEVICE7 dev)
 			for (j = g-1; j >= 0; j--)
 				if ((ti = Grp[j]->TexIdx) != SPEC_INHERIT) break;
 		if (ti != SPEC_INHERIT && (!g || (ti != pti))) {
-			dev->SetTexture (0, ti != SPEC_DEFAULT ? Tex[ti] : 0);
+			LPDIRECTDRAWSURFACE7 tx;
+			if (ti != SPEC_DEFAULT) {
+				tx = (ti < TEXIDX_MFD0 ? Tex[ti] : (LPDIRECTDRAWSURFACE7)gc->GetMFDSurface(ti-TEXIDX_MFD0));
+			} else tx = 0;
+			dev->SetTexture (0, tx);
 			pti = ti;
 		}
 

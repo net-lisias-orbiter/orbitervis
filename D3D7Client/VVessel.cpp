@@ -322,27 +322,19 @@ bool vVessel::Render (LPDIRECT3DDEVICE7 dev, bool internalpass)
 			bWorldValid = true;
 		}
 
+		if (bVC) { // link MFD textures for rendering
+			for (mfd = 0; mfd < MAXMFD; mfd++) {
+				if (mfdspec[mfd] && mfdspec[mfd]->nmesh == i) {
+					meshlist[i].mesh->GetGroup(mfdspec[mfd]->ngroup)->TexIdx = TEXIDX_MFD0+mfd;
+				}
+			}
+		}
+
 		// render mesh
 		meshlist[i].mesh->Render (dev);
 
 		// render VC HUD and MFDs
 		if (bVC) {
-
-			// render VC MFD displays
-			for (mfd = 0; mfd < MAXMFD; mfd++) {
-				if (mfdspec[mfd] && mfdspec[mfd]->nmesh == i) {
-					if (sMFD[mfd]) {
-						gc->clbkBlt (mfdsurf, 0, 0, sMFD[mfd]);
-						dev->SetTexture (0, mfdsurf);
-					} else {
-						static DDBLTFX bltfx = {sizeof(DDBLTFX), 0};
-						bltfx.dwFillColor = 0;
-						mfdsurf->Blt (NULL, NULL, NULL, DDBLT_COLORFILL, &bltfx);
-						dev->SetTexture (0, mfdsurf);
-					}
-					meshlist[i].mesh->RenderGroup (dev, meshlist[i].mesh->GetGroup(mfdspec[mfd]->ngroup));
-				}
-			}
 
 			// render VC HUD
 			if (sHUD && hudspec->nmesh == i) {

@@ -136,13 +136,11 @@ bool D3D7Client::clbkInitialise ()
 	D3D7Enum_DeviceInfo *pDevices;
 	DWORD nDevices;
 	D3D7Enum_GetDevices (&pDevices, &nDevices);
-	sprintf (cbuf, "Enumerated %d devices:", nDevices);
-	WriteLog (cbuf);
+	WriteLog ("Enumerated %d devices:", nDevices);
 	for (i = 0; i < nDevices; i++) {
-		sprintf (cbuf, "[%c] %s (%cW)",
+		WriteLog ("[%c] %s (%cW)",
 			pDevices[i].guidDevice == m_pDeviceInfo->guidDevice ? 'x':' ',
 			pDevices[i].strDesc, pDevices[i].bHardware ? 'H':'S');
-		WriteLog (cbuf);
 	}
 
 	// Create the Launchpad video tab interface
@@ -614,6 +612,9 @@ bool D3D7Client::clbkGetRenderParam (DWORD prm, DWORD *value) const
 	case RP_MAXLIGHTS:
 		*value = GetFramework()->GetMaxLights();
 		return true;
+	case RP_ISTLDEVICE:
+		*value = GetFramework()->IsTLDevice();
+		return true;
 	}
 	return false;
 }
@@ -696,32 +697,26 @@ void D3D7Client::LogRenderParams () const
 {
 	char cbuf[256];
 
-	sprintf (cbuf, "Viewport: %s %d x %d x %d",
+	WriteLog ("Viewport: %s %d x %d x %d",
 		bFullscreen ? "Fullscreen":"Window", viewW, viewH, viewBPP);
-	WriteLog (cbuf);
-	strcpy (cbuf, "Hardware T&L capability: ");
-	strcat (cbuf, GetFramework()->IsTLDevice() ? "Yes":"No");
-	WriteLog (cbuf);
-	if (GetFramework()->GetZBufferBitDepth()) {
-		sprintf (cbuf, "Z-buffer depth: %d bit", GetFramework()->GetZBufferBitDepth());
-		WriteLog (cbuf);
-	}
-	if (GetFramework()->GetStencilBitDepth()) {
-		sprintf (cbuf, "Stencil buffer depth: %d bit", GetFramework()->GetStencilBitDepth());
-		WriteLog (cbuf);
-	}
-	if (GetFramework()->GetMaxLights()) {
-		sprintf (cbuf, "Active lights supported: %d", GetFramework()->GetMaxLights());
-		WriteLog (cbuf);
-	}
+	WriteLog ("Hardware T&L capability: %s", GetFramework()->IsTLDevice() ? "Yes":"No");
+	if (GetFramework()->GetZBufferBitDepth())
+		WriteLog ("Z-buffer depth: %d bit", GetFramework()->GetZBufferBitDepth());
+	if (GetFramework()->GetStencilBitDepth())
+		WriteLog ("Stencil buffer depth: %d bit", GetFramework()->GetStencilBitDepth());
+	if (GetFramework()->GetMaxLights())
+		WriteLog ("Active lights supported: %d", GetFramework()->GetMaxLights());
 }
 
 // ==============================================================
 
-void D3D7Client::WriteLog (const char *msg) const
+void D3D7Client::WriteLog (const char *msg, ...) const
 {
 	char cbuf[256] = "D3D7Client: ";
-	strcpy (cbuf+12, msg);
+	va_list ap;
+	va_start (ap, msg);
+	vsnprintf (cbuf+12, 255-12, msg, ap);
+	va_end (ap);
 	oapiWriteLog (cbuf);
 }
 

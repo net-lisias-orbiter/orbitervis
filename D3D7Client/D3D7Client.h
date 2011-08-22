@@ -438,7 +438,7 @@ public:
 	void clbkReleaseSurfaceDC (SURFHANDLE surf, HDC hDC);
 	// @}
 
-	void WriteLog (const char *msg) const;
+	void WriteLog (const char *msg, ...) const;
 
 protected:
 	/**
