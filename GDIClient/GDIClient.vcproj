@@ -93,6 +93,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				CommandLine="copy $(ProjectDir)..\..\Modules\Server\$(ProjectName).dll $(SolutionDir)Debug_Server"
 			/>
 		</Configuration>
 		<Configuration
