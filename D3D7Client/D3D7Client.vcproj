@@ -427,6 +427,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\Log.cpp"
+				>
+			</File>
+			<File
 				RelativePath="Mesh.cpp"
 				>
 				<FileConfiguration
@@ -767,6 +771,10 @@
 			</File>
 			<File
 				RelativePath="Light.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Log.h"
 				>
 			</File>
 			<File

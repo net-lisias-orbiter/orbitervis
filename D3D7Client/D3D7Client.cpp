@@ -15,6 +15,7 @@
 #include "RingMgr.h"
 #include "HazeMgr.h"
 #include "CSphereMgr.h"
+#include "Log.h"
 
 using namespace oapi;
 
@@ -104,14 +105,13 @@ D3D7Client::~D3D7Client ()
 bool D3D7Client::clbkInitialise ()
 {
 	DWORD i;
-	char cbuf[256];
 
 	// Perform default setup
 	if (!GraphicsClient::clbkInitialise ()) return false;
 
 	// enumerate available D3D devices
 	if (FAILED (D3D7Enum_EnumerateDevices (clbkConfirmDevice))) {
-		WriteLog ("Could not enumerate devices");
+		LOGOUT_ERR ("Could not enumerate devices");
 		return false;
 	}
 
@@ -121,14 +121,14 @@ bool D3D7Client::clbkInitialise ()
 
 	if (!(m_pDeviceInfo = PickDevice (&dev_id)))
 		if (FAILED (D3D7Enum_SelectDefaultDevice (&m_pDeviceInfo))) {
-			WriteLog ("Could not select a device");
+			LOGOUT_ERR ("Could not select a device");
 			return false;
 		}
 
     // Create a new CD3DFramework class. This class does all of our D3D
     // initialization and manages the common D3D objects.
     if (NULL == (m_pFramework = new CD3DFramework7())) {
-		WriteLog ("Could not create D3D7 framework");
+		LOGOUT_ERR ("Could not create D3D7 framework");
         return false;
     }
 
@@ -136,9 +136,9 @@ bool D3D7Client::clbkInitialise ()
 	D3D7Enum_DeviceInfo *pDevices;
 	DWORD nDevices;
 	D3D7Enum_GetDevices (&pDevices, &nDevices);
-	WriteLog ("Enumerated %d devices:", nDevices);
+	LOGOUT ("Enumerated %d devices:", nDevices);
 	for (i = 0; i < nDevices; i++) {
-		WriteLog ("[%c] %s (%cW)",
+		LOGOUT ("[%c] %s (%cW)",
 			pDevices[i].guidDevice == m_pDeviceInfo->guidDevice ? 'x':' ',
 			pDevices[i].strDesc, pDevices[i].bHardware ? 'H':'S');
 	}
@@ -386,7 +386,7 @@ HRESULT D3D7Client::Initialise3DEnvironment ()
 		m_pDeviceInfo->pDeviceGUID,
 		&m_pDeviceInfo->ddsdFullscreenMode,
 		dwFrameworkFlags))) {
-		WriteLog ("3D environment ok");
+		LOGOUT ("3D environment ok");
 
 		pDD        = m_pFramework->GetDirectDraw();
         pD3D       = m_pFramework->GetDirect3D();
@@ -442,7 +442,7 @@ HRESULT D3D7Client::Initialise3DEnvironment ()
 		// Create scene instance
 		scene = new Scene (this, viewW, viewH);
 	} else {
-		WriteLog ("Could not initialise 3D environment");
+		LOGOUT_ERR ("Could not initialise 3D environment");
 	}
 	return hr;
 }
@@ -695,21 +695,20 @@ BOOL D3D7Client::LaunchpadVideoWndProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPA
 
 void D3D7Client::LogRenderParams () const
 {
-	char cbuf[256];
-
-	WriteLog ("Viewport: %s %d x %d x %d",
+	LOGOUT ("Viewport: %s %d x %d x %d",
 		bFullscreen ? "Fullscreen":"Window", viewW, viewH, viewBPP);
-	WriteLog ("Hardware T&L capability: %s", GetFramework()->IsTLDevice() ? "Yes":"No");
+	LOGOUT ("Hardware T&L capability: %s", GetFramework()->IsTLDevice() ? "Yes":"No");
 	if (GetFramework()->GetZBufferBitDepth())
-		WriteLog ("Z-buffer depth: %d bit", GetFramework()->GetZBufferBitDepth());
+		LOGOUT ("Z-buffer depth: %d bit", GetFramework()->GetZBufferBitDepth());
 	if (GetFramework()->GetStencilBitDepth())
-		WriteLog ("Stencil buffer depth: %d bit", GetFramework()->GetStencilBitDepth());
+		LOGOUT ("Stencil buffer depth: %d bit", GetFramework()->GetStencilBitDepth());
 	if (GetFramework()->GetMaxLights())
-		WriteLog ("Active lights supported: %d", GetFramework()->GetMaxLights());
+		LOGOUT ("Active lights supported: %d", GetFramework()->GetMaxLights());
 }
 
 // ==============================================================
 
+#ifdef UNDEF
 void D3D7Client::WriteLog (const char *msg, ...) const
 {
 	char cbuf[256] = "D3D7Client: ";
@@ -719,6 +718,7 @@ void D3D7Client::WriteLog (const char *msg, ...) const
 	va_end (ap);
 	oapiWriteLog (cbuf);
 }
+#endif
 
 // =======================================================================
 
@@ -794,6 +794,7 @@ void D3D7Client::clbkRender2DPanel (SURFHANDLE *hSurf, MESHHANDLE hMesh, MATRIX3
 
 SURFHANDLE D3D7Client::clbkCreateSurface (DWORD w, DWORD h, SURFHANDLE hTemplate)
 {
+	HRESULT hr;
 	LPDIRECTDRAWSURFACE7 surf;
 	DDSURFACEDESC2 ddsd;
     ZeroMemory (&ddsd, sizeof(ddsd));
@@ -808,8 +809,38 @@ SURFHANDLE D3D7Client::clbkCreateSurface (DWORD w, DWORD h, SURFHANDLE hTemplate
 		((LPDIRECTDRAWSURFACE7)hTemplate)->GetPixelFormat (&ddsd.ddpfPixelFormat);
 		ddsd.dwFlags |= DDSD_PIXELFORMAT;
 	}
-	if (pDD->CreateSurface (&ddsd, &surf, NULL) != DD_OK)
+	if ((hr = pDD->CreateSurface (&ddsd, &surf, NULL)) != DD_OK) {
+		LOGOUT_DDERR (hr);
 		return NULL;
+	}
+	return (SURFHANDLE)surf;
+}
+
+SURFHANDLE D3D7Client::clbkCreateSurfaceEx (DWORD w, DWORD h, DWORD attrib)
+{
+	HRESULT hr;
+	LPDIRECTDRAWSURFACE7 surf;
+	DDSURFACEDESC2 ddsd;
+    ZeroMemory (&ddsd, sizeof(ddsd));
+	ddsd.dwSize = sizeof(ddsd);
+	ddsd.ddpfPixelFormat.dwSize = sizeof (DDPIXELFORMAT);
+    ddsd.dwWidth  = w;
+	ddsd.dwHeight = h;
+    ddsd.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH; 
+	if (attrib & OAPISURFACE_TEXTURE)
+		ddsd.ddsCaps.dwCaps |= DDSCAPS_TEXTURE;
+	else
+		ddsd.ddsCaps.dwCaps |= DDSCAPS_OFFSCREENPLAIN;
+	if (attrib & OAPISURFACE_SYSMEM || (attrib & OAPISURFACE_GDI || attrib & OAPISURFACE_SKETCHPAD) && !(attrib & OAPISURFACE_TEXTURE)) 
+		ddsd.ddsCaps.dwCaps |= DDSCAPS_SYSTEMMEMORY;
+	else
+		ddsd.ddsCaps.dwCaps |= DDSCAPS_VIDEOMEMORY;
+	if ((attrib & OAPISURFACE_ALPHA) && !(attrib & (OAPISURFACE_GDI | OAPISURFACE_SKETCHPAD)))
+		ddsd.ddpfPixelFormat.dwFlags |=  DDPF_ALPHAPIXELS; // enable alpha channel
+	if ((hr = pDD->CreateSurface (&ddsd, &surf, NULL)) != DD_OK) {
+		LOGOUT_DDERR (hr);
+		return NULL;
+	}
 	return (SURFHANDLE)surf;
 }
 

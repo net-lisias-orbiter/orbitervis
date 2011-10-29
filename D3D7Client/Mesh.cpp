@@ -14,6 +14,7 @@
 // ==============================================================
 
 #include "Mesh.h"
+#include "Log.h"
 
 using namespace oapi;
 
@@ -320,7 +321,7 @@ void D3D7Mesh::RenderGroup (LPDIRECT3DDEVICE7 dev, GROUPREC *grp)
 	if (FAILED (dev->DrawIndexedPrimitiveVB (
 		D3DPT_TRIANGLELIST,
 		grp->VtxBuf, 0, grp->nVtx, grp->Idx, grp->nIdx, 0)))
-			gc->WriteLog("Render error");
+			LOGOUT_ERR("Render error\n");
 }
 
 void D3D7Mesh::Render (LPDIRECT3DDEVICE7 dev)

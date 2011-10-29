@@ -292,6 +292,8 @@ public:
 	 */
 	SURFHANDLE clbkCreateSurface (DWORD w, DWORD h, SURFHANDLE hTemplate = NULL);
 
+	SURFHANDLE clbkCreateSurfaceEx (DWORD w, DWORD h, DWORD attrib);
+
 	/**
 	 * \brief Creates a new texture surface.
 	 * \param w texture width
@@ -438,7 +440,7 @@ public:
 	void clbkReleaseSurfaceDC (SURFHANDLE surf, HDC hDC);
 	// @}
 
-	void WriteLog (const char *msg, ...) const;
+	//void WriteLog (const char *msg, ...) const;
 
 protected:
 	/**
