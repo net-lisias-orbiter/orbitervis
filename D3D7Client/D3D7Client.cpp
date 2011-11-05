@@ -615,6 +615,9 @@ bool D3D7Client::clbkGetRenderParam (DWORD prm, DWORD *value) const
 	case RP_ISTLDEVICE:
 		*value = GetFramework()->IsTLDevice();
 		return true;
+	case RP_REQUIRETEXPOW2:
+		*value = GetFramework()->RequireTexPow2();
+		return true;
 	}
 	return false;
 }

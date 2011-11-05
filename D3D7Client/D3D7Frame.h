@@ -77,6 +77,7 @@ public:
 	inline DWORD				GetMaxLights() const         { return m_dwMaxLights; }
 	inline BOOL                 SupportsMipmaps() const      { return m_bSupportsMipmaps; }
 	inline const RECT          &GetScreenRect() const        { return m_rcScreenRect; }
+	DWORD                       RequireTexPow2() const;
 
     // Functions to aid rendering
     HRESULT RestoreSurfaces();

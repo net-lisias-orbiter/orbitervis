@@ -574,3 +574,19 @@ HRESULT CD3DFramework7::ShowFrame ()
     }
 }
 
+//-----------------------------------------------------------------------------
+// Name: RequireTexPow2()
+// Desc: Return a flag for texture size requirement: 0=unrestricted, 1=size 2^n
+//       required, 2="conditionally" no size 2^n required
+//-----------------------------------------------------------------------------
+DWORD CD3DFramework7::RequireTexPow2 () const
+{
+	D3DDEVICEDESC7 ddsd;
+	m_pd3dDevice->GetCaps (&ddsd);
+	if (ddsd.dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_POW2)
+		return 1;
+	else if (ddsd.dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_NONPOW2CONDITIONAL)
+		return 2;
+	else
+		return 0;
+}
