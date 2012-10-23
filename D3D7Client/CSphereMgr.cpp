@@ -65,7 +65,7 @@ CSphereManager::CSphereManager (const D3D7Client *gclient, const Scene *scene)
 	maxlvl = 8; // g_pOrbiter->Cfg()->CSphereMaxLevel;
 	maxbaselvl = min (8, maxlvl);
 	int maxidx = patchidx[maxbaselvl];
-	bPreloadTile = cfg->PlanetPreloadMode;
+	bPreloadTile = (cfg->PlanetPreloadMode != 0);
 	nhitex = nhispec = 0;
 
 	tiledesc = new TILEDESC[maxidx];
@@ -90,15 +90,15 @@ CSphereManager::CSphereManager (const D3D7Client *gclient, const Scene *scene)
 	R = mul (ecl2gal, R);
 
 	D3DMAT_Identity (&trans);
-	trans._11 = R.m11;
-	trans._12 = R.m12;
-	trans._13 = R.m13;
-	trans._21 = R.m21;
-	trans._22 = R.m22;
-	trans._23 = R.m23;
-	trans._31 = R.m31;
-	trans._32 = R.m32;
-	trans._33 = R.m33;
+	trans._11 = (D3DVALUE)R.m11;
+	trans._12 = (D3DVALUE)R.m12;
+	trans._13 = (D3DVALUE)R.m13;
+	trans._21 = (D3DVALUE)R.m21;
+	trans._22 = (D3DVALUE)R.m22;
+	trans._23 = (D3DVALUE)R.m23;
+	trans._31 = (D3DVALUE)R.m31;
+	trans._32 = (D3DVALUE)R.m32;
+	trans._33 = (D3DVALUE)R.m33;
 }
 
 // =======================================================================
@@ -219,12 +219,12 @@ void CSphereManager::Render (LPDIRECT3DDEVICE7 dev, int level, int bglvl)
 
 	float intens = intensity;
 	if (bglvl) {
-		intens *= exp(-bglvl*0.05);
+		intens *= (float)exp(-bglvl*0.05);
 	}
 
 	if (!intens) return; // sanity check
 
-	level = min (level, maxlvl);
+	level = min (level, (int)maxlvl);
 
 	RenderParam.dev = dev;
 	RenderParam.tgtlvl = level;

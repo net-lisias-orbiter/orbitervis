@@ -70,6 +70,7 @@ D3D7Client::D3D7Client (HINSTANCE hInstance): GDIClient (hInstance)
 	meshmgr          = NULL;
 	texmgr           = NULL;
 	clipper          = NULL;
+	lstatus.bkgDC    = 0;
 
 	// Create the parameter manager
 	cfg              = new D3D7Config;
@@ -173,6 +174,9 @@ HWND D3D7Client::clbkCreateRenderWindow ()
 	ValidateRect (hRenderWnd, NULL);
 	// avoids white flash after splash screen
 
+	InitOutputLoadStatus ();
+	// prepare status output for splash screen
+
 	return hRenderWnd;
 }
 
@@ -180,7 +184,15 @@ HWND D3D7Client::clbkCreateRenderWindow ()
 
 void D3D7Client::clbkPostCreation ()
 {
+	ExitOutputLoadStatus ();
 	if (scene) scene->Initialise();
+}
+
+// =======================================================================
+
+bool D3D7Client::clbkSplashLoadMsg (const char *msg, int line)
+{
+	return OutputLoadStatus (msg, line);
 }
 
 // ==============================================================
@@ -522,6 +534,84 @@ bool D3D7Client::RenderWithPopupWindows ()
 		return false;
 		// we return false because the page still needs to be flipped
 	}
+}
+
+// =======================================================================
+
+static const DWORD LOADHEADERCOL = 0xB0B0B0; //0xFFFFFF
+static const DWORD LOADSTATUSCOL = 0xC08080; //0xFFD0D0
+
+void D3D7Client::InitOutputLoadStatus ()
+{
+
+	HDC hDC;
+	TEXTMETRIC tm;
+
+	m_pFramework->GetBackBuffer()->GetDC (&hDC);
+	DWORD sw = viewW, sh = viewH;
+	GetTextMetrics (hDC, &tm);
+	lstatus.h = tm.tmHeight*2;
+	lstatus.w = min (400, sw-280);
+	DWORD bmw = 1280;
+	DWORD srcw = min(bmw,(10*sw*bmw)/(16*sh));
+	DWORD srcx = (bmw-srcw)/2;
+	lstatus.x = ((748-srcx)*sw)/srcw - lstatus.w;
+	lstatus.y = (sh*4)/5;
+	HBITMAP hBmp = CreateCompatibleBitmap (hDC, lstatus.w+15, lstatus.h+lstatus.h/2+10);
+	lstatus.hBkg = CreateCompatibleBitmap (hDC, lstatus.w, lstatus.h);
+	lstatus.bkgDC = CreateCompatibleDC (hDC);
+	SelectObject (lstatus.bkgDC, hBmp);
+	SelectObject (lstatus.bkgDC, GetStockObject(GRAY_BRUSH));
+	Rectangle (lstatus.bkgDC, 0, 0, lstatus.w+15, lstatus.h+lstatus.h/2+10);
+	SelectObject (lstatus.bkgDC, lstatus.hBkg);
+	DeleteObject (hBmp);
+	BitBlt (lstatus.bkgDC, 0, 0, lstatus.w, lstatus.h, hDC, lstatus.x, lstatus.y, SRCCOPY);
+	SelectObject (hDC, GetStockObject (NULL_BRUSH));
+	HPEN pen, ppen;
+	pen = CreatePen (PS_SOLID, 1, LOADHEADERCOL);
+	ppen = (HPEN)SelectObject(hDC, pen);
+	MoveToEx (hDC, lstatus.x, lstatus.y-1, NULL); LineTo (hDC, lstatus.x+lstatus.w, lstatus.y-1);
+	SelectObject (hDC, ppen);
+	DeleteObject (pen);
+	SetTextColor (hDC, LOADHEADERCOL);
+	SetBkMode (hDC, TRANSPARENT);
+	SetTextAlign (hDC, TA_RIGHT);
+	TextOut (hDC, lstatus.x+lstatus.w, lstatus.y-lstatus.h/2-4, "Loading ...", 11);
+	m_pFramework->GetBackBuffer()->ReleaseDC (hDC);
+	clbkBlt (m_pFramework->GetFrontBuffer(), 0, 0, m_pFramework->GetBackBuffer()); 
+}
+
+// =======================================================================
+
+void D3D7Client::ExitOutputLoadStatus ()
+{
+	DeleteObject (lstatus.hBkg);
+	DeleteDC (lstatus.bkgDC);
+	lstatus.bkgDC = 0;
+}
+
+// =======================================================================
+
+bool D3D7Client::OutputLoadStatus (const char *msg, int line)
+{
+	static char linebuf[2][70] = {"", ""};
+
+	if (!lstatus.bkgDC) return false;
+	HDC hDC;
+	int i;
+	strncpy (linebuf[line], msg, 64); linebuf[line][63] = '\0';
+	m_pFramework->GetBackBuffer()->GetDC (&hDC);
+	SetTextColor (hDC, LOADSTATUSCOL);
+	SetBkMode (hDC, TRANSPARENT);
+	SetTextAlign (hDC, TA_RIGHT);
+	BitBlt (hDC, lstatus.x, lstatus.y, lstatus.w, lstatus.h, lstatus.bkgDC, 0, 0, SRCCOPY);
+	for (i = 0; i < 2; i++) {
+		if (linebuf[i][0]) 
+			TextOut (hDC, lstatus.x+lstatus.w, lstatus.y+i*lstatus.h/2, linebuf[i], strlen (linebuf[i]));
+	}
+	m_pFramework->GetBackBuffer()->ReleaseDC (hDC);
+	clbkDisplayFrame ();
+	return true;
 }
 
 // ==============================================================

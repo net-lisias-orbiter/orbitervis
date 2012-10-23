@@ -462,10 +462,21 @@ protected:
 	 */
 	HWND clbkCreateRenderWindow ();
 
-	/// \brief Finalise session creation
-	///
-	/// - Initialises the scene
+	/**
+	 * \brief Finalise session creation
+	 *
+	 * - Initialises the scene
+	 */
 	void clbkPostCreation ();
+
+	/**
+	 * \brief Display a load status message on the splash screen
+	 * \param msg status message to be displayed
+	 * \line line number (0 or 1)
+	 * \return true if status display was initialised (which should
+	 *   always be the case, false if not.
+	 */
+	bool clbkSplashLoadMsg (const char *msg, int line);
 
 	/**
 	 * \brief Cleanup of visual components before scenario
@@ -554,6 +565,25 @@ protected:
 	/// rendering the 3D scene (glass cockpit, date info, etc.)
 	void Output2DOverlay ();
 
+	/**
+	 * \brief Prepares splash screen for status message output.
+	 */
+	void InitOutputLoadStatus ();
+
+	/**
+	 * \brief Deallocates splash screen status message objects.
+	 */
+	void ExitOutputLoadStatus ();
+
+	/**
+	 * \brief Displays a message on the splash screen.
+	 * \param msg Message to be displayed.
+	 * \param line line number (0 or 1)
+	 * \return true if load status was initialised, false if not.
+	 * \sa clbkSplashLoadMsg
+	 */
+	bool OutputLoadStatus (const char *msg, int line);
+
 private:
 	D3D7Config *cfg;       // configuration manager
 	void LogRenderParams () const;
@@ -580,6 +610,13 @@ private:
 	TextureManager *texmgr; // texture manager
 
 	LaunchpadItem *lpiCfg, *lpiPlanetRender;
+
+	// Load status output parameters
+	struct {
+		int x, y, w, h;
+		HBITMAP hBkg;
+		HDC bkgDC;
+	} lstatus;
 }; // class D3D7Client
 
 
