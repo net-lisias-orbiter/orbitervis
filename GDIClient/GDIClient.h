@@ -102,6 +102,15 @@ public:
 	 */
 	void clbkReleaseBrush (oapi::Brush *brush) const;
 	//@}
+
+	/**
+	 * \brief Saves the contents of a surface to a formatted image file or to the clipboard
+	 * \param surf surface handle (0 for primary render surface)
+	 * \param fname image file path relative to orbiter root directory (excluding file extension), or NULL to save to clipboard
+	 * \param fmt output file format
+	 * \return \e true on success
+	 */
+	bool clbkSaveSurfaceToImage (SURFHANDLE surf, const char *fname, oapi::ImageFileFormat fmt);
 };
 
 
@@ -209,6 +218,16 @@ public:
 	 *   orientation of the axes).
 	 */
 	void SetOrigin (int x, int y);
+
+	/**
+	 * \brief Returns the position in the surface bitmap which is mapped to
+	 *   the origin of the coordinate system for all drawing functions.
+	 * \param [out] x pointer to integer receiving horizontal position of the origin [pixel]
+	 * \param [out] y pointer to integer receiving vertical position of the origin [pixel]
+	 * \default Returns (0,0)
+	 * \sa SetOrigin
+	 */
+	void GetOrigin (int *x, int *y) const;
 
 	/**
 	 * \brief Draws a text string.

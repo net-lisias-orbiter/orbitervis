@@ -57,6 +57,68 @@ void GDIClient::clbkReleaseBrush (Brush *brush) const
 	delete brush;
 }
 
+bool GDIClient::clbkSaveSurfaceToImage (SURFHANDLE surf, const char *fname, ImageFileFormat fmt)
+{
+	HDC hdc = clbkGetSurfaceDC (surf);
+	if (!hdc) return false;
+
+	DWORD w, h;
+	if (surf) clbkGetSurfaceSize (surf, &w, &h);
+	else      clbkGetViewportSize (&w, &h);
+
+	HDC hdcmem = CreateCompatibleDC (hdc);
+	HBITMAP hbm = CreateCompatibleBitmap (hdc, w, h);
+	SelectObject (hdcmem, hbm);
+	BitBlt (hdcmem, 0, 0, w, h, hdc, 0, 0, SRCCOPY);
+
+	if (fname == NULL) {
+		// copy device-dependent bitmap to clipboard
+		if (OpenClipboard (GetRenderWindow())) {
+		    EmptyClipboard();
+			SetClipboardData(CF_BITMAP,hbm);
+			CloseClipboard(); 
+		}
+	} else {
+		BITMAP bmp;
+		BITMAPINFOHEADER bi;
+		GetObject (hbm, sizeof(BITMAP), &bmp);
+
+		// map to device-independent bitmap
+		bi.biSize = sizeof(BITMAPINFOHEADER);    
+		bi.biWidth = bmp.bmWidth;    
+		bi.biHeight = -bmp.bmHeight;
+		bi.biPlanes = 1;    
+		bi.biBitCount = 24;    
+		bi.biCompression = BI_RGB;    
+		bi.biSizeImage = 0;  
+		bi.biXPelsPerMeter = 0;
+		bi.biYPelsPerMeter = 0;
+		bi.biClrUsed = 0;    
+		bi.biClrImportant = 0;
+
+		oapi::ImageData imgdata;
+		imgdata.width = (UINT)bmp.bmWidth;
+		imgdata.height = (UINT)bmp.bmHeight;
+		imgdata.bpp = bi.biBitCount;
+		imgdata.stride = ((imgdata.width * imgdata.bpp + 31) & ~31) >> 3;
+		imgdata.bufsize = imgdata.stride * imgdata.height;
+
+		HANDLE hDIB = GlobalAlloc(GHND,imgdata.bufsize);
+		imgdata.data = (BYTE*)GlobalLock(hDIB);
+
+		int res = GetDIBits(hdc, hbm, 0, imgdata.height, imgdata.data, (BITMAPINFO*)&bi, DIB_RGB_COLORS);
+
+		WriteImageDataToFile (imgdata, fname, fmt);
+
+		GlobalUnlock(hDIB);    
+		GlobalFree(hDIB);
+	}
+    DeleteObject(hbm);
+    DeleteObject(hdcmem);
+
+	clbkReleaseSurfaceDC (surf, hdc);
+	return true;
+}
 
 // ======================================================================
 // class GDIPad
@@ -176,6 +238,14 @@ DWORD GDIPad::GetTextWidth (const char *str, int len)
 void GDIPad::SetOrigin (int x, int y)
 {
 	SetViewportOrgEx (hDC, x, y, NULL);
+}
+
+void GDIPad::GetOrigin (int *x, int *y) const
+{
+	POINT p;
+	GetViewportOrgEx (hDC, &p);
+	*x = p.x;
+	*y = p.y;
 }
 
 bool GDIPad::Text (int x, int y, const char *str, int len)
