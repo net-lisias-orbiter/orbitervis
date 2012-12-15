@@ -110,7 +110,7 @@ public:
 	 * \param fmt output file format
 	 * \return \e true on success
 	 */
-	bool clbkSaveSurfaceToImage (SURFHANDLE surf, const char *fname, oapi::ImageFileFormat fmt);
+	bool clbkSaveSurfaceToImage (SURFHANDLE surf, const char *fname, oapi::ImageFileFormat fmt, float quality=0.7f);
 };
 
 

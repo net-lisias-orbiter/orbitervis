@@ -57,7 +57,7 @@ void GDIClient::clbkReleaseBrush (Brush *brush) const
 	delete brush;
 }
 
-bool GDIClient::clbkSaveSurfaceToImage (SURFHANDLE surf, const char *fname, ImageFileFormat fmt)
+bool GDIClient::clbkSaveSurfaceToImage (SURFHANDLE surf, const char *fname, ImageFileFormat fmt, float quality)
 {
 	HDC hdc = clbkGetSurfaceDC (surf);
 	if (!hdc) return false;
@@ -108,7 +108,7 @@ bool GDIClient::clbkSaveSurfaceToImage (SURFHANDLE surf, const char *fname, Imag
 
 		int res = GetDIBits(hdc, hbm, 0, imgdata.height, imgdata.data, (BITMAPINFO*)&bi, DIB_RGB_COLORS);
 
-		WriteImageDataToFile (imgdata, fname, fmt);
+		WriteImageDataToFile (imgdata, fname, fmt, quality);
 
 		GlobalUnlock(hDIB);    
 		GlobalFree(hDIB);
