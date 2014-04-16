@@ -175,8 +175,10 @@ protected:
 	OBJHANDLE hObj;    // handle for the "logical" object
 	const Scene *scn;  // The scene to which the object belongs
 	D3DMATRIX mWorld;  // D3D world matrix for the object
-	VECTOR3 cpos;      // camera-relative object position
+	MATRIX4 dmWorld;   // world matrix in double precision
+	double size;       // object radius [m]
 	double cdist;      // current camera distance
+	VECTOR3 cpos;      // camera-relative object position
 };
 
 #endif // !__VOBJECT_H

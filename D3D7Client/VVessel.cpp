@@ -472,6 +472,7 @@ void vVessel::RenderGroundShadow (LPDIRECT3DDEVICE7 dev, OBJHANDLE hPlanet)
 	pvr = sd-pp;                     // planet-relative vessel position
 	d = length(pvr);                 // vessel-planet distance
 	R = oapiGetSize (hPlanet);       // planet mean radius
+	R += vessel->GetSurfaceElevation();  // Note: this only works at low vessel altitudes (shadow close to vessel position)
 	alt = d-R;                       // altitude above surface
 	if (alt*eps > vessel->GetSize()) // too high to cast a shadow
 		return;
@@ -493,8 +494,8 @@ void vVessel::RenderGroundShadow (LPDIRECT3DDEVICE7 dev, OBJHANDLE hPlanet)
 	vessel->GetRotationMatrix (vR);
 	VECTOR3 sdv = tmul (vR, sd);     // projection direction in vessel frame
 	VECTOR3 shp = sdv*a;             // projection point
-	VECTOR3 hnp = sd*a + pvr; normalise (hnp); // horizon normal
-	VECTOR3 hn = tmul (vR, hnp);     // horizon normal in vessel frame
+	VECTOR3 hn, hnp = vessel->GetSurfaceNormal();
+	vessel->HorizonInvRot (hnp, hn);
 
 	// perform projections
 	double nr0 = dotp (hn, shp);

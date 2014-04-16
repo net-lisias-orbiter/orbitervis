@@ -71,13 +71,13 @@ void Scene::Initialise ()
     // Set miscellaneous renderstates
 	dev->SetRenderState (D3DRENDERSTATE_DITHERENABLE, TRUE);
     dev->SetRenderState (D3DRENDERSTATE_ZENABLE, TRUE);
-	dev->SetRenderState (D3DRENDERSTATE_FILLMODE, D3DFILL_SOLID);
+	dev->SetRenderState (D3DRENDERSTATE_FILLMODE, *(bool*)gc->GetConfigParam (CFGPRM_WIREFRAME) ? D3DFILL_WIREFRAME : D3DFILL_SOLID);
 	dev->SetRenderState (D3DRENDERSTATE_SHADEMODE, D3DSHADE_GOURAUD);
 	dev->SetRenderState (D3DRENDERSTATE_SPECULARENABLE, FALSE);
     dev->SetRenderState (D3DRENDERSTATE_ALPHABLENDENABLE, FALSE);
 	dev->SetRenderState (D3DRENDERSTATE_SRCBLEND, D3DBLEND_SRCALPHA);
 	dev->SetRenderState (D3DRENDERSTATE_DESTBLEND, D3DBLEND_INVSRCALPHA);
-	dev->SetRenderState (D3DRENDERSTATE_NORMALIZENORMALS, TRUE);
+	dev->SetRenderState (D3DRENDERSTATE_NORMALIZENORMALS, FALSE);
 	dev->SetRenderState (D3DRENDERSTATE_ZBIAS, 0);
 	dev->SetRenderState (D3DRENDERSTATE_WRAP0, 0);
 	dev->SetRenderState (D3DRENDERSTATE_AMBIENT, *(DWORD*)gc->GetConfigParam (CFGPRM_AMBIENTLEVEL) * 0x01010101);
@@ -302,7 +302,6 @@ void Scene::Render ()
 	if (FAILED (dev->BeginScene ())) return;
 
 	light->SetLight (dev);
-
 	int nlight = 1;
 	if (locallight) {
 		DWORD j, k;
@@ -433,7 +432,6 @@ void Scene::Render ()
 	int np;
 	const int MAXPLANET = 512; // hard limit; should be fixed
 	static PList plist[MAXPLANET];
-
 	for (pv = vobjFirst, np = 0; pv && np < MAXPLANET; pv = pv->next) {
 		if (!pv->vobj->IsActive()) continue;
 		OBJHANDLE hObj = pv->vobj->Object();
@@ -446,13 +444,7 @@ void Scene::Render ()
 	}
 	int distcomp (const void *arg1, const void *arg2);
 	qsort ((void*)plist, np, sizeof(PList), distcomp);
-	//cam->SetFustrumLimits (10, 1e6);
 	for (i = 0; i < np; i++) {
-		//  double nplane, fplane;
-		//  plist[i].vo->RenderZRange (&nplane, &fplane);
-		//  cam->SetFustrumLimits (nplane, fplane);
-		// since we are not using z-buffers here, we can adjust the projection
-		// matrix at will to make sure the object is within the viewing fustrum
 		OBJHANDLE hObj = plist[i].vo->Object();
 		plist[i].vo->Render (dev);
 		if (plnmode & PLN_ENABLE) {
@@ -559,9 +551,9 @@ void Scene::Render ()
 		dev->Clear (0, NULL, zclearflag,  0, 1.0f, 0L); // clear z-buffer
 		double nearp = cam->GetNearlimit();
 		double farp  = cam->GetFarlimit ();
-		cam->SetFustrumLimits (0.1, oapiGetSize (hFocus));
+		cam->SetFrustumLimits (0.1, oapiGetSize (hFocus));
 		vFocus->Render (dev, true);
-		cam->SetFustrumLimits (nearp, farp);
+		cam->SetFrustumLimits (nearp, farp);
 	}
 
 	// render 2D panel and HUD

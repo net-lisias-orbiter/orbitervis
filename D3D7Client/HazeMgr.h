@@ -17,7 +17,7 @@
 
 #include "D3D7Client.h"
 
-#define HORIZON_NSEG 64  // number of mesh segments
+#define HORIZON_NSEG 128  // number of mesh segments
 
 class vPlanet;
 

@@ -23,6 +23,7 @@
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
 			CharacterSet="0"
+			EnableManagedIncrementalBuild="0"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -71,6 +72,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="orbiter.lib orbitersdk.lib GDIClient.lib d3dim.lib ddraw.lib dxguid.lib"
 				OutputFile="..\..\Modules\Plugin\$(ProjectName).dll"
+				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\..\Orbitersdk\lib;c:\mssdk\lib;C:\dx7asdk\DXF\lib;.\..\..\Modules\Server"
 				IgnoreDefaultLibraryNames="libcmtd"
 				GenerateDebugInformation="true"
@@ -112,6 +114,7 @@
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
 			CharacterSet="0"
+			EnableManagedIncrementalBuild="0"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -260,6 +263,10 @@
 						PreprocessorDefinitions=""
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\cloudmgr2.cpp"
+				>
 			</File>
 			<File
 				RelativePath=".\CSphereMgr.cpp"
@@ -540,6 +547,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\spherepatch.cpp"
+				>
+			</File>
+			<File
 				RelativePath="SurfMgr.cpp"
 				>
 				<FileConfiguration
@@ -560,6 +571,10 @@
 						PreprocessorDefinitions=""
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\surfmgr2.cpp"
+				>
 			</File>
 			<File
 				RelativePath="Texture.cpp"
@@ -604,6 +619,10 @@
 						PreprocessorDefinitions=""
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\tilemgr2.cpp"
+				>
 			</File>
 			<File
 				RelativePath="VBase.cpp"
@@ -737,6 +756,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\cloudmgr2.h"
+				>
+			</File>
+			<File
 				RelativePath=".\CSphereMgr.h"
 				>
 			</File>
@@ -789,6 +812,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\qtree.h"
+				>
+			</File>
+			<File
 				RelativePath="resource.h"
 				>
 			</File>
@@ -801,7 +828,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\spherepatch.h"
+				>
+			</File>
+			<File
 				RelativePath="SurfMgr.h"
+				>
+			</File>
+			<File
+				RelativePath=".\surfmgr2.h"
 				>
 			</File>
 			<File
@@ -810,6 +845,14 @@
 			</File>
 			<File
 				RelativePath="TileMgr.h"
+				>
+			</File>
+			<File
+				RelativePath=".\tilemgr2.h"
+				>
+			</File>
+			<File
+				RelativePath=".\tilemgr2_imp.hpp"
 				>
 			</File>
 			<File

@@ -34,6 +34,9 @@ public:
 	inline const D3DMATRIX *GetProjectionMatrix () const { return &mProj; }
 	const D3DMATRIX *GetProjectionViewMatrix () const;
 
+	MATRIX4 ProjectionMatrix() const;
+	MATRIX4 ViewMatrix() const;
+
 	inline const VECTOR3 *GetGPos () const { return &gpos; }
 	inline const VECTOR3 *GetGDir () const { return &gdir; }
 	inline const MATRIX3 *GetGRot () const { return &grot; }
@@ -43,7 +46,7 @@ public:
 
 	inline OBJHANDLE GetProxyBody () const { return hObj_proxy; }
 
-	void SetFustrumLimits (double nearlimit, double farlimit);
+	void SetFrustumLimits (double nearlimit, double farlimit);
 
 protected:
 	void SetAperture (double _ap);

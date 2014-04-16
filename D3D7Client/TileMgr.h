@@ -17,17 +17,9 @@
 
 #include "D3D7Util.h"
 #include "Mesh.h"
+#include "spherepatch.h"
 
 #define MAXQUEUE 10
-
-struct VBMESH {
-	LPDIRECT3DVERTEXBUFFER7 vb; // mesh vertex buffer
-	LPDIRECT3DVERTEXBUFFER7 bb; // bounding box vertex buffer
-	VERTEX_2TEX *vtx;           // separate storage of vertices (NULL if not available)
-	DWORD nv;                   // number of vertices
-	LPWORD idx;                 // list of indices
-	DWORD ni;                   // number of indices
-};
 
 #pragma pack(push,1)
 	struct TILEFILESPEC {
@@ -83,11 +75,6 @@ public:
 	virtual void SetMicrolevel (double lvl);
 
 	virtual void Render (LPDIRECT3DDEVICE7 dev, D3DMATRIX &wmat, double scale, int level, double viewap = 0.0, bool bfog = false);
-
-	static void CreateSphere (LPDIRECT3D7 d3d, LPDIRECT3DDEVICE7 dev, VBMESH &mesh, DWORD nrings, bool hemisphere, int which_half, int texres);
-	static void CreateSpherePatch (LPDIRECT3D7 d3d, LPDIRECT3DDEVICE7 dev, VBMESH &mesh, int nlng, int nlat, int ilat, int res, int bseg = -1,
-		bool reduce = true, bool outside = true, bool store_vtx = false, bool shift_origin = false);
-	static void DestroyVBMesh (VBMESH &mesh);
 
 protected:
 	void RenderSimple (int level, TILEDESC *tile);

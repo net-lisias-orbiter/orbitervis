@@ -12,6 +12,7 @@
 #include "Texture.h"
 #include "MeshMgr.h"
 #include "TileMgr.h"
+#include "tilemgr2.h"
 #include "RingMgr.h"
 #include "HazeMgr.h"
 #include "CSphereMgr.h"
@@ -44,11 +45,11 @@ DLLCLBK void InitModule (HINSTANCE hDLL)
 
 DLLCLBK void ExitModule (HINSTANCE hDLL)
 {
-	if (g_client) {
-		oapiUnregisterGraphicsClient (g_client);
-		delete g_client;
-		g_client = 0;
-	}
+	//if (g_client) {
+	//	oapiUnregisterGraphicsClient (g_client);
+	//	delete g_client;
+	//	g_client = 0;
+	//}
 }
 
 // ==============================================================
@@ -86,6 +87,8 @@ D3D7Client::D3D7Client (HINSTANCE hInstance): GDIClient (hInstance)
 
 D3D7Client::~D3D7Client ()
 {
+	// Unregister graphics client
+	oapiUnregisterGraphicsClient (this);
 	// Unregister the "Extra" entries
 	oapiUnregisterLaunchpadItem (lpiPlanetRender);
 	delete lpiPlanetRender;
@@ -443,6 +446,7 @@ HRESULT D3D7Client::Initialise3DEnvironment ()
 
 		// Device-specific initialisations
 		TileManager::GlobalInit (this);
+		TileManager2Base::GlobalInit (this);
 		RingManager::GlobalInit (this);
 		HazeManager::GlobalInit (this);
 		CSphereManager::GlobalInit (this);
@@ -472,6 +476,7 @@ void D3D7Client::Cleanup3DEnvironment ()
 		clipper = NULL;
 	}
 	TileManager::GlobalExit();
+	TileManager2Base::GlobalExit();
 	D3D7ParticleStream::GlobalExit();
 	vVessel::GlobalExit();
 	vStar::GlobalExit();

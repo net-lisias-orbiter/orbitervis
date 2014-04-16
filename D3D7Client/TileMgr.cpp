@@ -23,7 +23,6 @@ using namespace oapi;
 int SURF_MAX_PATCHLEVEL = 14;
 const DWORD NOTILE = (DWORD)-1; // "no tile" flag
 
-static float TEX2_MULTIPLIER = 4.0f; // microtexture multiplier
 LPDIRECT3DVERTEXBUFFER7 bbtarget;  // target buffer for bounding box transformation
 
 D3DMATERIAL7 pmat;
@@ -759,6 +758,7 @@ void TileManager::GlobalInit (D3D7Client *gclient)
 {
 	LPDIRECT3D7 d3d = gclient->GetDirect3D7();
 	LPDIRECT3DDEVICE7 dev = gclient->GetDevice();
+
 	vbMemCaps = (gclient->GetFramework()->IsTLDevice() ? 0 : D3DVBCAPS_SYSTEMMEMORY);
 
 	bGlobalSpecular = *(bool*)gclient->GetConfigParam (CFGPRM_SURFACEREFLECT);
@@ -766,40 +766,40 @@ void TileManager::GlobalInit (D3D7Client *gclient)
 	bGlobalLights   = *(bool*)gclient->GetConfigParam (CFGPRM_SURFACELIGHTS);
 
 	// Level 1 patch template
-	CreateSphere (d3d, dev, PATCH_TPL_1, 6, false, 0, 64);
+	CreateSphere (gclient, PATCH_TPL_1, 6, false, 0, 64);
 
 	// Level 2 patch template
-	CreateSphere (d3d, dev, PATCH_TPL_2, 8, false, 0, 128);
+	CreateSphere (gclient, PATCH_TPL_2, 8, false, 0, 128);
 
 	// Level 3 patch template
-	CreateSphere (d3d, dev, PATCH_TPL_3, 12, false, 0, 256);
+	CreateSphere (gclient, PATCH_TPL_3, 12, false, 0, 256);
 
 	// Level 4 patch templates
-	CreateSphere (d3d, dev, PATCH_TPL_4[0], 16, true, 0, 256);
-	CreateSphere (d3d, dev, PATCH_TPL_4[1], 16, true, 1, 256);
+	CreateSphere (gclient, PATCH_TPL_4[0], 16, true, 0, 256);
+	CreateSphere (gclient, PATCH_TPL_4[1], 16, true, 1, 256);
 
 	// Level 5 patch template
-	CreateSpherePatch (d3d, dev, PATCH_TPL_5, 4, 1, 0, 18);
+	CreateSpherePatch (gclient, PATCH_TPL_5, 4, 1, 0, 18);
 
 	// Level 6 patch templates
-	CreateSpherePatch (d3d, dev, PATCH_TPL_6[0], 8, 2, 0, 10, 16);
-	CreateSpherePatch (d3d, dev, PATCH_TPL_6[1], 4, 2, 1, 12);
+	CreateSpherePatch (gclient, PATCH_TPL_6[0], 8, 2, 0, 10, 16);
+	CreateSpherePatch (gclient, PATCH_TPL_6[1], 4, 2, 1, 12);
 
 	// Level 7 patch templates
-	CreateSpherePatch (d3d, dev, PATCH_TPL_7[0], 16, 4, 0, 12, 12, false);
-	CreateSpherePatch (d3d, dev, PATCH_TPL_7[1], 16, 4, 1, 12, 12, false);
-	CreateSpherePatch (d3d, dev, PATCH_TPL_7[2], 12, 4, 2, 10, 16, true);
-	CreateSpherePatch (d3d, dev, PATCH_TPL_7[3],  6, 4, 3, 12, -1, true);
+	CreateSpherePatch (gclient, PATCH_TPL_7[0], 16, 4, 0, 12, 12, false);
+	CreateSpherePatch (gclient, PATCH_TPL_7[1], 16, 4, 1, 12, 12, false);
+	CreateSpherePatch (gclient, PATCH_TPL_7[2], 12, 4, 2, 10, 16, true);
+	CreateSpherePatch (gclient, PATCH_TPL_7[3],  6, 4, 3, 12, -1, true);
 
 	// Level 8 patch templates
-	CreateSpherePatch (d3d, dev, PATCH_TPL_8[0], 32, 8, 0, 12, 15, false, true, true);
-	CreateSpherePatch (d3d, dev, PATCH_TPL_8[1], 32, 8, 1, 12, 15, false, true, true);
-	CreateSpherePatch (d3d, dev, PATCH_TPL_8[2], 30, 8, 2, 12, 16, false, true, true);
-	CreateSpherePatch (d3d, dev, PATCH_TPL_8[3], 28, 8, 3, 12, 12, false, true, true);
-	CreateSpherePatch (d3d, dev, PATCH_TPL_8[4], 24, 8, 4, 12, 12, false, true, true);
-	CreateSpherePatch (d3d, dev, PATCH_TPL_8[5], 18, 8, 5, 12, 12, false, true, true);
-	CreateSpherePatch (d3d, dev, PATCH_TPL_8[6], 12, 8, 6, 10, 16, true,  true, true);
-	CreateSpherePatch (d3d, dev, PATCH_TPL_8[7],  6, 8, 7, 12, -1, true,  true, true);
+	CreateSpherePatch (gclient, PATCH_TPL_8[0], 32, 8, 0, 12, 15, false, true, true);
+	CreateSpherePatch (gclient, PATCH_TPL_8[1], 32, 8, 1, 12, 15, false, true, true);
+	CreateSpherePatch (gclient, PATCH_TPL_8[2], 30, 8, 2, 12, 16, false, true, true);
+	CreateSpherePatch (gclient, PATCH_TPL_8[3], 28, 8, 3, 12, 12, false, true, true);
+	CreateSpherePatch (gclient, PATCH_TPL_8[4], 24, 8, 4, 12, 12, false, true, true);
+	CreateSpherePatch (gclient, PATCH_TPL_8[5], 18, 8, 5, 12, 12, false, true, true);
+	CreateSpherePatch (gclient, PATCH_TPL_8[6], 12, 8, 6, 10, 16, true,  true, true);
+	CreateSpherePatch (gclient, PATCH_TPL_8[7],  6, 8, 7, 12, -1, true,  true, true);
 
 	// Patch templates for level 9 and beyond
 	const int n = 8;
@@ -811,9 +811,9 @@ void TileManager::GlobalInit (D3D7Client *gclient)
 		for (i = 0; i < 8; i++) {
 			for (j = 0; j < mult; j++) {
 				if (idx < n*mult)
-					CreateSpherePatch (d3d, dev, PATCH_TPL[lvl][idx], nlng8[i]*mult, n*mult, idx, 12, res8[i], false, true, true, true);
+					CreateSpherePatch (gclient, PATCH_TPL[lvl][idx], nlng8[i]*mult, n*mult, idx, 12, res8[i], false, true, true, true);
 				else
-					CreateSpherePatch (d3d, dev, PATCH_TPL[lvl][idx], nlng8[i]*mult, n*mult, idx, 12, -1, true, true, true, true);
+					CreateSpherePatch (gclient, PATCH_TPL[lvl][idx], nlng8[i]*mult, n*mult, idx, 12, -1, true, true, true, true);
 				idx++;
 			}
 		}
@@ -880,300 +880,8 @@ void TileManager::SetMicrolevel (double lvl)
 }
 
 // ==============================================================
-// CreateSphere()
-// Create a spherical mesh of radius 1 and resolution defined by nrings
-// Below is a list of #vertices and #indices against nrings:
-//
-// nrings  nvtx   nidx   (nidx = 12 nrings^2)
-//   4       38    192
-//   6       80    432
-//   8      138    768
-//  12      302   1728
-//  16      530   3072
-//  20      822   4800
-//  24     1178   6912
-
-void TileManager::CreateSphere (LPDIRECT3D7 d3d, LPDIRECT3DDEVICE7 dev, VBMESH &mesh, DWORD nrings, bool hemisphere, int which_half, int texres)
-{
-	// Allocate memory for the vertices and indices
-	DWORD       nVtx = hemisphere ? nrings*(nrings+1)+2 : nrings*(2*nrings+1)+2;
-	DWORD       nIdx = hemisphere ? 6*nrings*nrings : 12*nrings*nrings;
-	VERTEX_2TEX* Vtx = new VERTEX_2TEX[nVtx];
-	WORD*        Idx = new WORD[nIdx];
-
-	// Counters
-    WORD x, y, nvtx = 0, nidx = 0;
-	VERTEX_2TEX *vtx = Vtx;
-	WORD *idx = Idx;
-
-	// Angle deltas for constructing the sphere's vertices
-    FLOAT fDAng   = (FLOAT)PI / nrings;
-    FLOAT fDAngY0 = fDAng;
-	DWORD x1 = (hemisphere ? nrings : nrings*2);
-	DWORD x2 = x1+1;
-	FLOAT du = 0.5f/(FLOAT)texres;
-	FLOAT a  = (1.0f-2.0f*du)/(FLOAT)x1;
-
-    // Make the middle of the sphere
-    for (y = 0; y < nrings; y++) {
-        FLOAT y0 = (FLOAT)cos(fDAngY0);
-        FLOAT r0 = (FLOAT)sin(fDAngY0);
-		FLOAT tv = fDAngY0/(FLOAT)PI;
-
-        for (x = 0; x < x2; x++) {
-            FLOAT fDAngX0 = x*fDAng - (FLOAT)PI;  // subtract Pi to wrap at +-180°
-			if (hemisphere && which_half) fDAngX0 += (FLOAT)PI;
-
-			D3DVECTOR v = {r0*(FLOAT)cos(fDAngX0), y0, r0*(FLOAT)sin(fDAngX0)};
-			FLOAT tu = a*(FLOAT)x + du;
-			//FLOAT tu = x/(FLOAT)x1;
-
-            *vtx++ = VERTEX_2TEX (v, v, tu, tv, tu, tv);
-			nvtx++;
-        }
-        fDAngY0 += fDAng;
-    }
-
-    for (y = 0; y < nrings-1; y++) {
-        for (x = 0; x < x1; x++) {
-            *idx++ = (WORD)( (y+0)*x2 + (x+0) );
-            *idx++ = (WORD)( (y+0)*x2 + (x+1) );
-            *idx++ = (WORD)( (y+1)*x2 + (x+0) );
-            *idx++ = (WORD)( (y+0)*x2 + (x+1) );
-            *idx++ = (WORD)( (y+1)*x2 + (x+1) );
-            *idx++ = (WORD)( (y+1)*x2 + (x+0) ); 
-			nidx += 6;
-        }
-    }
-    // Make top and bottom
-	D3DVECTOR pvy = {0, 1, 0}, nvy = {0,-1,0};
-	WORD wNorthVtx = nvtx;
-    *vtx++ = VERTEX_2TEX (pvy, pvy, 0.5f, 0.0f, 0.5f, 0.0f);
-    nvtx++;
-	WORD wSouthVtx = nvtx;
-    *vtx++ = VERTEX_2TEX (nvy, nvy, 0.5f, 1.0f, 0.5f, 1.0f);
-    nvtx++;
-
-    for (x = 0; x < x1; x++) {
-		WORD p1 = wSouthVtx;
-		WORD p2 = (WORD)( (y)*x2 + (x+0) );
-		WORD p3 = (WORD)( (y)*x2 + (x+1) );
-
-        *idx++ = p1;
-        *idx++ = p3;
-        *idx++ = p2;
-		nidx += 3;
-    }
-
-    for (x = 0; x < x1; x++) {
-		WORD p1 = wNorthVtx;
-		WORD p2 = (WORD)( (0)*x2 + (x+0) );
-		WORD p3 = (WORD)( (0)*x2 + (x+1) );
-
-        *idx++ = p1;
-        *idx++ = p3;
-        *idx++ = p2;
-		nidx += 3;
-    }
-
-	D3DVERTEXBUFFERDESC vbd = 
-	{ sizeof(D3DVERTEXBUFFERDESC), vbMemCaps | D3DVBCAPS_WRITEONLY, FVF_2TEX, nVtx };
-	LPVOID data;
-
-	d3d->CreateVertexBuffer (&vbd, &mesh.vb, 0);
-	mesh.vb->Lock (DDLOCK_WAIT | DDLOCK_WRITEONLY | DDLOCK_DISCARDCONTENTS, (LPVOID*)&data, NULL);
-	memcpy (data, Vtx, nVtx*sizeof(VERTEX_2TEX));
-	mesh.vb->Unlock();
-	mesh.vb->Optimize (dev, 0);
-	delete []Vtx;
-	mesh.nv  = nVtx;
-	mesh.idx = Idx;
-	mesh.ni  = nIdx;
-	mesh.bb = 0;
-	mesh.vtx = 0;
-}
-
-// ==============================================================
-
-void TileManager::CreateSpherePatch (LPDIRECT3D7 d3d, LPDIRECT3DDEVICE7 dev, VBMESH &mesh, int nlng, int nlat, int ilat, int res, int bseg,
-	bool reduce, bool outside, bool store_vtx, bool shift_origin)
-{
-	const float c1 = 1.0f, c2 = 0.0f;
-	int i, j, nVtx, nIdx, nseg, n, nofs0, nofs1;
-	double minlat, maxlat, lat, minlng, maxlng, lng;
-	double slat, clat, slng, clng;
-	WORD tmp;
-	VECTOR3 pos, tpos;
-
-	minlat = PI*0.5 * (double)ilat/(double)nlat;
-	maxlat = PI*0.5 * (double)(ilat+1)/(double)nlat;
-	minlng = 0;
-	maxlng = PI*2.0/(double)nlng;
-	if (bseg < 0 || ilat == nlat-1) bseg = (nlat-ilat)*res;
-
-	// generate nodes
-	nVtx = (bseg+1)*(res+1);
-	if (reduce) nVtx -= ((res+1)*res)/2;
-	VERTEX_2TEX *Vtx = new VERTEX_2TEX[nVtx];
-
-	// create transformation for bounding box
-	// we define the local coordinates for the patch so that the x-axis points
-	// from (minlng,minlat) corner to (maxlng,minlat) corner (origin is halfway between)
-	// y-axis points from local origin to middle between (minlng,maxlat) and (maxlng,maxlat)
-	// bounding box is created in this system and then transformed back to planet coords.
-	double clat0 = cos(minlat), slat0 = sin(minlat);
-	double clng0 = cos(minlng), slng0 = sin(minlng);
-	double clat1 = cos(maxlat), slat1 = sin(maxlat);
-	double clng1 = cos(maxlng), slng1 = sin(maxlng);
-	VECTOR3 ex = {clat0*clng1 - clat0*clng0, 0, clat0*slng1 - clat0*slng0}; normalise(ex);
-	VECTOR3 ey = {0.5*(clng0+clng1)*(clat1-clat0), slat1-slat0, 0.5*(slng0+slng1)*(clat1-clat0)}; normalise(ey);
-	VECTOR3 ez = crossp (ey, ex);
-	MATRIX3 R = {ex.x, ex.y, ex.z,  ey.x, ey.y, ey.z,  ez.x, ez.y, ez.z};
-	VECTOR3 pref = {0.5*(clat0*clng1 + clat0*clng0), slat0, 0.5*(clat0*slng1 + clat0*slng0)}; // origin
-	VECTOR3 tpmin, tpmax; 
-
-	float dx, dy;
-	if (shift_origin) {
-		dx = (float)clat0;
-		dy = (float)slat0;
-	}
-
-	for (i = n = 0; i <= res; i++) {  // loop over longitudinal strips
-		lat = minlat + (maxlat-minlat) * (double)i/(double)res;
-		slat = sin(lat), clat = cos(lat);
-		nseg = (reduce ? bseg-i : bseg);
-		for (j = 0; j <= nseg; j++) {
-			lng = (nseg ? minlng + (maxlng-minlng) * (double)j/(double)nseg : 0.0);
-			slng = sin(lng), clng = cos(lng);
-			pos = _V(clat*clng, slat, clat*slng);
-			tpos = mul (R, pos-pref);
-			if (!n) {
-				tpmin = tpos;
-				tpmax = tpos;
-			} else {
-				if      (tpos.x < tpmin.x) tpmin.x = tpos.x;
-			    else if (tpos.x > tpmax.x) tpmax.x = tpos.x;
-				if      (tpos.y < tpmin.y) tpmin.y = tpos.y;
-				else if (tpos.y > tpmax.y) tpmax.y = tpos.y;
-				if      (tpos.z < tpmin.z) tpmin.z = tpos.z;
-				else if (tpos.z > tpmax.z) tpmax.z = tpos.z;
-			}
-
-			Vtx[n].x = Vtx[n].nx = D3DVAL(pos.x);
-			Vtx[n].y = Vtx[n].ny = D3DVAL(pos.y);
-			Vtx[n].z = Vtx[n].nz = D3DVAL(pos.z);
-			if (shift_origin)
-				Vtx[n].x -= dx, Vtx[n].y -= dy;
-
-			Vtx[n].tu0 = D3DVAL(nseg ? (c1*j)/nseg+c2 : 0.5f); // overlap to avoid seams
-			Vtx[n].tv0 = D3DVAL((c1*(res-i))/res+c2);
-			Vtx[n].tu1 = (nseg ? Vtx[n].tu0 * TEX2_MULTIPLIER : 0.5f);
-			Vtx[n].tv1 = Vtx[n].tv0 * TEX2_MULTIPLIER;
-			if (!outside) {
-				Vtx[n].nx = -Vtx[n].nx;
-				Vtx[n].ny = -Vtx[n].ny;
-				Vtx[n].nz = -Vtx[n].nz;
-			}
-			n++;
-		}
-	}
-
-	// generate faces
-	nIdx = (reduce ? res * (2*bseg-res) : 2*res*bseg) * 3;
-	WORD *Idx = new WORD[nIdx];
-
-	for (i = n = nofs0 = 0; i < res; i++) {
-		nseg = (reduce ? bseg-i : bseg);
-		nofs1 = nofs0+nseg+1;
-		for (j = 0; j < nseg; j++) {
-			Idx[n++] = nofs0+j;
-			Idx[n++] = nofs1+j;
-			Idx[n++] = nofs0+j+1;
-			if (reduce && j == nseg-1) break;
-			Idx[n++] = nofs0+j+1;
-			Idx[n++] = nofs1+j;
-			Idx[n++] = nofs1+j+1;
-		}
-		nofs0 = nofs1;
-	}
-	if (!outside)
-		for (i = 0; i < nIdx/3; i += 3)
-			tmp = Idx[i+1], Idx[i+1] = Idx[i+2], Idx[i+2] = tmp;
-
-	D3DVERTEXBUFFERDESC vbd = 
-	{ sizeof(D3DVERTEXBUFFERDESC), vbMemCaps | D3DVBCAPS_WRITEONLY, FVF_2TEX, nVtx };
-	d3d->CreateVertexBuffer (&vbd, &mesh.vb, 0);
-	LPVOID data;
-	mesh.vb->Lock (DDLOCK_WAIT | DDLOCK_WRITEONLY | DDLOCK_DISCARDCONTENTS, (LPVOID*)&data, NULL);
-	memcpy (data, Vtx, nVtx*sizeof(VERTEX_2TEX));
-	mesh.vb->Unlock();
-	mesh.vb->Optimize (dev, 0);
-
-	if (store_vtx) {
-		mesh.vtx = Vtx;
-	} else {
-		delete []Vtx;
-		mesh.vtx = 0;
-	}
-	mesh.nv  = nVtx;
-	mesh.idx = Idx;
-	mesh.ni  = nIdx;
-
-	// set bounding box
-	static D3DVERTEXBUFFERDESC bbvbd ={ sizeof(D3DVERTEXBUFFERDESC), D3DVBCAPS_SYSTEMMEMORY, D3DFVF_XYZ, 8 };
-	VERTEX_XYZ *V;
-	d3d->CreateVertexBuffer (&bbvbd, &mesh.bb, 0);
-	mesh.bb->Lock (DDLOCK_WAIT | DDLOCK_WRITEONLY | DDLOCK_DISCARDCONTENTS, (LPVOID*)&V, NULL);
-
-	if (shift_origin) {
-		pref.x -= dx;
-		pref.y -= dy;
-	}
-
-	// transform bounding box back to patch coordinates
-	pos = tmul (R, _V(tpmin.x, tpmin.y, tpmin.z)) + pref;
-	V[0].x = D3DVAL(pos.x); V[0].y = D3DVAL(pos.y); V[0].z = D3DVAL(pos.z);
-	pos = tmul (R, _V(tpmax.x, tpmin.y, tpmin.z)) + pref;
-	V[1].x = D3DVAL(pos.x); V[1].y = D3DVAL(pos.y); V[1].z = D3DVAL(pos.z);
-	pos = tmul (R, _V(tpmin.x, tpmax.y, tpmin.z)) + pref;
-	V[2].x = D3DVAL(pos.x); V[2].y = D3DVAL(pos.y); V[2].z = D3DVAL(pos.z);
-	pos = tmul (R, _V(tpmax.x, tpmax.y, tpmin.z)) + pref;
-	V[3].x = D3DVAL(pos.x); V[3].y = D3DVAL(pos.y); V[3].z = D3DVAL(pos.z);
-	pos = tmul (R, _V(tpmin.x, tpmin.y, tpmax.z)) + pref;
-	V[4].x = D3DVAL(pos.x); V[4].y = D3DVAL(pos.y); V[4].z = D3DVAL(pos.z);
-	pos = tmul (R, _V(tpmax.x, tpmin.y, tpmax.z)) + pref;
-	V[5].x = D3DVAL(pos.x); V[5].y = D3DVAL(pos.y); V[5].z = D3DVAL(pos.z);
-	pos = tmul (R, _V(tpmin.x, tpmax.y, tpmax.z)) + pref;
-	V[6].x = D3DVAL(pos.x); V[6].y = D3DVAL(pos.y); V[6].z = D3DVAL(pos.z);
-	pos = tmul (R, _V(tpmax.x, tpmax.y, tpmax.z)) + pref;
-	V[7].x = D3DVAL(pos.x); V[7].y = D3DVAL(pos.y); V[7].z = D3DVAL(pos.z);
-	mesh.bb->Unlock ();
-}
-
-// ==============================================================
-
-void TileManager::DestroyVBMesh (VBMESH &mesh)
-{
-	mesh.vb->Release();
-	mesh.vb  = 0;
-	mesh.nv  = 0;
-	if (mesh.bb) {
-		mesh.bb->Release();
-		mesh.bb  = 0;
-	}
-	delete []mesh.idx;
-	mesh.idx = 0;
-	if (mesh.vtx) {
-		delete []mesh.vtx;
-		mesh.vtx = 0;
-	}
-	mesh.ni  = 0;
-}
-
-// ==============================================================
 // static member initialisation
 
-DWORD TileManager::vbMemCaps = 0;
 int TileManager::patchidx[9] = {0, 1, 2, 3, 5, 13, 37, 137, 501};
 
 const D3D7Config *TileManager::cfg = NULL;
@@ -1183,6 +891,7 @@ bool TileManager::bGlobalLights = false;
 
 TileBuffer *TileManager::tilebuf = NULL;
 D3DMATRIX   TileManager::Rsouth;
+DWORD TileManager::vbMemCaps = 0;
 
 VBMESH TileManager::PATCH_TPL_1;
 VBMESH TileManager::PATCH_TPL_2;

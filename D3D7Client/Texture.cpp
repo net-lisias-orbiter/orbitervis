@@ -102,7 +102,7 @@ HRESULT TextureManager::ReadTexture (FILE *file, LPDIRECTDRAWSURFACE7 *ppdds, DW
 
 HRESULT TextureManager::LoadTexture (const char *fname, LPDIRECTDRAWSURFACE7 *ppdds, DWORD flags)
 {
-	HRESULT hr = S_OK;
+	HRESULT hr = S_FALSE;
 	char cpath[256];
 	if (gc->TexturePath (fname, cpath)) {
 		FILE *f = fopen (cpath, "rb");

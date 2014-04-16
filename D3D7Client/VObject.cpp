@@ -41,8 +41,10 @@ vObject::vObject (OBJHANDLE _hObj, const Scene *scene): VisObject (_hObj)
 	active = true;
 	hObj = _hObj;
 	scn  = scene;
-	D3DMAT_Identity (&mWorld);
+	size = oapiGetSize(hObj);
 	cdist = 0.0;
+	dmWorld = identity4();
+	D3DMAT_Identity (&mWorld);
 }
 
 vObject *vObject::Create (OBJHANDLE _hObj, const Scene *scene)
@@ -96,6 +98,10 @@ bool vObject::Update ()
 	cdist = length (cpos);
 	// camera distance
 
+	dmWorld = _M(grot.m11, grot.m21, grot.m31, 0,
+		         grot.m12, grot.m22, grot.m32, 0,
+				 grot.m13, grot.m23, grot.m33, 0,
+				 cpos.x,   cpos.y,   cpos.z,   1);
 	D3DMAT_SetInvRotation (&mWorld, &grot);
 	D3DMAT_SetTranslation (&mWorld, &cpos);
 	// update the object's world matrix

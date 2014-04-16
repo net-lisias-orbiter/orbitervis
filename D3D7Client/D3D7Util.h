@@ -85,6 +85,7 @@ struct VERTEX_TL2TEX {
 	D3DCOLOR diff, spec;
 	D3DVALUE tu0, tv0, tu1, tv1;
 };
+
 #define FVF_TL2TEX ( D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_SPECULAR | D3DFVF_TEX2 | D3DFVF_TEXCOORDSIZE2(0) | D3DFVF_TEXCOORDSIZE2(1) )
 
 VERTEX_XYZ  *GetVertexXYZ  (DWORD n);
@@ -97,5 +98,13 @@ VERTEX_XYZC *GetVertexXYZC (DWORD n);
 
 #define SAFE_DELETE(p)  { if(p) { delete (p);     (p)=NULL; } }
 #define SAFE_RELEASE(p) { if(p) { (p)->Release(); (p)=NULL; } }
+
+inline void MATRIX4toD3DMATRIX (const MATRIX4 &M, D3DMATRIX &D)
+{
+	D._11 = (D3DVALUE)M.m11;  D._12 = (D3DVALUE)M.m12;  D._13 = (D3DVALUE)M.m13;  D._14 = (D3DVALUE)M.m14;
+	D._21 = (D3DVALUE)M.m21;  D._22 = (D3DVALUE)M.m22;  D._23 = (D3DVALUE)M.m23;  D._24 = (D3DVALUE)M.m24;
+	D._31 = (D3DVALUE)M.m31;  D._32 = (D3DVALUE)M.m32;  D._33 = (D3DVALUE)M.m33;  D._34 = (D3DVALUE)M.m34;
+	D._41 = (D3DVALUE)M.m41;  D._42 = (D3DVALUE)M.m42;  D._43 = (D3DVALUE)M.m43;  D._44 = (D3DVALUE)M.m44;
+}
 
 #endif // !__D3DUTIL_H

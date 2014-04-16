@@ -32,7 +32,25 @@ Camera::Camera (LPDIRECT3DDEVICE7 _dev, DWORD w, DWORD h)
 
 	D3DMAT_Identity (&mView);
 	bProjView_valid = false;
-	SetFustrumLimits (2.5f, 5e6f); // initial limits
+	SetFrustumLimits (2.5f, 5e6f); // initial limits
+}
+
+MATRIX4 Camera::ProjectionMatrix() const
+{
+	MATRIX4 mat = {aspect/tan_ap,0,0,0,
+		           0,1.0/tan_ap,0,0,
+				   0,0,farplane/(farplane-nearplane),1.0,
+				   0,0,-nearplane*farplane/(farplane-nearplane),0};
+	return mat;
+}
+
+MATRIX4 Camera::ViewMatrix() const
+{
+	MATRIX4 mat = {grot.m11,grot.m12,grot.m13,0,
+		           grot.m21,grot.m22,grot.m23,0,
+				   grot.m31,grot.m32,grot.m33,0,
+				   0,0,0,1};
+	return mat;
 }
 
 const D3DMATRIX *Camera::GetProjectionViewMatrix () const
@@ -63,7 +81,7 @@ void Camera::SetAperture (double _ap)
 	UpdateProjectionMatrix ();
 }
 
-void Camera::SetFustrumLimits (double nearlimit, double farlimit)
+void Camera::SetFrustumLimits (double nearlimit, double farlimit)
 {
 	nearplane = (float)nearlimit;
 	farplane = (float)farlimit;
