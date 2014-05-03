@@ -43,7 +43,7 @@ vVessel::~vVessel ()
 
 void vVessel::GlobalInit (D3D7Client *gc)
 {
-	const DWORD texsize = 256; // render target texture size
+	const DWORD texsize = *(int*)gc->GetConfigParam (CFGPRM_PANELMFDHUDSIZE);
 
 	if (mfdsurf) mfdsurf->Release();
 	mfdsurf = (LPDIRECTDRAWSURFACE7)gc->clbkCreateTexture (texsize, texsize);

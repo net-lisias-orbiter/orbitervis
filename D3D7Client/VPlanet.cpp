@@ -2,7 +2,7 @@
 // VPlanet.cpp
 // Part of the ORBITER VISUALISATION PROJECT (OVP)
 // Released under GNU General Public License
-// Copyright (C) 2006-2010 Martin Schweiger
+// Copyright (C) 2006-2014 Martin Schweiger
 // ==============================================================
 
 // ==============================================================
