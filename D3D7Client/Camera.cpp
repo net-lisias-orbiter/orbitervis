@@ -1,11 +1,12 @@
 // ==============================================================
-// Camera.cpp
-// Part of the ORBITER VISUALISATION PROJECT (OVP)
-// Released under GNU General Public License
-// Copyright (C) 2006 Martin Schweiger
+//   ORBITER VISUALISATION PROJECT (OVP)
+//   D3D7 Client module
+//   Copyright (C) 2006-2014 Martin Schweiger
+//   Dual licensed under GPL v3 and LGPL v3
 // ==============================================================
 
 // ==============================================================
+// Camera.cpp
 // Class Camera (implementation)
 //
 // The camera defines the observer position in the 3D world.

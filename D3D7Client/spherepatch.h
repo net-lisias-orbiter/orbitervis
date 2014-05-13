@@ -1,3 +1,15 @@
+// ==============================================================
+//   ORBITER VISUALISATION PROJECT (OVP)
+//   D3D7 Client module
+//   Copyright (C) 2006-2014 Martin Schweiger
+//   Dual licensed under GPL v3 and LGPL v3
+// ==============================================================
+
+// ==============================================================
+// spherepatch.h
+// Create meshes for spheres and sphere patches
+// ==============================================================
+
 #ifndef __SPHEREPATCH_H
 #define __SPHEREPATCH_H
 

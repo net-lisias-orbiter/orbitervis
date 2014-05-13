@@ -1,3 +1,22 @@
+// ==============================================================
+//   ORBITER VISUALISATION PROJECT (OVP)
+//   D3D7 Client module
+//   Copyright (C) 2006-2014 Martin Schweiger
+//   Dual licensed under GPL v3 and LGPL v3
+// ==============================================================
+
+// ==============================================================
+// Scene.cpp
+// Class Scene
+//
+// A "Scene" represents the 3-D world as seen from a specific
+// viewpoint ("camera"). Each scene therefore has a camera object
+// associated with it. The Orbiter core supports a single
+// camera, but in principle a graphics client could define
+// multiple scenes and render them simultaneously into separate
+// windows (or into MFD display surfaces, etc.)
+// ==============================================================
+
 #include "Scene.h"
 #include "Camera.h"
 #include "VPlanet.h"

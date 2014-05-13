@@ -1,11 +1,12 @@
 // ==============================================================
-// Mesh.cpp
-// Part of the ORBITER VISUALISATION PROJECT (OVP)
-// Released under GNU General Public License
-// Copyright (C) 2006 Martin Schweiger
+//   ORBITER VISUALISATION PROJECT (OVP)
+//   D3D7 Client module
+//   Copyright (C) 2006-2014 Martin Schweiger
+//   Dual licensed under GPL v3 and LGPL v3
 // ==============================================================
 
 // ==============================================================
+// Mesh.cpp
 // class D3D7Mesh (implementation)
 //
 // This class represents a mesh in terms of DX7 interface elements
@@ -250,20 +251,28 @@ int D3D7Mesh::EditGroup (DWORD grp, GROUPEDITSPEC *ges)
 	else if (flag & GRPEDIT_DELUSERFLAG)
 		g->UsrFlag &= ~ges->UsrFlag;
 
-	if (flag & GRPEDIT_VTX) {
+	if (flag & GRPEDIT_VTXMOD) {
 		D3DVERTEX *vtx;
 		if (g->VtxBuf->Lock (DDLOCK_WRITEONLY, (LPVOID*)&vtx, 0) == D3D_OK) {
 			for (i = 0; i < ges->nVtx; i++) {
 				vi = (ges->vIdx ? ges->vIdx[i] : i);
 				if (vi < g->nVtx) {
-					if (flag & GRPEDIT_VTXCRDX) vtx[vi].x = ges->Vtx[i].x;
-					if (flag & GRPEDIT_VTXCRDY) vtx[vi].y = ges->Vtx[i].y;
-					if (flag & GRPEDIT_VTXCRDZ) vtx[vi].z = ges->Vtx[i].z;
-					if (flag & GRPEDIT_VTXNMLX) vtx[vi].nx = ges->Vtx[i].nx;
-					if (flag & GRPEDIT_VTXNMLY) vtx[vi].ny = ges->Vtx[i].ny;
-					if (flag & GRPEDIT_VTXNMLZ) vtx[vi].nz = ges->Vtx[i].nz;
-					if (flag & GRPEDIT_VTXTEXU) vtx[vi].tu = ges->Vtx[i].tu;
-					if (flag & GRPEDIT_VTXTEXV) vtx[vi].tv = ges->Vtx[i].tv;
+					if      (flag & GRPEDIT_VTXCRDX)    vtx[vi].x   = ges->Vtx[i].x;
+					else if (flag & GRPEDIT_VTXCRDADDX) vtx[vi].x  += ges->Vtx[i].x;
+					if      (flag & GRPEDIT_VTXCRDY)    vtx[vi].y   = ges->Vtx[i].y;
+					else if (flag & GRPEDIT_VTXCRDADDY) vtx[vi].y  += ges->Vtx[i].y;
+					if      (flag & GRPEDIT_VTXCRDZ)    vtx[vi].z   = ges->Vtx[i].z;
+					else if (flag & GRPEDIT_VTXCRDADDZ) vtx[vi].z  += ges->Vtx[i].z;
+					if      (flag & GRPEDIT_VTXNMLX)    vtx[vi].nx  = ges->Vtx[i].nx;
+					else if (flag & GRPEDIT_VTXNMLADDX) vtx[vi].nx += ges->Vtx[i].nx;
+					if      (flag & GRPEDIT_VTXNMLY)    vtx[vi].ny  = ges->Vtx[i].ny;
+					else if (flag & GRPEDIT_VTXNMLADDY) vtx[vi].ny += ges->Vtx[i].ny;
+					if      (flag & GRPEDIT_VTXNMLZ)    vtx[vi].nz  = ges->Vtx[i].nz;
+					else if (flag & GRPEDIT_VTXNMLADDZ) vtx[vi].nz += ges->Vtx[i].nz;
+					if      (flag & GRPEDIT_VTXTEXU)    vtx[vi].tu  = ges->Vtx[i].tu;
+					else if (flag & GRPEDIT_VTXTEXADDU) vtx[vi].tu += ges->Vtx[i].tu;
+					if      (flag & GRPEDIT_VTXTEXV)    vtx[vi].tv  = ges->Vtx[i].tv;
+					else if (flag & GRPEDIT_VTXTEXADDV) vtx[vi].tv += ges->Vtx[i].tv;
 				}
 			}
 			g->VtxBuf->Unlock ();

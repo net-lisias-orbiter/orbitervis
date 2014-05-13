@@ -1,7 +1,15 @@
-// =======================================================================
-// CSphereMgr: Rendering of the celestial sphere background at variable
+// ==============================================================
+//   ORBITER VISUALISATION PROJECT (OVP)
+//   D3D7 Client module
+//   Copyright (C) 2006-2014 Martin Schweiger
+//   Dual licensed under GPL v3 and LGPL v3
+// ==============================================================
+
+// ==============================================================
+// CSphereMgr.h:
+// Rendering of the celestial sphere background at variable
 // resolutions.
-// =======================================================================
+// ==============================================================
 
 #ifndef __CSPHEREMGR_H
 #define __CSPHEREMGR_H

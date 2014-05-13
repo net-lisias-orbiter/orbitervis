@@ -1,14 +1,15 @@
-// =======================================================================
-// cloudmgr2.h
-// Part of the ORBITER VISUALISATION PROJECT (OVP)
-// Released under GNU General Public License
-// Copyright (C) 2006-2014 Martin Schweiger
-// =======================================================================
+// ==============================================================
+//   ORBITER VISUALISATION PROJECT (OVP)
+//   D3D7 Client module
+//   Copyright (C) 2006-2014 Martin Schweiger
+//   Dual licensed under GPL v3 and LGPL v3
+// ==============================================================
 
-// =======================================================================
+// ==============================================================
+// cloudmgr2.h
 // Rendering of planetary cloud layers using texture tiles at
 // variable resolutions (new version).
-// =======================================================================
+// ==============================================================
 
 #ifndef __CLOUDMGR2_H
 #define __CLOUDMGR2_H

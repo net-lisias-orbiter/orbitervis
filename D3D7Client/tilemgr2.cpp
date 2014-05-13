@@ -1,7 +1,15 @@
-// =======================================================================
-// TileManager2: Rendering of planetary surfaces using texture tiles at
+// ==============================================================
+//   ORBITER VISUALISATION PROJECT (OVP)
+//   D3D7 Client module
+//   Copyright (C) 2006-2014 Martin Schweiger
+//   Dual licensed under GPL v3 and LGPL v3
+// ==============================================================
+
+// ==============================================================
+// tilemanager2.cpp
+// Rendering of planetary surfaces using texture tiles at
 // variable resolutions (new version).
-// =======================================================================
+// ==============================================================
 
 #include "tilemgr2.h"
 #include "Texture.h"

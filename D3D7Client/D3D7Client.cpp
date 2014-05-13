@@ -1,3 +1,18 @@
+// ==============================================================
+//   ORBITER VISUALISATION PROJECT (OVP)
+//   D3D7 Client module
+//   Copyright (C) 2006-2014 Martin Schweiger
+//   Dual licensed under GPL v3 and LGPL v3
+// ==============================================================
+
+// --------------------------------------------------------------
+// D3D7Client.h
+// Class D3D7Client
+//
+// DX7 version of a graphics subsystem for Orbiter, derived from
+// the GraphicsClient class in the Orbiter API.
+// --------------------------------------------------------------
+
 #define STRICT 1
 #define ORBITER_MODULE
 #include "orbitersdk.h"

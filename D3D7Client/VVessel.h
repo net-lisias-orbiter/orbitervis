@@ -1,8 +1,13 @@
 // ==============================================================
+//   ORBITER VISUALISATION PROJECT (OVP)
+//   D3D7 Client module
+//   Copyright (C) 2006-2014 Martin Schweiger
+//   Dual licensed under GPL v3 and LGPL v3
+// ==============================================================
+
+// ==============================================================
 // VVessel.h
-// Part of the ORBITER VISUALISATION PROJECT (OVP)
-// Released under GNU General Public License
-// Copyright (C) 2006 Martin Schweiger
+// Vessel visualisation
 // ==============================================================
 
 #ifndef __VVESSEL_H

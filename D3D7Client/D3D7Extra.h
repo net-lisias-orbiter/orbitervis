@@ -1,5 +1,15 @@
+// ==============================================================
+//   ORBITER VISUALISATION PROJECT (OVP)
+//   D3D7 Client module
+//   Copyright (C) 2006-2014 Martin Schweiger
+//   Dual licensed under GPL v3 and LGPL v3
+// ==============================================================
+
+// ==============================================================
+// D3D7Extra.h
 // Management of the configuration dialogs under the "Extra"
 // Launchpad tab
+// ==============================================================
 
 #ifndef __D3D7EXTRA_H
 #define __D3D7EXTRA_H

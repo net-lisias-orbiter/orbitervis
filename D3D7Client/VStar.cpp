@@ -1,11 +1,12 @@
 // ==============================================================
-// VStar.cpp
-// Part of the ORBITER VISUALISATION PROJECT (OVP)
-// Released under GNU General Public License
-// Copyright (C) 2006-2010 Martin Schweiger
+//   ORBITER VISUALISATION PROJECT (OVP)
+//   D3D7 Client module
+//   Copyright (C) 2006-2014 Martin Schweiger
+//   Dual licensed under GPL v3 and LGPL v3
 // ==============================================================
 
 // ==============================================================
+// VStar.cpp
 // class vStar (interface)
 //
 // Renders the central star as a billboard mesh.

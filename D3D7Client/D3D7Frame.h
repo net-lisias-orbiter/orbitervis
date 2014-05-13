@@ -1,5 +1,12 @@
-// ====================================================================================
-// File: D3d7frame.h
+// ==============================================================
+//   ORBITER VISUALISATION PROJECT (OVP)
+//   D3D7 Client module
+//   Copyright (C) 2006-2014 Martin Schweiger
+//   Dual licensed under GPL v3 and LGPL v3
+// ==============================================================
+
+// ==============================================================
+// D3d7frame.h
 // Desc: Class to manage the Direct3D environment objects
 //
 //       The class is initialized with the Initialize() function, after which
@@ -13,7 +20,7 @@
 //       restored with the RestoreSurfaces() function. Finally, if normal
 //       Windows output is needed, the FlipToGDISurface() provides a GDI
 //       surface to draw on.
-// ====================================================================================
+// ==============================================================
 
 #ifndef D3D7FRAME_H
 #define D3D7FRAME_H

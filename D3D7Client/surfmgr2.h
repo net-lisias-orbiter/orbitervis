@@ -1,11 +1,12 @@
 // ==============================================================
-// surfmgr2.h
-// Part of the ORBITER VISUALISATION PROJECT (OVP)
-// Released under GNU General Public License
-// Copyright (C) 2013 Martin Schweiger
+//   ORBITER VISUALISATION PROJECT (OVP)
+//   D3D7 Client module
+//   Copyright (C) 2006-2014 Martin Schweiger
+//   Dual licensed under GPL v3 and LGPL v3
 // ==============================================================
 
 // ==============================================================
+// surfmgr2.h
 // Planetary surface rendering engine v2, including a simple
 // LOD (level-of-detail) algorithm for surface patch resolution.
 // ==============================================================

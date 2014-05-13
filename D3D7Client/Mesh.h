@@ -1,11 +1,12 @@
 // ==============================================================
-// Mesh.h
-// Part of the ORBITER VISUALISATION PROJECT (OVP)
-// Released under GNU General Public License
-// Copyright (C) 2006 Martin Schweiger
+//   ORBITER VISUALISATION PROJECT (OVP)
+//   D3D7 Client module
+//   Copyright (C) 2006-2014 Martin Schweiger
+//   Dual licensed under GPL v3 and LGPL v3
 // ==============================================================
 
 // ==============================================================
+// Mesh.h
 // class D3D7Mesh (interface)
 //
 // This class represents a mesh in terms of DX7 interface elements

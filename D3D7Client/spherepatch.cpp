@@ -1,3 +1,15 @@
+// ==============================================================
+//   ORBITER VISUALISATION PROJECT (OVP)
+//   D3D7 Client module
+//   Copyright (C) 2006-2014 Martin Schweiger
+//   Dual licensed under GPL v3 and LGPL v3
+// ==============================================================
+
+// ==============================================================
+// spherepatch.cpp
+// Create meshes for spheres and sphere patches
+// ==============================================================
+
 #include "spherepatch.h"
 
 static float TEX2_MULTIPLIER = 4.0f; // microtexture multiplier

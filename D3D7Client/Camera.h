@@ -1,11 +1,12 @@
 // ==============================================================
-// Camera.h
-// Part of the ORBITER VISUALISATION PROJECT (OVP)
-// Released under GNU General Public License
-// Copyright (C) 2006 Martin Schweiger
+//   ORBITER VISUALISATION PROJECT (OVP)
+//   D3D7 Client module
+//   Copyright (C) 2006-2014 Martin Schweiger
+//   Dual licensed under GPL v3 and LGPL v3
 // ==============================================================
 
-// ==============================================================
+// --------------------------------------------------------------
+// Camera.h
 // Class Camera (interface)
 //
 // The camera defines the observer position in the 3D world.
@@ -16,7 +17,7 @@
 // "global frame" in which orbiter's logical objects live, such
 // that the camera is always at the origin. Global and render
 // space have however the same orientation.
-// ==============================================================
+// --------------------------------------------------------------
 
 #ifndef __CAMERA_H
 #define __CAMERA_H

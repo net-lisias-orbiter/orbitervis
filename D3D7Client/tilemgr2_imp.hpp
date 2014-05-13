@@ -1,3 +1,16 @@
+// ==============================================================
+//   ORBITER VISUALISATION PROJECT (OVP)
+//   D3D7 Client module
+//   Copyright (C) 2006-2014 Martin Schweiger
+//   Dual licensed under GPL v3 and LGPL v3
+// ==============================================================
+
+// =======================================================================
+// tilemgr2_imp.hpp
+// Rendering of planetary surfaces using texture tiles at
+// variable resolutions (new version).
+// =======================================================================
+
 #ifndef __TILEMGR2_IMP_HPP
 #define __TILEMGR2_IMP_HPP
 

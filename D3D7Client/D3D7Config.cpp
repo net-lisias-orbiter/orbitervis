@@ -1,3 +1,15 @@
+// ==============================================================
+//   ORBITER VISUALISATION PROJECT (OVP)
+//   D3D7 Client module
+//   Copyright (C) 2006-2014 Martin Schweiger
+//   Dual licensed under GPL v3 and LGPL v3
+// ==============================================================
+
+// ==============================================================
+// D3D7Config.cpp
+// Management of configuration parameters for the D3D7 client.
+// ==============================================================
+
 #include "D3D7Config.h"
 #include "orbitersdk.h"
 

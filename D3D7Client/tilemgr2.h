@@ -1,11 +1,12 @@
-// =======================================================================
-// tilemgr2.h
-// Part of the ORBITER VISUALISATION PROJECT (OVP)
-// Released under GNU General Public License
-// Copyright (C) 2006-2013 Martin Schweiger
-// =======================================================================
+// ==============================================================
+//   ORBITER VISUALISATION PROJECT (OVP)
+//   D3D7 Client module
+//   Copyright (C) 2006-2014 Martin Schweiger
+//   Dual licensed under GPL v3 and LGPL v3
+// ==============================================================
 
 // =======================================================================
+// tilemgr2.h
 // Rendering of planetary surfaces using texture tiles at
 // variable resolutions (new version).
 // =======================================================================

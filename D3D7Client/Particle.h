@@ -1,5 +1,14 @@
-// =======================================================================
+// ==============================================================
+//   ORBITER VISUALISATION PROJECT (OVP)
+//   D3D7 Client module
+//   Copyright (C) 2006-2014 Martin Schweiger
+//   Dual licensed under GPL v3 and LGPL v3
+// ==============================================================
+
+// ==============================================================
+// Particle.h
 // Particle system for exhaust contrails
+// ==============================================================
 
 #ifndef __PARTICLE_H
 #define __PARTICLE_H
