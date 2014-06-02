@@ -129,6 +129,7 @@ public:
 	void Render (LPDIRECT3DDEVICE7 dev);
 
 	void TransformGroup (DWORD n, const D3DMATRIX *m);
+	int GetGroup (DWORD grp, GROUPREQUESTSPEC *grs);
 	int EditGroup (DWORD grp, GROUPEDITSPEC *ges);
 
 	/**

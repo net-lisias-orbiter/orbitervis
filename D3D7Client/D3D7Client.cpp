@@ -752,6 +752,13 @@ MESHHANDLE D3D7Client::clbkGetMesh (VISHANDLE vis, UINT idx)
 
 // =======================================================================
 
+int D3D7Client::clbkGetMeshGroup (DEVMESHHANDLE hMesh, DWORD grpidx, GROUPREQUESTSPEC *grs)
+{
+	return ((D3D7Mesh*)hMesh)->GetGroup (grpidx, grs);
+}
+
+// =======================================================================
+
 int D3D7Client::clbkEditMeshGroup (DEVMESHHANDLE hMesh, DWORD grpidx, GROUPEDITSPEC *ges)
 {
 	return ((D3D7Mesh*)hMesh)->EditGroup (grpidx, ges);
@@ -898,6 +905,29 @@ void D3D7Client::clbkRender2DPanel (SURFHANDLE *hSurf, MESHHANDLE hMesh, MATRIX3
 		pd3dDevice->SetRenderState (D3DRENDERSTATE_DESTBLEND, D3DBLEND_INVSRCALPHA);
 	if (dAlpha != TRUE)
 		pd3dDevice->SetRenderState (D3DRENDERSTATE_ALPHABLENDENABLE, dAlpha);
+}
+
+// =======================================================================
+
+void D3D7Client::clbkRender2DPanel (SURFHANDLE *hSurf, MESHHANDLE hMesh, MATRIX3 *T, float alpha, bool additive)
+{
+	bool reset = false;
+	DWORD alphaop, alphaarg2, tfactor;
+	if (alpha < 1.0f) {
+		pd3dDevice->GetTextureStageState (0, D3DTSS_ALPHAOP, &alphaop);
+		pd3dDevice->GetTextureStageState (0, D3DTSS_ALPHAARG2, &alphaarg2);
+		pd3dDevice->GetRenderState (D3DRENDERSTATE_TEXTUREFACTOR, &tfactor);
+		pd3dDevice->SetTextureStageState (0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
+		pd3dDevice->SetTextureStageState (0, D3DTSS_ALPHAARG2, D3DTA_TFACTOR);
+		pd3dDevice->SetRenderState (D3DRENDERSTATE_TEXTUREFACTOR, D3DRGBA(1,1,1,alpha));
+		reset = true;
+	}
+	clbkRender2DPanel (hSurf, hMesh, T, additive);
+	if (reset) {
+		pd3dDevice->SetTextureStageState (0, D3DTSS_ALPHAOP, alphaop);
+		pd3dDevice->SetTextureStageState (0, D3DTSS_ALPHAARG2, alphaarg2);
+		pd3dDevice->SetRenderState (D3DRENDERSTATE_TEXTUREFACTOR, tfactor);
+	}
 }
 
 

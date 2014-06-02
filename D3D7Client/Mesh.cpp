@@ -237,6 +237,61 @@ void D3D7Mesh::DeleteGroup (GROUPREC *grp)
 	delete grp;
 }
 
+int D3D7Mesh::GetGroup (DWORD grp, GROUPREQUESTSPEC *grs)
+{
+	static NTVERTEX zero = {0,0,0, 0,0,0, 0,0};
+	if (grp >= nGrp) return 1;
+	GROUPREC *g = Grp[grp];
+	D3DVERTEX *vtxd3d;
+	NTVERTEX *vtx;
+	DWORD nv = g->nVtx;
+	DWORD ni = g->nIdx;
+	DWORD i, vi;
+	int ret = 0;
+
+	if (grs->nVtx && grs->Vtx) { // vertex data requested
+		if (g->VtxBuf->Lock (DDLOCK_WRITEONLY, (LPVOID*)&vtxd3d, 0) == D3D_OK) {
+			vtx = (NTVERTEX*)vtxd3d; // only allowed because format is compatible
+			if (grs->VtxPerm) { // random access data request
+				for (i = 0; i < grs->nVtx; i++) {
+					vi = grs->VtxPerm[i];
+					if (vi < nv) {
+						grs->Vtx[i] = vtx[vi];
+					} else {
+						grs->Vtx[i] = zero;
+						ret = 1;
+					}
+				}
+			} else {
+				if (grs->nVtx > nv) grs->nVtx = nv;
+				memcpy (grs->Vtx, vtx, grs->nVtx * sizeof(NTVERTEX));
+			}
+			g->VtxBuf->Unlock ();
+		}
+	}
+
+	if (grs->nIdx && grs->Idx) { // index data requested
+		if (grs->IdxPerm) { // random access data request
+			for (i = 0; i < grs->nIdx; i++) {
+				vi = grs->IdxPerm[i];
+				if (vi < ni) {
+					grs->Idx[i] = g->Idx[vi];
+				} else {
+					grs->Idx[i] = 0;
+					ret = 1;
+				}
+			}
+		} else {
+			if (grs->nIdx > ni) grs->nIdx = ni;
+			memcpy (grs->Idx, g->Idx, grs->nIdx * sizeof(WORD));
+		}
+	}
+
+	grs->MtrlIdx = g->MtrlIdx;
+	grs->TexIdx = g->TexIdx;
+	return ret;
+}
+
 int D3D7Mesh::EditGroup (DWORD grp, GROUPEDITSPEC *ges)
 {
 	if (grp >= nGrp) return 1;

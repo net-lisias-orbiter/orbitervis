@@ -354,7 +354,8 @@ void Scene::Render ()
 			}
 		}
 		for (i = 1; i < nlight; i++)
-			AddLocalLight (lightlist[i].plight, lightlist[i].vobj, i);
+			if (lightlist[i].plight->GetVisibility() & LightEmitter::VIS_EXTERNAL)
+				AddLocalLight (lightlist[i].plight, lightlist[i].vobj, i);
 	}
 
 	dev->SetMaterial (&def_mat);
@@ -560,12 +561,21 @@ void Scene::Render ()
 	if (ptex) dev->SetTexture (0, 0);
 	if (!alpha) dev->SetRenderState (D3DRENDERSTATE_ALPHABLENDENABLE, FALSE);
 
-	if (locallight)
-		for (i = 1; i < nlight; i++)
-			dev->LightEnable (i, FALSE);
-
 	// render the internal parts of the focus object in a separate render pass
 	if (oapiCameraInternal() && vFocus) {
+		// switch cockpit lights on, external-only lights off
+		if (locallight) {
+			for (i = 1; i < nlight; i++) {
+				switch (lightlist[i].plight->GetVisibility()) {
+				case LightEmitter::VIS_EXTERNAL:
+					dev->LightEnable (i, FALSE);
+					break;
+				case LightEmitter::VIS_COCKPIT:
+					AddLocalLight (lightlist[i].plight, lightlist[i].vobj, i);
+					break;
+				}
+			}
+		}
 		// should also check for internal meshes
 		dev->Clear (0, NULL, zclearflag,  0, 1.0f, 0L); // clear z-buffer
 		double nearp = cam->GetNearlimit();
@@ -574,6 +584,10 @@ void Scene::Render ()
 		vFocus->Render (dev, true);
 		cam->SetFrustumLimits (nearp, farp);
 	}
+
+	if (locallight)
+		for (i = 1; i < nlight; i++)
+			dev->LightEnable (i, FALSE);
 
 	// render 2D panel and HUD
 	gc->Render2DOverlay();

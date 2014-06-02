@@ -148,6 +148,16 @@ public:
 	virtual MESHHANDLE clbkGetMesh (VISHANDLE vis, UINT idx);
 
 	/**
+	 * \brief Mesh group data retrieval interface for device-specific meshes.
+	 * \param hMesh device mesh handle
+	 * \param grpidx mesh group index (>= 0)
+	 * \param grs data buffers and buffer size information. See \ref oapiGetMeshGroup
+	 *    for details.
+	 * \return Returns 0 on success, or error flags > 0.
+	 */
+	int clbkGetMeshGroup (DEVMESHHANDLE hMesh, DWORD grpidx, GROUPREQUESTSPEC *grs);
+
+	/**
 	 * \brief Mesh group editing interface for device-specific meshes.
 	 * \param hMesh device mesh handle
 	 * \param grpidx mesh group index (>= 0)
@@ -289,6 +299,20 @@ public:
 	 *   don't need to be present in the hSurf list.
 	 */
 	void clbkRender2DPanel (SURFHANDLE *hSurf, MESHHANDLE hMesh, MATRIX3 *T, bool transparent = false);
+
+	/**
+	 * \brief Render an instrument panel in cockpit view as a 2D billboard.
+	 * \param hSurf array of texture handles for the panel surface
+	 * \param hMesh billboard mesh handle
+	 * \param T transformation matrix for panel mesh vertices (2D)
+	 * \param alpha opacity value, between 0 (transparent) and 1 (opaque)
+	 * \param additive flag for transparent (additive) rendering
+	 * \note The texture index of each group in the mesh is interpreted as index into the
+	 *   hSurf array. Special indices are TEXIDX_MFD0 and above, which specify the
+	 *   surfaces representing the MFD displays. These are obtained separately and
+	 *   don't need to be present in the hSurf list.
+	 */
+	void clbkRender2DPanel (SURFHANDLE *hSurf, MESHHANDLE hMesh, MATRIX3 *T, float alpha, bool additive = false);
 
 	// ==================================================================
 	/// \name Surface-related methods
