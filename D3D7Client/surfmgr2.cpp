@@ -62,6 +62,7 @@ SurfTile::SurfTile (TileManager2Base *_mgr, int _lvl, int _ilat, int _ilng)
 	elev = 0;
 	ggelev = 0;
 	ltex = 0;
+	has_elevfile = false;
 }
 
 // -----------------------------------------------------------------------
@@ -131,6 +132,8 @@ bool SurfTile::LoadElevationData ()
 	// can be served directly without further disk I/O.
 
 	if (elev) return true; // already present
+
+	has_elevfile = false;
 	int mode = mgr->Cprm().elevMode;
 	if (!mode) return false;
 
@@ -175,103 +178,67 @@ bool SurfTile::LoadElevationData ()
 				elev[i] = (INT16)(elev[i] * elev_exaggerate_factor);
 
 		fclose(f);
-	} else {
-		// try fetching elevation data recursively from parent and interpolate them
-		if (node->Parent() && node->Parent()->Entry()->LoadElevationData ()) {
-			int lat_ofs = (ilat & 1 ? 0 : TILE_PATCHRES*4);
-			int lng_ofs = (ilng & 1 ? TILE_PATCHRES*4 : 0);
-			elev = new INT16[ndat];
-			mean_elev = 0.0;
-			INT16 *celev = elev + TILE_ELEVSTRIDE+1;   // pointer to beginning of unpadded block
-			INT16 *pelev = node->Parent()->Entry()->elev + lat_ofs*TILE_ELEVSTRIDE + lng_ofs + TILE_ELEVSTRIDE+1;
 
-			for (i = 0; i <= TILE_PATCHRES*4; i++) {
-				for (j = 0; j <= TILE_PATCHRES*4; j++) {
-					mean_elev += (celev[i*2*TILE_ELEVSTRIDE + j*2] = pelev[i*TILE_ELEVSTRIDE + j]);
-				}
+		// now load the overload data if present
+		sprintf (path, "Textures\\%s\\Elev_mod\\%02d\\%06d\\%06d.elv", mgr->CbodyName(), lvl+4, ilat, ilng);
+		f = fopen(path,"rb");
+		if (f) {
+			fread (&hdr, sizeof(ELEVFILEHEADER), 1, f);
+			if (hdr.hdrsize != sizeof(ELEVFILEHEADER)) {
+				fseek (f, hdr.hdrsize, SEEK_SET);
 			}
-			if (mode == 1) { // linear
-				for (i = 0; i <= TILE_PATCHRES*4; i++) {
-					for (j = -1; j <= TILE_PATCHRES*4; j++) {
-						celev[i*2*TILE_ELEVSTRIDE + j*2+1] = (pelev[i*TILE_ELEVSTRIDE+j] + pelev[i*TILE_ELEVSTRIDE+j+1]) / 2;
-					}
+			switch (hdr.dtype) {
+			case 0:
+				for (i = 0; i < ndat; i++) elev[i] = (INT16)hdr.offset;
+				break;
+			case 8: {
+				const UINT8 mask = 0xFF;
+				UINT8 *tmp = new UINT8[ndat];
+				fread (tmp, sizeof(UINT8), ndat, f);
+				for (i = 0; i < ndat; i++)
+					if (tmp[i] != mask) elev[i] = (INT16)(tmp[i]+hdr.offset);
+				delete []tmp;
 				}
-				for (i = -1; i <= TILE_PATCHRES*4; i++) {
-					for (j = 0; j <= TILE_PATCHRES*4; j++) {
-						celev[(i*2+1)*TILE_ELEVSTRIDE + j*2] = (pelev[i*TILE_ELEVSTRIDE+j] + pelev[(i+1)*TILE_ELEVSTRIDE+j]) / 2;
-					}
+				break;
+			case -16: {
+				const INT16 mask = (INT16)0xFFFF;
+				INT16 *tmp = new INT16[ndat];
+				INT16 ofs = (INT16)hdr.offset;
+				fread (tmp, sizeof(INT16), ndat, f);
+				for (i = 0; i < ndat; i++)
+					if (tmp[i] != mask) elev[i] = tmp[i]+ofs;
+				delete []tmp;
 				}
-				for (i = -1; i <= TILE_PATCHRES*4; i++) {
-					for (j = -1; j <= TILE_PATCHRES*4; j++) {
-						celev[(i*2+1)*TILE_ELEVSTRIDE + j*2+1] = (pelev[i*TILE_ELEVSTRIDE+j] + pelev[i*TILE_ELEVSTRIDE+j+1] + pelev[(i+1)*TILE_ELEVSTRIDE+j] + pelev[(i+1)*TILE_ELEVSTRIDE+j+1]) / 4;
-					}
-				}
-			} else { // cubic spline interpolation
-				double a_m1, a_0, a_p1, a_p2, b_m1, b_0, b_p1, b_p2, res;
-				for (i = 0; i <= TILE_PATCHRES*4; i++) {
-					for (j = 0; j < TILE_PATCHRES*4; j++) {
-						a_m1 = pelev[i*TILE_ELEVSTRIDE+j-1];
-						a_0  = pelev[i*TILE_ELEVSTRIDE+j];
-						a_p1 = pelev[i*TILE_ELEVSTRIDE+j+1];
-						a_p2 = pelev[i*TILE_ELEVSTRIDE+j+2];
-						res = 0.5 * (2.0*a_0 + 0.5*(-a_m1+a_p1) + 0.25*(2.0*a_m1-5.0*a_0+4.0*a_p1-a_p2) + 0.125*(-a_m1+3.0*a_0-3.0*a_p1+a_p2));
-						celev[i*2*TILE_ELEVSTRIDE + j*2+1] = (INT16)(res+0.5);
-					}
-				}
-				for (i = 0; i < TILE_PATCHRES*4; i++) {
-					for (j = 0; j <= TILE_PATCHRES*4; j++) {
-						a_m1 = pelev[(i-1)*TILE_ELEVSTRIDE+j];
-						a_0  = pelev[i*TILE_ELEVSTRIDE+j];
-						a_p1 = pelev[(i+1)*TILE_ELEVSTRIDE+j];
-						a_p2 = pelev[(i+2)*TILE_ELEVSTRIDE+j];
-						res = 0.5 * (2.0*a_0 + 0.5*(-a_m1+a_p1) + 0.25*(2.0*a_m1-5.0*a_0+4.0*a_p1-a_p2) + 0.125*(-a_m1+3.0*a_0-3.0*a_p1+a_p2));
-						celev[(i*2+1)*TILE_ELEVSTRIDE + j*2] = (INT16)(res+0.5);
-					}
-				}
-				for (i = 0; i < TILE_PATCHRES*4; i++) {
-					for (j = 0; j < TILE_PATCHRES*4; j++) {
-						if (i) b_m1 = celev[(i*2-2)*TILE_ELEVSTRIDE + j*2+1];
-						else {
-							a_m1 = pelev[(i-1)*TILE_ELEVSTRIDE+j-1];
-							a_0  = pelev[(i-1)*TILE_ELEVSTRIDE+j];
-							a_p1 = pelev[(i-1)*TILE_ELEVSTRIDE+j+1];
-							a_p2 = pelev[(i-1)*TILE_ELEVSTRIDE+j+2];
-							b_m1 = 0.5 * (2.0*a_0 + 0.5*(-a_m1+a_p1) + 0.25*(2.0*a_m1-5.0*a_0+4.0*a_p1-a_p2) + 0.125*(-a_m1+3.0*a_0-3.0*a_p1+a_p2));
-						}
-						b_0  = celev[(i*2)*TILE_ELEVSTRIDE + j*2+1];
-						b_p1 = celev[(i*2+2)*TILE_ELEVSTRIDE + j*2+1];
-						if (i < TILE_PATCHRES*4-1) b_p2 = celev[(i*2+4)*TILE_ELEVSTRIDE + j*2+1];
-						else {
-							a_m1 = pelev[(i+2)*TILE_ELEVSTRIDE+j-1];
-							a_0  = pelev[(i+2)*TILE_ELEVSTRIDE+j];
-							a_p1 = pelev[(i+2)*TILE_ELEVSTRIDE+j+1];
-							a_p2 = pelev[(i+2)*TILE_ELEVSTRIDE+j+2];
-							b_p2 = 0.5 * (2.0*a_0 + 0.5*(-a_m1+a_p1) + 0.25*(2.0*a_m1-5.0*a_0+4.0*a_p1-a_p2) + 0.125*(-a_m1+3.0*a_0-3.0*a_p1+a_p2));
-						}
-						res = 0.5 * (2.0*b_0 + 0.5*(-b_m1+b_p1) + 0.25*(2.0*b_m1-5.0*b_0+4.0*b_p1-b_p2) + 0.125*(-b_m1+3.0*b_0-3.0*b_p1+b_p2));
-						celev[(i*2+1)*TILE_ELEVSTRIDE + j*2+1] = (INT16)(res+0.5);
-					}
-				}
-				// do linear interpolation for border nodes
-				for (i = 0; i <= TILE_PATCHRES*4; i++) {
-					celev[(i*2)*TILE_ELEVSTRIDE-1] = (pelev[i*TILE_ELEVSTRIDE-1]+pelev[i*TILE_ELEVSTRIDE])/2;
-					celev[(i*2)*TILE_ELEVSTRIDE+TILE_PATCHRES*8+1] = (pelev[i*TILE_ELEVSTRIDE+TILE_PATCHRES*4]+pelev[i*TILE_ELEVSTRIDE+TILE_PATCHRES*4+1]) /2;
-				}
-				for (j = 0; j <= TILE_PATCHRES*4; j++) {
-					celev[-TILE_ELEVSTRIDE+j*2] = (pelev[-TILE_ELEVSTRIDE+j]+pelev[j])/2;
-					celev[(TILE_PATCHRES*8+1)*TILE_ELEVSTRIDE+j*2] = (pelev[(TILE_PATCHRES*4)*TILE_ELEVSTRIDE+j]+pelev[(TILE_PATCHRES*4+1)*TILE_ELEVSTRIDE+j])/2;
-				}
-				for (i = -1; i <= TILE_PATCHRES*4; i++) {
-					celev[(i*2+1)*TILE_ELEVSTRIDE-1] = (pelev[i*TILE_ELEVSTRIDE-1] + pelev[i*TILE_ELEVSTRIDE] + pelev[(i+1)*TILE_ELEVSTRIDE-1] + pelev[(i+1)*TILE_ELEVSTRIDE])/4;
-					celev[(i*2+1)*TILE_ELEVSTRIDE+TILE_PATCHRES*8+1] = (pelev[i*TILE_ELEVSTRIDE+TILE_PATCHRES*4] + pelev[i*TILE_ELEVSTRIDE+TILE_PATCHRES*4+1] + pelev[(i+1)*TILE_ELEVSTRIDE+TILE_PATCHRES*4] + pelev[(i+1)*TILE_ELEVSTRIDE+TILE_PATCHRES*4+1])/4;
-				}
-				for (j = 0; j < TILE_PATCHRES*4; j++) {
-					celev[-TILE_ELEVSTRIDE+j*2+1] = (pelev[-TILE_ELEVSTRIDE+j] + pelev[-TILE_ELEVSTRIDE+j+1] + pelev[j] + pelev[j+1])/4;
-					celev[(TILE_PATCHRES*8+1)*TILE_ELEVSTRIDE+j*2+1] = (pelev[(TILE_PATCHRES*4)*TILE_ELEVSTRIDE+j] + pelev[(TILE_PATCHRES*4)*TILE_ELEVSTRIDE+j+1] + pelev[(TILE_PATCHRES*4+1)*TILE_ELEVSTRIDE+j] + pelev[(TILE_PATCHRES*4+1)*TILE_ELEVSTRIDE+j+1])/4;
-				}
+				break;
 			}
-			mean_elev /= ((TILE_PATCHRES*4+1)*(TILE_PATCHRES*4+1));
+			fclose(f);
+		}
+		has_elevfile = true;
+
+	} else {
+
+		// construct elevation grid by interpolating ancestor data
+		ELEVHANDLE hElev = mgr->ElevMgr();
+		if (hElev) {
+			int plvl = lvl-1;
+			int pilat = ilat >> 1;
+			int pilng = ilng >> 1;
+			INT16 *pelev;
+			QuadTreeNode<SurfTile> *parent = node->Parent();
+			for (; plvl >= 0; plvl--) { // find ancestor with elevation data
+				if (parent && parent->Entry()->has_elevfile) {
+					pelev = parent->Entry()->elev;
+					break;
+				}
+				parent = parent->Parent();
+				pilat >>= 1;
+				pilng >>= 1;
+			}
+			elev = new INT16[ndat];
+			// submit ancestor data to elevation manager for interpolation
+			mgr->GClient()->ElevationGrid (hElev, ilat, ilng, lvl, pilat, pilng, plvl, pelev, elev, &mean_elev);
 		} else elev = 0;
+
 	}
 	return (elev != 0);
 }
@@ -322,6 +289,165 @@ void SurfTile::Render ()
 	TileManager2Base::Dev()->DrawIndexedPrimitiveVB (D3DPT_TRIANGLELIST, vb, 0,
 		mesh->nv, mesh->idx, mesh->ni, 0);
 
+	if (ltex) {
+
+		double sdist = acos (dotp (mgr->prm.sdir, cnt));
+		static const double rad0 = sqrt(2.0)*PI05;
+		double rad = rad0/(double)(2<<lvl); // tile radius
+
+		bool has_specular = (sdist < PI05+rad);
+		bool render_cloud_shadows = (sdist < PI05+rad && !mgr->prm.rprm->bCloudFlatShadows /*&& mgr->prm.cloudmgr*/);
+		render_lights = (render_lights && sdist > 1.45);
+
+		if (has_specular) {
+			TileManager2Base::Dev()->GetMaterial (&pmat);
+			TileManager2Base::Dev()->SetMaterial (&watermat);
+			TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_SPECULARENABLE, TRUE);
+			TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_ALPHABLENDENABLE, TRUE);
+
+			DWORD dns;
+			if (mgr->prm.fog) {
+				// increase fog density to simulate sky reflection on water surface
+				TileManager2Base::Dev()->GetRenderState (D3DRENDERSTATE_FOGDENSITY, &dns);
+				float fFogDns = *((float*)&dns) * 3.0f;
+				TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_FOGDENSITY, *((LPDWORD) (&fFogDns)));
+			}
+
+			// use water mask to limit specular reflection to water surfaces
+			TileManager2Base::Dev()->SetTexture (1, ltex);
+			TileManager2Base::Dev()->SetTextureStageState (1, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
+			TileManager2Base::Dev()->SetTextureStageState (1, D3DTSS_ALPHAARG1, D3DTA_TEXTURE|D3DTA_COMPLEMENT); // need to invert alpha channel of mask
+			if (!mgr->prm.tint) { // just pass colour through this stage
+				TileManager2Base::Dev()->SetTextureStageState (1, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
+				TileManager2Base::Dev()->SetTextureStageState (1, D3DTSS_COLORARG1, D3DTA_CURRENT);
+			}
+			TileManager2Base::Dev()->DrawIndexedPrimitiveVB (D3DPT_TRIANGLELIST, vb, 0,
+				mesh->nv, mesh->idx, mesh->ni, 0);
+
+			TileManager2Base::Dev()->SetTextureStageState (1, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
+			TileManager2Base::Dev()->SetTextureStageState (1, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
+			TileManager2Base::Dev()->SetTextureStageState (1, D3DTSS_COLOROP, D3DTOP_DISABLE);
+			TileManager2Base::Dev()->SetTextureStageState (1, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+			TileManager2Base::Dev()->SetTextureStageState (1, D3DTSS_COLORARG2, D3DTA_CURRENT);
+			TileManager2Base::Dev()->SetTexture (1, 0);
+			if (mgr->prm.fog)
+				TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_FOGDENSITY, dns);
+			TileManager2Base::Dev()->SetMaterial (&pmat);
+			TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_SPECULARENABLE, FALSE);
+			TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_ALPHABLENDENABLE, FALSE);
+		}
+
+		// add cloud shadows
+		if (render_cloud_shadows) {
+			const TileManager2<CloudTile> *cmgr = mgr->GetPlanet()->CloudMgr2();
+			if (cmgr) {
+				int nlng = 2 << lvl;
+				int nlat = 1 << lvl;
+				double minlat = PI * (double)(nlat/2-ilat-1)/(double)nlat;
+				double maxlat = PI * (double)(nlat/2-ilat)/(double)nlat;
+				double minlng = PI2 * (double)(ilng-nlng/2)/(double)nlng;
+				double maxlng = PI2 * (double)(ilng-nlng/2+1)/(double)nlng;
+
+				const Tile *tbuf[2];
+				int maxlvl = min(lvl,9);
+				int ncloud = cmgr->Coverage(minlat, maxlat, minlng, maxlng, maxlvl, tbuf, 2);
+				if (ncloud > 0) {
+					D3DMATERIAL7 pmat;
+					static D3DMATERIAL7 cloudmat = {{0,0,0,1},{0,0,0,1},{0,0,0,0},{0,0,0,0},0};
+	
+					float alpha = (float)mgr->prm.rprm->shadowalpha;
+					//if (alpha < 0.01f) return; // don't render cloud shadows for this planet
+					cloudmat.diffuse.a = cloudmat.ambient.a = alpha;
+
+					if (ncloud == 1) { // other cases still to be done
+
+						mgr->Dev()->GetMaterial (&pmat);
+						mgr->Dev()->SetMaterial (&cloudmat);
+
+						mgr->Dev()->SetRenderState (D3DRENDERSTATE_ALPHABLENDENABLE, TRUE);
+						mgr->Dev()->SetTextureStageState (0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
+		
+						for (int i = 0; i < ncloud; i++) {
+							mgr->Dev()->SetTexture (0, tbuf[i]->Tex());
+
+							// to be completed: create new mesh with modified texture coordinates
+							const TEXCRDRANGE2 *ctexrange = tbuf[i]->GetTexRange();
+							double cminlat, cmaxlat, cminlng, cmaxlng;
+							float tu0, tu1, tv0, tv1, tuscale, tvscale;
+							tbuf[i]->Extents (&cminlat, &cmaxlat, &cminlng, &cmaxlng);
+
+							cminlng -= mgr->prm.rprm->cloudrot;
+							cmaxlng -= mgr->prm.rprm->cloudrot;
+							if (cmaxlng < -PI) {
+								cminlng += PI2;
+								cmaxlng += PI2;
+							}
+
+							static int ncvtx = (TILE_PATCHRES+3)*(TILE_PATCHRES+3);
+							static VERTEX_2TEX *cvtx = new VERTEX_2TEX[ncvtx];
+							if (mesh->nv > ncvtx) {
+								delete []cvtx;
+								cvtx = new VERTEX_2TEX[ncvtx=mesh->nv];
+							}
+							memcpy(cvtx, mesh->vtx, mesh->nv*sizeof(VERTEX_2TEX));
+							tu0 = ctexrange->tumin + (ctexrange->tumax-ctexrange->tumin)*(float)((minlng-cminlng)/(cmaxlng-cminlng));
+							tu1 = ctexrange->tumin + (ctexrange->tumax-ctexrange->tumin)*(float)((maxlng-cminlng)/(cmaxlng-cminlng));
+							tv0 = ctexrange->tvmin + (ctexrange->tvmax-ctexrange->tvmin)*(float)((maxlat-cmaxlat)/(cminlat-cmaxlat));
+							tv1	= ctexrange->tvmin + (ctexrange->tvmax-ctexrange->tvmin)*(float)((minlat-cmaxlat)/(cminlat-cmaxlat));
+							tuscale = (tu1-tu0)/(texrange.tumax-texrange.tumin);
+							tvscale = (tv1-tv0)/(texrange.tvmax-texrange.tvmin);
+							for (int j = 0; j < mesh->nv; j++) {
+								cvtx[j].tu0 = tu0 + tuscale * (cvtx[j].tu0-texrange.tumin);
+								cvtx[j].tv0 = tv0 + tvscale * (cvtx[j].tv0-texrange.tvmin);
+							}
+						
+							mgr->Dev()->DrawIndexedPrimitive (D3DPT_TRIANGLELIST, FVF_2TEX, cvtx, mesh->nv, mesh->idx, mesh->ni, 0);
+						}
+	
+						mgr->Dev()->SetRenderState (D3DRENDERSTATE_ALPHABLENDENABLE, FALSE);
+						mgr->Dev()->SetTextureStageState (0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
+
+						mgr->Dev()->SetMaterial (&pmat);
+					}
+				}
+			}
+		}
+
+		// disable fog on additional render passes
+		if (mgr->prm.fog) {
+			TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_FOGENABLE, FALSE);
+			TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_FOGTABLEMODE, D3DFOG_NONE);
+		}
+
+		// add city lights
+		if (render_lights) {
+			double fac = mgr->Cprm().lightfac;
+			if (sdist < 1.9) fac *= (sdist-1.45)/(1.9-1.45);
+			TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_TEXTUREFACTOR, D3DRGBA(fac,fac,fac,1));
+			TileManager2Base::Dev()->SetTextureStageState (0, D3DTSS_COLOROP, D3DTOP_MODULATE);
+			TileManager2Base::Dev()->SetTextureStageState (0, D3DTSS_COLORARG2, D3DTA_TFACTOR);
+			TileManager2Base::Dev()->SetTextureStageState (1, D3DTSS_COLOROP, D3DTOP_DISABLE);
+			TileManager2Base::Dev()->SetTexture (0, ltex);
+			TileManager2Base::Dev()->SetTextureStageState (0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+			TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_ALPHABLENDENABLE, TRUE);
+			TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_DESTBLEND, D3DBLEND_ONE);
+			TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_SRCBLEND, D3DBLEND_ONE);
+			TileManager2Base::Dev()->DrawIndexedPrimitiveVB (D3DPT_TRIANGLELIST, vb, 0,
+				mesh->nv, mesh->idx, mesh->ni, 0);
+			TileManager2Base::Dev()->SetTextureStageState (0, D3DTSS_COLOROP, D3DTOP_MODULATE);
+			TileManager2Base::Dev()->SetTextureStageState (0, D3DTSS_COLORARG2, D3DTA_CURRENT);
+			TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_ALPHABLENDENABLE, FALSE);
+			TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_SRCBLEND, D3DBLEND_SRCALPHA);
+			TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_DESTBLEND, D3DBLEND_INVSRCALPHA);
+		}
+
+		if (mgr->prm.fog) {
+			// turn fog back on
+			TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_FOGENABLE, TRUE);
+			TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_FOGTABLEMODE, D3DFOG_EXP);
+		}
+	}
+
 	// reset the atmospheric tint
 	if (mgr->prm.tint) {
 		TileManager2Base::Dev()->SetTextureStageState (0, D3DTSS_COLOROP, D3DTOP_MODULATE);
@@ -330,142 +456,6 @@ void SurfTile::Render ()
 		TileManager2Base::Dev()->SetTextureStageState (1, D3DTSS_COLOROP, D3DTOP_DISABLE);
 		TileManager2Base::Dev()->SetTextureStageState (1, D3DTSS_COLORARG1, D3DTA_TEXTURE);
 		TileManager2Base::Dev()->SetTextureStageState (1, D3DTSS_COLORARG2, D3DTA_CURRENT);
-	}
-
-	if (!ltex) return; // no mask texture: we are done
-
-	double sdist = acos (dotp (mgr->prm.sdir, cnt));
-	static const double rad0 = sqrt(2.0)*PI05;
-	double rad = rad0/(double)(2<<lvl); // tile radius
-
-	bool has_specular = (sdist < PI05+rad);
-	bool render_cloud_shadows = (sdist < PI05+rad && !mgr->prm.rprm->bCloudFlatShadows /*&& mgr->prm.cloudmgr*/);
-	render_lights = (render_lights && sdist > 1.45);
-
-	// add cloud shadows
-	if (render_cloud_shadows) {
-		const TileManager2<CloudTile> *cmgr = mgr->GetPlanet()->CloudMgr2();
-		if (cmgr) {
-			int nlng = 2 << lvl;
-			int nlat = 1 << lvl;
-			double minlat = PI * (double)(nlat/2-ilat-1)/(double)nlat;
-			double maxlat = PI * (double)(nlat/2-ilat)/(double)nlat;
-			double minlng = PI2 * (double)(ilng-nlng/2)/(double)nlng;
-			double maxlng = PI2 * (double)(ilng-nlng/2+1)/(double)nlng;
-
-			const Tile *tbuf[2];
-			int maxlvl = min(lvl,9);
-			int ncloud = cmgr->Coverage(minlat, maxlat, minlng, maxlng, maxlvl, tbuf, 2);
-			if (ncloud > 0) {
-				D3DMATERIAL7 pmat;
-				static D3DMATERIAL7 cloudmat = {{0,0,0,1},{0,0,0,1},{0,0,0,0},{0,0,0,0},0};
-	
-				float alpha = (float)mgr->prm.rprm->shadowalpha;
-				//if (alpha < 0.01f) return; // don't render cloud shadows for this planet
-				cloudmat.diffuse.a = cloudmat.ambient.a = alpha;
-
-				if (ncloud == 1) { // other cases still to be done
-
-					mgr->Dev()->GetMaterial (&pmat);
-					mgr->Dev()->SetMaterial (&cloudmat);
-
-					mgr->Dev()->SetRenderState (D3DRENDERSTATE_ALPHABLENDENABLE, TRUE);
-					mgr->Dev()->SetTextureStageState (0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
-		
-					for (int i = 0; i < ncloud; i++) {
-						mgr->Dev()->SetTexture (0, tbuf[i]->Tex());
-
-						// to be completed: create new mesh with modified texture coordinates
-						const TEXCRDRANGE2 *ctexrange = tbuf[i]->GetTexRange();
-						double cminlat, cmaxlat, cminlng, cmaxlng;
-						float tu0, tu1, tv0, tv1, tuscale, tvscale;
-						tbuf[i]->Extents (&cminlat, &cmaxlat, &cminlng, &cmaxlng);
-
-						cminlng -= mgr->prm.rprm->cloudrot;
-						cmaxlng -= mgr->prm.rprm->cloudrot;
-						if (cmaxlng < -PI) {
-							cminlng += PI2;
-							cmaxlng += PI2;
-						}
-
-						static int ncvtx = (TILE_PATCHRES+3)*(TILE_PATCHRES+3);
-						static VERTEX_2TEX *cvtx = new VERTEX_2TEX[ncvtx];
-						if (mesh->nv > ncvtx) {
-							delete []cvtx;
-							cvtx = new VERTEX_2TEX[ncvtx=mesh->nv];
-						}
-						memcpy(cvtx, mesh->vtx, mesh->nv*sizeof(VERTEX_2TEX));
-						tu0 = ctexrange->tumin + (ctexrange->tumax-ctexrange->tumin)*(float)((minlng-cminlng)/(cmaxlng-cminlng));
-						tu1 = ctexrange->tumin + (ctexrange->tumax-ctexrange->tumin)*(float)((maxlng-cminlng)/(cmaxlng-cminlng));
-						tv0 = ctexrange->tvmin + (ctexrange->tvmax-ctexrange->tvmin)*(float)((maxlat-cmaxlat)/(cminlat-cmaxlat));
-						tv1	= ctexrange->tvmin + (ctexrange->tvmax-ctexrange->tvmin)*(float)((minlat-cmaxlat)/(cminlat-cmaxlat));
-						tuscale = (tu1-tu0)/(texrange.tumax-texrange.tumin);
-						tvscale = (tv1-tv0)/(texrange.tvmax-texrange.tvmin);
-						for (int j = 0; j < mesh->nv; j++) {
-							cvtx[j].tu0 = tu0 + tuscale * (cvtx[j].tu0-texrange.tumin);
-							cvtx[j].tv0 = tv0 + tvscale * (cvtx[j].tv0-texrange.tvmin);
-						}
-						
-						mgr->Dev()->DrawIndexedPrimitive (D3DPT_TRIANGLELIST, FVF_2TEX, cvtx, mesh->nv, mesh->idx, mesh->ni, 0);
-					}
-	
-					mgr->Dev()->SetRenderState (D3DRENDERSTATE_ALPHABLENDENABLE, FALSE);
-					mgr->Dev()->SetTextureStageState (0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
-
-					mgr->Dev()->SetMaterial (&pmat);
-				}
-			}
-		}
-	}
-
-	// disable fog on additional render passes
-	if (mgr->prm.fog) {
-		TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_FOGENABLE, FALSE);
-		TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_FOGTABLEMODE, D3DFOG_NONE);
-	}
-
-	// add city lights
-	if (render_lights) {
-		double fac = mgr->Cprm().lightfac;
-		if (sdist < 1.9) fac *= (sdist-1.45)/(1.9-1.45);
-		TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_TEXTUREFACTOR, D3DRGBA(fac,fac,fac,1));
-		TileManager2Base::Dev()->SetTextureStageState (0, D3DTSS_COLOROP, D3DTOP_MODULATE);
-		TileManager2Base::Dev()->SetTextureStageState (0, D3DTSS_COLORARG2, D3DTA_TFACTOR);
-		TileManager2Base::Dev()->SetTexture (0, ltex);
-		TileManager2Base::Dev()->SetTextureStageState (0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
-		TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_ALPHABLENDENABLE, TRUE);
-		TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_DESTBLEND, D3DBLEND_ONE);
-		TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_SRCBLEND, D3DBLEND_ONE);
-		TileManager2Base::Dev()->DrawIndexedPrimitiveVB (D3DPT_TRIANGLELIST, vb, 0,
-			mesh->nv, mesh->idx, mesh->ni, 0);
-		TileManager2Base::Dev()->SetTextureStageState (0, D3DTSS_COLOROP, D3DTOP_MODULATE);
-		TileManager2Base::Dev()->SetTextureStageState (0, D3DTSS_COLORARG2, D3DTA_CURRENT);
-		TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_ALPHABLENDENABLE, FALSE);
-		TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_SRCBLEND, D3DBLEND_SRCALPHA);
-		TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_DESTBLEND, D3DBLEND_INVSRCALPHA);
-	}
-
-	if (has_specular) {
-		TileManager2Base::Dev()->GetMaterial (&pmat);
-		TileManager2Base::Dev()->SetMaterial (&watermat);
-		TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_SPECULARENABLE, TRUE);
-		TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_ALPHABLENDENABLE, TRUE);
-		TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_SRCBLEND, D3DBLEND_INVSRCALPHA);
-		TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_DESTBLEND, D3DBLEND_ONE);
-		TileManager2Base::Dev()->SetTexture (0, ltex);
-		TileManager2Base::Dev()->DrawIndexedPrimitiveVB (D3DPT_TRIANGLELIST, vb, 0,
-				mesh->nv, mesh->idx, mesh->ni, 0);
-		TileManager2Base::Dev()->SetMaterial (&pmat);
-		TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_SPECULARENABLE, FALSE);
-		TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_ALPHABLENDENABLE, FALSE);
-		TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_SRCBLEND, D3DBLEND_SRCALPHA);
-		TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_DESTBLEND, D3DBLEND_INVSRCALPHA);
-	}
-
-	if (mgr->prm.fog) {
-		// turn fog back on
-		TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_FOGENABLE, TRUE);
-		TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_FOGTABLEMODE, D3DFOG_EXP);
 	}
 }
 
@@ -549,9 +539,9 @@ void SurfTile::FixCorner (const SurfTile *nbr)
 	
 		double rad = mgr->CbodySize();
 		double radfac = (rad+nbr_corner_elev)/(rad+corner_elev);
-		mesh->vtx[vtx_idx].x = vtx_store.x*radfac + vtxshift.x*(radfac-1.0);
-		mesh->vtx[vtx_idx].y = vtx_store.y*radfac + vtxshift.y*(radfac-1.0);
-		mesh->vtx[vtx_idx].z = vtx_store.z*radfac + vtxshift.z*(radfac-1.0);
+		mesh->vtx[vtx_idx].x = (float)(vtx_store.x*radfac + vtxshift.x*(radfac-1.0));
+		mesh->vtx[vtx_idx].y = (float)(vtx_store.y*radfac + vtxshift.y*(radfac-1.0));
+		mesh->vtx[vtx_idx].z = (float)(vtx_store.z*radfac + vtxshift.z*(radfac-1.0));
 	}
 }
 
@@ -596,9 +586,9 @@ void SurfTile::FixLongitudeBoundary (const SurfTile *nbr, bool keep_corner)
 						if (ilat & 1) i0++; else i1--;
 					for (i = i0; i <= i1; i++) {
 						double radfac = (rad+nbr_elev[i*TILE_ELEVSTRIDE])/(rad+elev[i*TILE_ELEVSTRIDE*nsub]);
-						mesh->vtx[vtx_ofs+i*vtx_skip].x = vtx_store[i*nsub].x*radfac + vtxshift.x*(radfac-1.0);
-						mesh->vtx[vtx_ofs+i*vtx_skip].y = vtx_store[i*nsub].y*radfac + vtxshift.y*(radfac-1.0);
-						mesh->vtx[vtx_ofs+i*vtx_skip].z = vtx_store[i*nsub].z*radfac + vtxshift.z*(radfac-1.0);
+						mesh->vtx[vtx_ofs+i*vtx_skip].x = (float)(vtx_store[i*nsub].x*radfac + vtxshift.x*(radfac-1.0));
+						mesh->vtx[vtx_ofs+i*vtx_skip].y = (float)(vtx_store[i*nsub].y*radfac + vtxshift.y*(radfac-1.0));
+						mesh->vtx[vtx_ofs+i*vtx_skip].z = (float)(vtx_store[i*nsub].z*radfac + vtxshift.z*(radfac-1.0));
 					}
 					// interpolate the nodes that fall between neighbour nodes
 					for (i = 0; i < nbr_range; i++)
@@ -654,9 +644,9 @@ void SurfTile::FixLatitudeBoundary (const SurfTile *nbr, bool keep_corner)
 						if (ilng & 1) i1--; else i0++;
 					for (i = i0; i <= i1; i++) {
 						double radfac = (rad+nbr_elev[i])/(rad+elev[i*nsub]);
-						mesh->vtx[vtx_ofs+i*vtx_skip].x = vtx_store[i*nsub].x*radfac + vtxshift.x*(radfac-1.0);
-						mesh->vtx[vtx_ofs+i*vtx_skip].y = vtx_store[i*nsub].y*radfac + vtxshift.y*(radfac-1.0);
-						mesh->vtx[vtx_ofs+i*vtx_skip].z = vtx_store[i*nsub].z*radfac + vtxshift.z*(radfac-1.0);
+						mesh->vtx[vtx_ofs+i*vtx_skip].x = (float)(vtx_store[i*nsub].x*radfac + vtxshift.x*(radfac-1.0));
+						mesh->vtx[vtx_ofs+i*vtx_skip].y = (float)(vtx_store[i*nsub].y*radfac + vtxshift.y*(radfac-1.0));
+						mesh->vtx[vtx_ofs+i*vtx_skip].z = (float)(vtx_store[i*nsub].z*radfac + vtxshift.z*(radfac-1.0));
 					}
 					// interpolate the nodes that fall between neighbour nodes
 					for (i = 0; i < nbr_range; i++)
@@ -680,9 +670,7 @@ void TileManager2<SurfTile>::Render (MATRIX4 &dwmat, bool use_zbuf, const vPlane
 	SetRenderPrm (dwmat, 0, use_zbuf, rprm);
 
 	double np = 0.0, fp = 0.0;
-	bool reset_clipping = false;
-	float fogfactor;
-	int i, j;
+	int i;
 	Camera *camera = GClient()->GetScene()->GetCamera();
 
 	// adjust scaling parameters (can only be done if no z-buffering is in use)
@@ -716,17 +704,16 @@ void TileManager2<SurfTile>::Render (MATRIX4 &dwmat, bool use_zbuf, const vPlane
 		ProcessNode (tiletree+i);
 
 	// render the tree
-	Dev()->SetTextureStageState (0, D3DTSS_ADDRESS, D3DTADDRESS_CLAMP);
+	for (i = 0; i < 2; i++)
+		Dev()->SetTextureStageState (i, D3DTSS_ADDRESS, D3DTADDRESS_CLAMP);
+
 	for (i = 0; i < 2; i++)
 		RenderNode (tiletree+i);
-	Dev()->SetTextureStageState (0, D3DTSS_ADDRESS, D3DTADDRESS_WRAP);
+
+	for (i = 0; i < 2; i++)
+		Dev()->SetTextureStageState (i, D3DTSS_ADDRESS, D3DTADDRESS_WRAP);
 
 	loader->ReleaseMutex ();
-
-	if (reset_clipping) {
-		if (rprm.bFog)
-			Dev()->SetRenderState (D3DRENDERSTATE_FOGDENSITY, *((LPDWORD)(&fogfactor)));
-	}
 
 	if (np)
 		camera->SetFrustumLimits(np,fp);

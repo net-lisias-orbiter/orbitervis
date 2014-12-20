@@ -410,6 +410,7 @@ HRESULT D3D7Client::Initialise3DEnvironment ()
 	if (data->fullscreen) dwFrameworkFlags |= D3DFW_FULLSCREEN;
 	if (data->novsync)    dwFrameworkFlags |= D3DFW_NOVSYNC;
 	if (data->pageflip)   dwFrameworkFlags |= D3DFW_PAGEFLIP;
+	if (data->trystencil) dwFrameworkFlags |= D3DFW_TRYSTENCIL;
 
 	if (SUCCEEDED (hr = m_pFramework->Initialize (hRenderWnd,
 		m_pDeviceInfo->pDriverGUID,
@@ -563,7 +564,7 @@ static const DWORD LOADSTATUSCOL = 0xC08080; //0xFFD0D0
 
 void D3D7Client::InitOutputLoadStatus ()
 {
-
+#ifdef UNDEF
 	HDC hDC;
 	TEXTMETRIC tm;
 
@@ -599,21 +600,25 @@ void D3D7Client::InitOutputLoadStatus ()
 	TextOut (hDC, lstatus.x+lstatus.w, lstatus.y-lstatus.h/2-4, "Loading ...", 11);
 	m_pFramework->GetBackBuffer()->ReleaseDC (hDC);
 	clbkBlt (m_pFramework->GetFrontBuffer(), 0, 0, m_pFramework->GetBackBuffer()); 
+#endif
 }
 
 // =======================================================================
 
 void D3D7Client::ExitOutputLoadStatus ()
 {
+#ifdef UNDEF
 	DeleteObject (lstatus.hBkg);
 	DeleteDC (lstatus.bkgDC);
 	lstatus.bkgDC = 0;
+#endif
 }
 
 // =======================================================================
 
 bool D3D7Client::OutputLoadStatus (const char *msg, int line)
 {
+#ifdef UNDEF
 	static char linebuf[2][70] = {"", ""};
 
 	if (!lstatus.bkgDC) return false;
@@ -632,6 +637,8 @@ bool D3D7Client::OutputLoadStatus (const char *msg, int line)
 	m_pFramework->GetBackBuffer()->ReleaseDC (hDC);
 	clbkDisplayFrame ();
 	return true;
+#endif
+	return false;
 }
 
 // ==============================================================

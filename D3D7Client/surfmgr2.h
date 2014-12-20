@@ -56,6 +56,7 @@ private:
 	LPDIRECTDRAWSURFACE7 ltex;		// landmask/nightlight texture, if applicable
 	INT16 *elev;               // elevation data [m] (8x subsampled)
 	mutable INT16 *ggelev;     // pointer to my elevation data in the great-grandparent
+	bool has_elevfile;          // true if the elevation data for this tile were read from file
 };
 
 #endif // !__SURFMGR2_H

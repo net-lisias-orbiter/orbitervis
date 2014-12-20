@@ -38,9 +38,13 @@ public:
 	MATRIX4 ProjectionMatrix() const;
 	MATRIX4 ViewMatrix() const;
 
+	inline DWORD GetViewportW () const { return viewW; }
+	inline DWORD GetViewportH () const { return viewH; }
+
 	inline const VECTOR3 *GetGPos () const { return &gpos; }
 	inline const VECTOR3 *GetGDir () const { return &gdir; }
 	inline const MATRIX3 *GetGRot () const { return &grot; }
+
 	inline double GetTanAp () const { return tan_ap; }
 	inline double GetNearlimit () const { return nearplane; }
 	inline double GetFarlimit () const { return farplane; }

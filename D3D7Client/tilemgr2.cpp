@@ -24,13 +24,11 @@ static int patch_res = 32; // patch node grid dimensions
 static int elev_stride = patch_res*8+3;
 static TEXCRDRANGE2 fullrange = {0,1,0,1};
 
-int SURF_MAX_PATCHLEVEL2 = 18; // move this somewhere else
-
 // =======================================================================
 
 static D3DLIGHT7 nightlight = {
 	D3DLIGHT_DIRECTIONAL,
-	{0.5,0.5,0.7,0},
+	{0.5f,0.5f,0.7f,0},
 	{0,0,0,0},
 	{0,0,0,0},
 	{0,0,0},
@@ -307,8 +305,7 @@ VBMESH *Tile::CreateMesh_quadpatch (int grdlat, int grdlng, INT16 *elev, double 
 	// regenerate normals for terrain
 	if (elev) {
 		const double shade_exaggerate = 1.0; // 1 = normal, <1 = more dramatic landscape shadows
-		double dy, dz, dydz, nz_x, nz_z, ny_x, ny_y, nx1, ny1, nz1;
-		double dy_dezp, dy_dezm, dz_deyp, dz_deym;
+		double dy, dz, dydz, nz_x, ny_x, nx1, ny1, nz1;
 		int en;
 		dy = radius * PI/(nlat*grdlat);  // y-distance between vertices
 		ny_x = shade_exaggerate*dy;
@@ -592,7 +589,6 @@ DWORD WINAPI TileLoader::Load_ThreadProc (void *data)
 	bool load;
 
 	while (bRunThread) {
-		Sleep (idle);
 		WaitForMutex ();
 		if (load = (nqueue > 0)) {
 			tile = queue[queue_out].tile;
@@ -608,6 +604,8 @@ DWORD WINAPI TileLoader::Load_ThreadProc (void *data)
 			WaitForMutex ();
 			tile->state = Tile::Inactive; // unlock tile
 			ReleaseMutex ();
+		} else {
+			Sleep (idle);
 		}
 	}
 	return 0;
@@ -629,6 +627,7 @@ TileManager2Base::configPrm TileManager2Base::cprm = {
 };
 TileLoader *TileManager2Base::loader = NULL;
 double TileManager2Base::resolutionBias = 4.0;
+double TileManager2Base::resolutionScale = 1.0;
 bool TileManager2Base::bTileLoadThread = false;
 
 // -----------------------------------------------------------------------
@@ -642,6 +641,8 @@ TileManager2Base::TileManager2Base (const vPlanet *vplanet, int _maxres)
 	obj = vp->Object();
 	obj_size = oapiGetSize (obj);
 	oapiGetObjectName (obj, cbody_name, 256);
+	camera = gc->GetScene()->GetCamera();
+	emgr = oapiElevationManager(obj);
 }
 
 // -----------------------------------------------------------------------
@@ -653,6 +654,9 @@ void TileManager2Base::GlobalInit (oapi::D3D7Client *gclient)
 	dev = gc->GetDevice();
 	vbMemCaps = (gclient->GetFramework()->IsTLDevice() ? 0 : D3DVBCAPS_SYSTEMMEMORY);
 	resolutionBias = 4.0 + *(double*)gclient->GetConfigParam (CFGPRM_RESOLUTIONBIAS);
+	DWORD w, h;
+	gc->clbkGetViewportSize (&w, &h);
+	resolutionScale = 1400.0 / (double)h;
 	cprm.bSpecular = *(bool*)gclient->GetConfigParam (CFGPRM_SURFACEREFLECT);
 	cprm.bLights = *(bool*)gclient->GetConfigParam (CFGPRM_SURFACELIGHTS);
 	cprm.bCloudShadow = *(bool*)gclient->GetConfigParam (CFGPRM_CLOUDSHADOWS);

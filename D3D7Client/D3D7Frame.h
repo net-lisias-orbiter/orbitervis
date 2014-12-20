@@ -41,6 +41,7 @@ class CD3DFramework7
     BOOL                 m_bIsStereo;          // Stereo view mode
 	BOOL				 m_bNoVSync;           // don't use vertical sync in fullscreen
 	BOOL                 m_bPageflip;          // allow page flipping in fullscreen
+	BOOL                 m_bTryStencil;        // try to find a device that supports stencil buffers
 	BOOL                 m_bSupportsMipmaps;
     DWORD                m_dwRenderWidth;      // Dimensions of the render target
     DWORD                m_dwRenderHeight;
@@ -115,6 +116,7 @@ public:
 #define D3DFW_NO_FPUSETUP   0x00000008 // Don't use default DDSCL_FPUSETUP flag
 #define D3DFW_NOVSYNC		0x00000010 // Don't use vertical sync in fullscreen
 #define D3DFW_PAGEFLIP      0x00000020 // Allow page flipping in fullscreen
+#define D3DFW_TRYSTENCIL    0x00000040 // Try for stencil buffer support
 
 //-----------------------------------------------------------------------------
 // Errors that the Initialize() and ChangeDriver() calls may return

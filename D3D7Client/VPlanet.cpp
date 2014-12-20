@@ -37,7 +37,6 @@ static double farplane = 1e6;
 static double max_surf_dist = 1e4;
 
 extern int SURF_MAX_PATCHLEVEL;
-extern int SURF_MAX_PATCHLEVEL2;
 
 // ==============================================================
 
@@ -48,15 +47,15 @@ vPlanet::vPlanet (OBJHANDLE _hObj, const Scene *scene): vObject (_hObj, scene)
 	dist_scale = 1.0f;
 	max_centre_dist = 0.9*scene->GetCamera()->GetFarlimit();
 	maxdist = max (max_centre_dist, max_surf_dist + rad);
+	max_patchres = *(DWORD*)oapiGetObjectParam (_hObj, OBJPRM_PLANET_SURFACEMAXLEVEL);
+	max_patchres = min (max_patchres, *(DWORD*)gc->GetConfigParam (CFGPRM_SURFACEMAXLEVEL));
 	int tilever = *(int*)oapiGetObjectParam (_hObj, OBJPRM_PLANET_TILEENGINE);
 	if (tilever < 2) {
 		surfmgr = new SurfaceManager (gc, this);
 		surfmgr2 = NULL;
 	} else {
 		surfmgr = NULL;
-		int maxlvl = *(DWORD*)oapiGetObjectParam (_hObj, OBJPRM_PLANET_SURFACEMAXLEVEL);
-		maxlvl = min (maxlvl, SURF_MAX_PATCHLEVEL2);
-		surfmgr2 = new TileManager2<SurfTile> (this, maxlvl);
+		surfmgr2 = new TileManager2<SurfTile> (this, max_patchres);
 	}
 	prm.bAtm = oapiPlanetHasAtmosphere (_hObj);
 	if (prm.bAtm) {
@@ -105,6 +104,7 @@ vPlanet::vPlanet (OBJHANDLE _hObj, const Scene *scene): vObject (_hObj, scene)
 			}
 		} else { // v2 cloud engine
 			int maxlvl = *(int*)oapiGetObjectParam (_hObj, OBJPRM_PLANET_CLOUDMAXLEVEL);
+			maxlvl = min (maxlvl, *(DWORD*)gc->GetConfigParam (CFGPRM_SURFACEMAXLEVEL));
 			cloudmgr2 = new TileManager2<CloudTile> (this, maxlvl);
 		}
 	} else {
@@ -286,7 +286,7 @@ void vPlanet::CheckResolution ()
 
 		static const double scal2 = 1.0/log(2.0);
 		const double shift = (surfmgr2 ? 6.0 : 5.0); // reduce level for tile mgr v2, because of increased patch size
-		new_patchres = min (max ((int)(scal2*log(ntx)-5.0),1), SURF_MAX_PATCHLEVEL2);
+		new_patchres = min (max ((int)(scal2*log(ntx)-shift),1), max_patchres);
 	}
 	if (new_patchres != patchres) {
 		if (hashaze) {

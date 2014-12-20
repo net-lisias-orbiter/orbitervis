@@ -123,6 +123,7 @@ HRESULT CD3DFramework7::Initialize (HWND hWnd, GUID* pDriverGUID,
 	m_bIsTLDevice   = ( *pDeviceGUID == IID_IDirect3DTnLHalDevice );
 	m_bNoVSync      = (dwFlags & D3DFW_NOVSYNC) ? TRUE : FALSE;
 	m_bPageflip     = (dwFlags & D3DFW_PAGEFLIP) ? TRUE : FALSE;
+	m_bTryStencil   = (dwFlags & D3DFW_TRYSTENCIL) ? TRUE : FALSE;
 
     // Support stereoscopic viewing for fullscreen modes which support it
 	if ((dwFlags & D3DFW_STEREO) && (dwFlags & D3DFW_FULLSCREEN))
@@ -188,7 +189,7 @@ static HRESULT WINAPI EnumZBufferFormatsCallback (DDPIXELFORMAT* pddpf, VOID* pC
 {
     DDPIXELFORMAT* pddpfOut = (DDPIXELFORMAT*)pContext;
 
-    if (pddpfOut->dwRGBBitCount == pddpf->dwRGBBitCount) {
+    if (pddpfOut->dwRGBBitCount == pddpf->dwRGBBitCount && pddpfOut->dwStencilBitDepth <= pddpf->dwStencilBitDepth) {
         (*pddpfOut) = (*pddpf);
         return D3DENUMRET_CANCEL;
     }
@@ -463,14 +464,25 @@ HRESULT CD3DFramework7::CreateZBuffer (GUID* pDeviceGUID)
     ddsd.dwFlags        = DDSD_WIDTH | DDSD_HEIGHT | DDSD_CAPS | DDSD_PIXELFORMAT;
     ddsd.ddsCaps.dwCaps = DDSCAPS_ZBUFFER | m_dwDeviceMemType;
     ddsd.ddpfPixelFormat.dwSize = 0;  // Tag the pixel format as unitialized.
+	ddsd.ddpfPixelFormat.dwStencilBitDepth = (m_bTryStencil ? 1:0);
 
     // Get an appropiate pixel format from enumeration of the formats. On the
     // first pass, we look for a zbuffer dpeth which is equal to the frame
     // buffer depth (as some cards unfornately require this).
     m_pD3D->EnumZBufferFormats (*pDeviceGUID, EnumZBufferFormatsCallback,
                                 (VOID*)&ddsd.ddpfPixelFormat);
-    if (0 == ddsd.ddpfPixelFormat.dwSize) {
-        // Try again, just accepting any 16-bit zbuffer
+
+	// If we were looking for stencil support and no match was found,
+	// try again without stencil
+	if (0 == ddsd.ddpfPixelFormat.dwSize && m_bTryStencil) {
+		strcpy(oapiDebugString(), "no stencil found");
+		ddsd.ddpfPixelFormat.dwStencilBitDepth = 0;
+	    m_pD3D->EnumZBufferFormats (*pDeviceGUID, EnumZBufferFormatsCallback,
+		     (VOID*)&ddsd.ddpfPixelFormat);
+	}
+
+	// Still no luck: Try again, just accepting any 16-bit zbuffer mode
+	if (0 == ddsd.ddpfPixelFormat.dwSize) {
         ddsd.ddpfPixelFormat.dwRGBBitCount = 16;
         m_pD3D->EnumZBufferFormats (*pDeviceGUID, EnumZBufferFormatsCallback,
                                     (VOID*)&ddsd.ddpfPixelFormat);

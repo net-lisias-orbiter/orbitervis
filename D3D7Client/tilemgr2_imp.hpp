@@ -124,14 +124,15 @@ void TileManager2Base::ProcessNode (QuadTreeNode<TileType> *node)
 			double a = prm.cdist - erad*cos(adist);
 			tdist = sqrt(a*a + h*h);
 		}
-		int tgtres = (tdist < 1e-6 ? prm.maxlvl : max (0, min (prm.maxlvl, (int)(bias - log(tdist)*res_scale))));
+		double apr = tdist * camera->GetTanAp() * resolutionScale;
+		int tgtres = (apr < 1e-6 ? prm.maxlvl : max (0, min (prm.maxlvl, (int)(bias - log(apr)*res_scale))));
 		bstepdown = (lvl < tgtres);
 	}
 
 	// Recursion to next level: subdivide into 2x2 patch
 	if (bstepdown) {
 		bool subcomplete = true;
-		int i, j, idx;
+		int i, idx;
 		// check if all 4 subtiles are available already, and queue any missing for loading
 		for (idx = 0; idx < 4; idx++) {
 			QuadTreeNode<TileType> *child = node->Child(idx);
@@ -195,6 +196,15 @@ TileManager2<TileType>::TileManager2 (const vPlanet *vplanet, int _maxres)
 		tiletree[i].SetEntry (new TileType (this, 0, 0, i));
 		tiletree[i].Entry()->Load();
 	}
+}
+
+// -----------------------------------------------------------------------
+
+template<class TileType>
+TileManager2<TileType>::~TileManager2 ()
+{
+	for (int i = 0; i < 2; i++)
+		tiletree[i].DelChildren();
 }
 
 // -----------------------------------------------------------------------

@@ -88,7 +88,7 @@ void TileManager2<CloudTile>::Render (MATRIX4 &dwmat, bool use_zbuf, const vPlan
 	SetRenderPrm (dwmat, rprm.cloudrot, use_zbuf, rprm);
 
 	double np = 0.0, fp = 0.0;
-	int i, j;
+	int i;
 	Camera *camera = GClient()->GetScene()->GetCamera();
 
 	if (rprm.bCloudBrighten)
@@ -171,7 +171,7 @@ void TileManager2<CloudTile>::RenderFlatCloudShadows (MATRIX4 &dwmat, const vPla
 	Dev()->SetTextureStageState (0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
 	
 	double np = 0.0, fp = 0.0;
-	int i, j;
+	int i;
 
 	Camera *camera = GClient()->GetScene()->GetCamera();
 	double R = obj_size;

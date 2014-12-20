@@ -86,6 +86,7 @@ private:
 	double maxdist, max_centre_dist;
 	float shadowalpha;        // alpha value for surface shadows
 	double cloudrad;          // cloud layer radius [m]
+	int max_patchres;         // max surface LOD level
 	int patchres;             // surface LOD level
 	int mipmap_mode;          // mipmapping mode for planet surface (0=none, 1=point sampling, 2=linear interpolation)
 	int aniso_mode;           // anisotropic filtering (>= 1, 1=none)
