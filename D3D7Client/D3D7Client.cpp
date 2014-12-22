@@ -876,12 +876,18 @@ void D3D7Client::clbkRender2DPanel (SURFHANDLE *hSurf, MESHHANDLE hMesh, MATRIX3
 		MESHGROUP *grp = oapiMeshGroup (hMesh, i);
 		if (grp->UsrFlag & 2) continue; // skip this group
 
-		if (grp->TexIdx >= TEXIDX_MFD0) {
+		if (grp->TexIdx == SPEC_DEFAULT) {
+			newsurf = 0;
+		} else if (grp->TexIdx == SPEC_INHERIT) {
+			// nothing to do
+		} else if (grp->TexIdx >= TEXIDX_MFD0) {
 			int mfdidx = grp->TexIdx-TEXIDX_MFD0;
 			newsurf = GetMFDSurface (mfdidx);
 			if (!newsurf) continue;
-		} else {
+		} else if (hSurf) {
 			newsurf = hSurf[grp->TexIdx];
+		} else {
+			newsurf = oapiGetTextureHandle (hMesh, grp->TexIdx+1);
 		}
 		if (newsurf != surf) {
 			pd3dDevice->SetTexture (0, (LPDIRECTDRAWSURFACE7)(surf = newsurf));
