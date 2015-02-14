@@ -1,7 +1,7 @@
 // ==============================================================
 //   ORBITER VISUALISATION PROJECT (OVP)
 //   D3D7 Client module
-//   Copyright (C) 2006-2014 Martin Schweiger
+//   Copyright (C) 2006-2015 Martin Schweiger
 //   Dual licensed under GPL v3 and LGPL v3
 // ==============================================================
 
@@ -394,14 +394,16 @@ void D3D7Mesh::Render (LPDIRECT3DDEVICE7 dev)
 	if (bModulateMatAlpha)
 		dev->SetTextureStageState (0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
 
-	DWORD g, j, n, mi, pmi, ti, pti, wrap, owrap = 0;
+	DWORD g, j, n, mi, pmi, ti, pti, uflag, wrap, owrap = 0;
 	bool skipped = false;
 	bool texstage[MAXTEX] = {false};
 	BOOL specular = FALSE;
 	BOOL lighting = TRUE;
 
 	for (g = 0; g < nGrp; g++) {
-		if (Grp[g]->UsrFlag & 2) { // user skip
+
+		uflag = Grp[g]->UsrFlag;
+		if (uflag & 2) { // user skip
 			skipped = true;
 			continue;
 		}
@@ -457,15 +459,30 @@ void D3D7Mesh::Render (LPDIRECT3DDEVICE7 dev)
 		if (wrap != owrap)
 			dev->SetRenderState (D3DRENDERSTATE_WRAP0, owrap = wrap);
 
-		if (!(Grp[g]->UsrFlag & 0x4) != lighting)
+		if (!(uflag & 0x4) != lighting)
 			dev->SetRenderState (D3DRENDERSTATE_LIGHTING, lighting = !lighting);
 
-		if (Grp[g]->UsrFlag & 0x8) { // brighten
-			dev->SetRenderState (D3DRENDERSTATE_SRCBLEND, D3DBLEND_ONE);
+		if (uflag & 0x8) { // brighten
+			dev->SetRenderState (D3DRENDERSTATE_SRCBLEND, D3DBLEND_SRCALPHA);
 			dev->SetRenderState (D3DRENDERSTATE_DESTBLEND, D3DBLEND_ONE);
 		}
 
+		if (uflag &0x10) { // skip texture color information
+			dev->SetTextureStageState (0, D3DTSS_COLOROP, D3DTOP_SELECTARG2);
+		}
+
 		RenderGroup (dev, Grp[g]);
+
+		if (uflag & 0x8) { // reset brighten
+			dev->SetRenderState (D3DRENDERSTATE_SRCBLEND, D3DBLEND_SRCALPHA);
+			dev->SetRenderState (D3DRENDERSTATE_DESTBLEND, D3DBLEND_INVSRCALPHA);
+		}
+
+		if (uflag & 0x10) {
+			dev->SetTextureStageState (0, D3DTSS_COLOROP, D3DTOP_MODULATE);
+		}
+
+		skipped = false;
 	}
 
 	if (owrap)     dev->SetRenderState (D3DRENDERSTATE_WRAP0, 0);

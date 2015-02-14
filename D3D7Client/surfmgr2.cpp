@@ -1,7 +1,7 @@
 // ==============================================================
 //   ORBITER VISUALISATION PROJECT (OVP)
 //   D3D7 Client module
-//   Copyright (C) 2006-2014 Martin Schweiger
+//   Copyright (C) 2006-2015 Martin Schweiger
 //   Dual licensed under GPL v3 and LGPL v3
 // ==============================================================
 
@@ -309,7 +309,7 @@ void SurfTile::Render ()
 			if (mgr->prm.fog) {
 				// increase fog density to simulate sky reflection on water surface
 				TileManager2Base::Dev()->GetRenderState (D3DRENDERSTATE_FOGDENSITY, &dns);
-				float fFogDns = *((float*)&dns) * 3.0f;
+				float fFogDns = *((float*)&dns) * (float)(1.0 + 3.0*exp(-4e2*(mgr->prm.cdist-1.0)));
 				TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_FOGDENSITY, *((LPDWORD) (&fFogDns)));
 			}
 
