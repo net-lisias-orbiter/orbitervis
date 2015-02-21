@@ -482,7 +482,7 @@ void vPlanet::RenderSphere (LPDIRECT3DDEVICE7 dev, const RenderPrm &prm)
 	}
 
 	if (surfmgr2) {
-		if (cdist >= 1.3*rad) {
+		if (cdist >= 1.3*rad && cdist > 1e6) {
 			surfmgr2->Render (dmWorld, false, prm);
 		} else {
 			dev->SetRenderState (D3DRENDERSTATE_ZENABLE, TRUE);

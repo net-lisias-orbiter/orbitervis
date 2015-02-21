@@ -461,6 +461,14 @@ void TileManager::Render (LPDIRECT3DDEVICE7 dev, D3DMATRIX &wmat, double scale, 
 
 	TEXCRDRANGE range = {0,1,0,1};
 
+	// need to enable auto-rescale of normals since sphere is resized via world matrix
+	DWORD nmlscale = TRUE;
+	dev->GetRenderState (D3DRENDERSTATE_NORMALIZENORMALS, &nmlscale);
+	if (!nmlscale)
+		dev->SetRenderState (D3DRENDERSTATE_NORMALIZENORMALS, TRUE);
+
+	dev->SetTextureStageState (0, D3DTSS_ADDRESS, D3DTADDRESS_CLAMP);
+
 	if (level <= 4) {
 
 		RenderSimple (level, td);
@@ -490,6 +498,10 @@ void TileManager::Render (LPDIRECT3DDEVICE7 dev, D3DMATRIX &wmat, double scale, 
 		}
 		ReleaseMutex (tilebuf->hQueueMutex);
 	}
+
+	dev->SetTextureStageState (0, D3DTSS_ADDRESS, D3DTADDRESS_WRAP);
+	if (!nmlscale)
+		dev->SetRenderState (D3DRENDERSTATE_NORMALIZENORMALS, FALSE);
 
 	pcdir = RenderParam.cdir; // store camera direction
 }
