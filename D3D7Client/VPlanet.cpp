@@ -123,6 +123,7 @@ vPlanet::vPlanet (OBJHANDLE _hObj, const Scene *scene): vObject (_hObj, scene)
 	memcpy (&fog, oapiGetObjectParam (_hObj, OBJPRM_PLANET_FOGPARAM), sizeof (FogParam));
 	prm.bFogEnabled = (fog.dens_0 > 0);
 
+	renderpix = false;
 	patchres = 0;
 	mipmap_mode = gc->Cfg()->PlanetMipmapMode;
 	aniso_mode = gc->Cfg()->PlanetAnisoMode;
@@ -279,9 +280,11 @@ void vPlanet::CheckResolution ()
 	double ntx;
 
 	if (apr < 2.5) { // render planet as 2x2 pixels
+		renderpix = true;
 		new_patchres = 0;
 		ntx = 0;
 	} else {
+		renderpix = false;
 		ntx = PI*2.0 * apr;
 
 		static const double scal2 = 1.0/log(2.0);
@@ -320,9 +323,20 @@ bool vPlanet::Render (LPDIRECT3DDEVICE7 dev)
 {
 	if (!active) return false;
 
-	if (patchres == 0) { // render as 2x2 pixel block
+	if (renderpix) { // render as 2x2 pixel block
+
 		RenderDot (dev);
+
 	} else {             // render as sphere
+
+		DWORD nmlnml = TRUE;
+		if (mesh || !surfmgr2) {
+			// old-style and mesh-based planet surfaces use a rescaled world matrix,
+			// so we need to make sure that normals are renormalised
+			dev->GetRenderState (D3DRENDERSTATE_NORMALIZENORMALS, &nmlnml);
+			if (!nmlnml) dev->SetRenderState (D3DRENDERSTATE_NORMALIZENORMALS, TRUE);
+		}
+
 		DWORD amb = prm.amb0col;
 		bool ringpostrender = false;
 		float fogfactor;
@@ -445,6 +459,7 @@ bool vPlanet::Render (LPDIRECT3DDEVICE7 dev)
 			dev->SetRenderState (D3DRENDERSTATE_ZENABLE, FALSE);
 			dev->SetRenderState (D3DRENDERSTATE_ZWRITEENABLE, FALSE);
 		}
+		if (!nmlnml) dev->SetRenderState (D3DRENDERSTATE_NORMALIZENORMALS, FALSE);
 	}
 	return true;
 }

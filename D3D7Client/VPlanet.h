@@ -90,6 +90,7 @@ private:
 	int patchres;             // surface LOD level
 	int mipmap_mode;          // mipmapping mode for planet surface (0=none, 1=point sampling, 2=linear interpolation)
 	int aniso_mode;           // anisotropic filtering (>= 1, 1=none)
+	bool renderpix;           // render planet as pixel block (at large distance)
 	bool hashaze;             // render atmospheric haze
 	DWORD nbase;              // number of surface bases
 	vBase **vbase;            // list of base visuals
