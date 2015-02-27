@@ -157,7 +157,7 @@ void Tile::Extents (double *latmin, double *latmax, double *lngmin, double *lngm
 // -----------------------------------------------------------------------
 
 VBMESH *Tile::CreateMesh_quadpatch (int grdlat, int grdlng, INT16 *elev, double globelev,
-	const TEXCRDRANGE2 *range, bool shift_origin, VECTOR3 *shift)
+	const TEXCRDRANGE2 *range, bool shift_origin, VECTOR3 *shift, double bb_excess)
 {
 	const float TEX2_MULTIPLIER = 4.0f; // was: 16.0f
 	const float c1 = 1.0f, c2 = 0.0f;   // -1.0f/512.0f; // assumes 256x256 texture patches
@@ -350,6 +350,18 @@ VBMESH *Tile::CreateMesh_quadpatch (int grdlat, int grdlng, INT16 *elev, double 
 	mesh->ni  = nidx;
 
 	// set bounding box for visibility calculations
+	if (bb_excess) {
+		double bb_dx = tpmax.x-tpmin.x;
+		double bb_dy = tpmax.y-tpmin.y;
+		double bb_dz = tpmax.z-tpmin.z;
+		double scale = sqrt(bb_dx*bb_dx + bb_dy*bb_dy + bb_dz*bb_dz)/(2.0*sqrt(3.0))*bb_excess;
+		tpmin.x -= scale;
+		tpmax.x += scale;
+		tpmin.y -= scale;
+		tpmax.y += scale;
+		tpmin.z -= scale;
+		tpmax.z += scale;
+	}
 	pref.x -= dx;
 	pref.y -= dy;
 	mesh->bbvtx = new VECTOR4[8];
@@ -678,7 +690,7 @@ void TileManager2Base::GlobalExit ()
 
 void TileManager2Base::SetRenderPrm (MATRIX4 &dwmat, double prerot, bool use_zbuf, const vPlanet::RenderPrm &rprm)
 {
-	const double minalt = 0.002;
+	const double minalt = max(0.002,rprm.horizon_excess);
 	VECTOR3 obj_pos, cam_pos;
 	Camera *camera = gc->GetScene()->GetCamera();
 

@@ -93,7 +93,7 @@ protected:
 	// Returns the direction of the tile centre from the planet centre in local planet coordinates
 
 	VBMESH *CreateMesh_quadpatch (int grdlat, int grdlng, INT16 *elev=0, double globelev=0.0, 
-		const TEXCRDRANGE2 *range=0, bool shift_origin=false, VECTOR3 *shift=0);
+		const TEXCRDRANGE2 *range=0, bool shift_origin=false, VECTOR3 *shift=0, double bb_excess=0.0);
 	// Creates a quadrilateral patch mesh
 
 	VBMESH *CreateMesh_hemisphere (int grd, INT16 *elev=0, double globelev=0.0);
@@ -250,6 +250,10 @@ public:
 	{ return TileManager2Base::FindNode<TileType> (tiletree, lvl, ilng, ilat); }
 	// Returns the node at the specified position, or 0 if it doesn't exist
 
+	inline TileType *GlobalTile (int lvl)
+	{ return globtile[lvl]; }
+	// Returns a low-res global tile
+
 	int Coverage (double latmin, double latmax, double lngmin, double lngmax, int maxlvl, const Tile **tbuf, int nt) const;
 	// fills tbuf with a list of tiles up to maxlvl currently covering the area latmin,latmax,lngmin,lngmax
 	// nt is the length of tbuf. Return value is the number of tiles copied into tbuf.
@@ -258,6 +262,7 @@ public:
 	// after the next call to Render.
 
 protected:
+	TileType *globtile[3];              // full-sphere tiles for resolution levels 1-3
 	QuadTreeNode<TileType> tiletree[2]; // quadtree roots for western and eastern hemisphere
 
 	void CheckCoverage (const QuadTreeNode<TileType> *node, double latmin, double latmax, double lngmin, double lngmax, int maxlvl, const Tile **tbuf, int nt, int *nfound) const;
