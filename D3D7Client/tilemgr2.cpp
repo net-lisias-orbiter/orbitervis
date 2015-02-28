@@ -400,22 +400,23 @@ VBMESH *Tile::CreateMesh_hemisphere (int grd, INT16 *elev, double globelev)
 
 	// Angle deltas for constructing the sphere's vertices
     double fDAng   = PI / grd;
-    double lat = fDAng;
+    double lng, lat = fDAng;
 	DWORD x1 = grd;
 	DWORD x2 = x1+1;
 	FLOAT du = 0.5f/(FLOAT)texres;
 	FLOAT a  = (1.0f-2.0f*du)/(FLOAT)x1;
 
     // Make the middle of the sphere
-    for (y = 0; y < grd; y++) {
+    for (y = 1; y < grd; y++) {
 		slat = sin(lat), clat = cos(lat);
 		FLOAT tv = (D3DVALUE)(lat/PI);
 
         for (x = 0; x < x2; x++) {
-            double lng = x*fDAng - PI;  // subtract Pi to wrap at +-180°
+            lng = x*fDAng - PI;  // subtract Pi to wrap at +-180°
 			if (ilng) lng += PI;
 			slng = sin(lng), clng = cos(lng);
-			eradius = radius; // TODO: elevation
+			eradius = radius + globelev; // radius including node elevation
+			if (elev) eradius += (double)elev[(33-y)*TILE_ELEVSTRIDE + x+1];
 			nml = _V(slat*clng, clat, slat*slng);
 			pos = nml*eradius;
 			vtx->x = D3DVAL(pos.x);  vtx->nx = D3DVAL(nml.x);
@@ -430,7 +431,7 @@ VBMESH *Tile::CreateMesh_hemisphere (int grd, INT16 *elev, double globelev)
         lat += fDAng;
     }
 
-    for (y = 0; y < grd-1; y++) {
+    for (y = 0; y < grd-2; y++) {
         for (x = 0; x < x1; x++) {
             *idx++ = (WORD)( (y+0)*x2 + (x+0) );
             *idx++ = (WORD)( (y+0)*x2 + (x+1) );
@@ -443,7 +444,12 @@ VBMESH *Tile::CreateMesh_hemisphere (int grd, INT16 *elev, double globelev)
     }
     // Make top and bottom
 	WORD wNorthVtx = nvtx;
-	eradius = radius;
+	eradius = radius + globelev;
+	if (elev) {
+		double mn = 0.0;
+		for (x = 0; x < x2; x++) mn += (double)elev[TILE_ELEVSTRIDE*33 + x+1];
+		eradius += mn/x2;
+	}
 	nml = _V(0,1,0);
 	pos = nml*eradius;
 	vtx->x = D3DVAL(pos.x);  vtx->nx = D3DVAL(nml.x);
@@ -456,7 +462,12 @@ VBMESH *Tile::CreateMesh_hemisphere (int grd, INT16 *elev, double globelev)
 	WORD wSouthVtx = nvtx;
 
 	
-	eradius = radius;
+	eradius = radius + globelev;
+	if (elev) {
+		double mn = 0.0;
+		for (x = 0; x < x2; x++) mn += (double)elev[TILE_ELEVSTRIDE + x+1];
+		eradius += mn/x2;
+	}
 	nml = _V(0,-1,0);
 	pos = nml*eradius;
 	vtx->x = D3DVAL(pos.x);  vtx->nx = D3DVAL(nml.x);
@@ -469,12 +480,12 @@ VBMESH *Tile::CreateMesh_hemisphere (int grd, INT16 *elev, double globelev)
 
     for (x = 0; x < x1; x++) {
 		WORD p1 = wSouthVtx;
-		WORD p2 = (WORD)( (y)*x2 + (x+0) );
-		WORD p3 = (WORD)( (y)*x2 + (x+1) );
+		WORD p2 = (WORD)( (grd-2)*x2 + (x+0) );
+		WORD p3 = (WORD)( (grd-2)*x2 + (x+1) );
 
         *idx++ = p1;
-        *idx++ = p3;
         *idx++ = p2;
+        *idx++ = p3;
 		nidx += 3;
     }
 
@@ -488,6 +499,36 @@ VBMESH *Tile::CreateMesh_hemisphere (int grd, INT16 *elev, double globelev)
         *idx++ = p2;
 		nidx += 3;
     }
+
+	// regenerate normals for terrain
+	if (elev) {
+		double dy, dz, dydz, nx1, ny1, nz1;
+		int en;
+		dy = radius * PI/grd;  // y-distance between vertices
+		vtx = Vtx;
+		for (y = 1; y < grd; y++) {
+			lat = PI05-y*fDAng;
+			slat = sin(lat), clat = cos(lat);
+			dz = radius * PI*cos(lat) / grd; // z-distance between vertices on unit sphere
+			dydz = dy*dz;
+			for (x = 0; x < x2; x++) {
+				lng = x*fDAng;
+				if (!ilng) lng -= PI;
+				slng = sin(lng), clng = cos(lng);
+				en = (33-y)*TILE_ELEVSTRIDE + x+1;
+				VECTOR3 nml = {2.0*dydz, dz*(elev[en-TILE_ELEVSTRIDE]-elev[en+TILE_ELEVSTRIDE]), dy*(elev[en-1]-elev[en+1])};
+				normalise(nml);
+				// rotate into place
+				nx1 = nml.x*clat - nml.y*slat;
+				ny1 = nml.x*slat + nml.y*clat;
+				nz1 = nml.z;
+				vtx->nx = (float)(nx1*clng - nz1*slng);
+				vtx->ny = (float)(ny1);
+				vtx->nz = (float)(nx1*slng + nz1*clng);
+				vtx++;
+			}
+		}
+	}
 
 	// create the mesh
 	VBMESH *mesh = new VBMESH;
@@ -648,7 +689,7 @@ TileManager2Base::TileManager2Base (const vPlanet *vplanet, int _maxres)
 : vp(vplanet)
 {
 	// set persistent parameters
-	prm.maxlvl = max (1, _maxres-4);
+	prm.maxlvl = max (0, _maxres-4);
 
 	obj = vp->Object();
 	obj_size = oapiGetSize (obj);
