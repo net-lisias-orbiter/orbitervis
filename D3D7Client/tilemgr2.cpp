@@ -388,8 +388,8 @@ VBMESH *Tile::CreateMesh_hemisphere (int grd, INT16 *elev, double globelev)
 	VECTOR3 pos, nml;
 
 	// Allocate memory for the vertices and indices
-	int         nVtx = grd*(grd+1)+2;
-	int         nIdx = 6*grd*grd;
+	int         nVtx = (grd-1)*(grd+1)+2;
+	int         nIdx = 6*(grd*(grd-2)+grd);
 	VERTEX_2TEX *Vtx = new VERTEX_2TEX[nVtx];
 	WORD*       Idx = new WORD[nIdx];
 

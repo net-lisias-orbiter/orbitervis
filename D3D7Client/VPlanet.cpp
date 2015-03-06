@@ -499,7 +499,7 @@ void vPlanet::RenderSphere (LPDIRECT3DDEVICE7 dev, const RenderPrm &prm)
 	}
 
 	if (surfmgr2) {
-		if (cdist >= 1.3*rad && cdist > 1e6) {
+		if (cdist >= 1.3*rad && cdist > 3e6) {
 			surfmgr2->Render (dmWorld, false, prm);
 		} else {
 			dev->SetRenderState (D3DRENDERSTATE_ZENABLE, TRUE);
@@ -545,10 +545,12 @@ void vPlanet::RenderSphere (LPDIRECT3DDEVICE7 dev, const RenderPrm &prm)
 void vPlanet::RenderCloudLayer (LPDIRECT3DDEVICE7 dev, DWORD cullmode, const RenderPrm &prm)
 {
 	if (cullmode != D3DCULL_CCW) dev->SetRenderState (D3DRENDERSTATE_CULLMODE, cullmode);
+	dev->SetRenderState (D3DRENDERSTATE_ALPHABLENDENABLE, TRUE);
 	if (cloudmgr2)
 		cloudmgr2->Render (dmWorld, false, prm);
 	else
 		clouddata->cloudmgr->Render (dev, clouddata->mWorldC, dist_scale, min(patchres,8), clouddata->viewap); // clouds
+	dev->SetRenderState (D3DRENDERSTATE_ALPHABLENDENABLE, FALSE);
 	if (cullmode != D3DCULL_CCW) dev->SetRenderState (D3DRENDERSTATE_CULLMODE, D3DCULL_CCW);
 }
 
