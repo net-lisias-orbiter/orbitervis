@@ -295,7 +295,7 @@ void vPlanet::CheckResolution ()
 	}
 	if (new_patchres != patchres) {
 		if (hashaze) {
-			if (new_patchres < 3) {
+			if (new_patchres < 1) {
 				if (hazemgr) { delete hazemgr; hazemgr = 0; }
 			} else {
 				if (!hazemgr) { hazemgr = new HazeManager (scn->GetClient(), this); }
