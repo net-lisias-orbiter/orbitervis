@@ -73,7 +73,7 @@ public:
 
 protected:
 	void RenderDot (LPDIRECT3DDEVICE7 dev);
-	void RenderSphere (LPDIRECT3DDEVICE7 dev, const RenderPrm &prm);
+	void RenderSphere (LPDIRECT3DDEVICE7 dev, const RenderPrm &prm, bool &using_zbuf);
 	void RenderCloudLayer (LPDIRECT3DDEVICE7 dev, DWORD cullmode, const RenderPrm &prm);
 	void RenderBaseSurfaces (LPDIRECT3DDEVICE7 dev);
 	void RenderBaseStructures (LPDIRECT3DDEVICE7 dev);

@@ -341,6 +341,7 @@ bool vPlanet::Render (LPDIRECT3DDEVICE7 dev)
 
 		DWORD amb = prm.amb0col;
 		bool ringpostrender = false;
+		bool clear_zbuf = false;
 		float fogfactor;
 
 		prm.bFog = prm.bFogEnabled;
@@ -360,6 +361,7 @@ bool vPlanet::Render (LPDIRECT3DDEVICE7 dev)
 				dev->SetRenderState (D3DRENDERSTATE_ZWRITEENABLE, TRUE);
 				dev->SetRenderState (D3DRENDERSTATE_ZFUNC, D3DCMP_ALWAYS);
 				ringpostrender = true;
+				clear_zbuf = true;
 			}
 		}
 		if (prm.bCloud && (prm.cloudvis & 1))
@@ -431,7 +433,9 @@ bool vPlanet::Render (LPDIRECT3DDEVICE7 dev)
 			dev->SetTransform (D3DTRANSFORMSTATE_WORLD, &mWorld);
 			mesh->Render (dev);
 		} else {
-			RenderSphere (dev, prm);                               // planet surface
+			bool using_zbuf;
+			RenderSphere (dev, prm, using_zbuf);            // planet surface
+			if (using_zbuf) clear_zbuf = false;
 		}
 
 		if (nbase) RenderBaseStructures (dev);
@@ -461,6 +465,9 @@ bool vPlanet::Render (LPDIRECT3DDEVICE7 dev)
 			dev->SetRenderState (D3DRENDERSTATE_ZENABLE, FALSE);
 			dev->SetRenderState (D3DRENDERSTATE_ZWRITEENABLE, FALSE);
 		}
+		if (clear_zbuf)
+			dev->Clear (0, NULL, D3DCLEAR_ZBUFFER, 0, 1.0f, 0L);
+
 		if (!nmlnml) dev->SetRenderState (D3DRENDERSTATE_NORMALIZENORMALS, FALSE);
 	}
 	return true;
@@ -475,8 +482,10 @@ void vPlanet::RenderDot (LPDIRECT3DDEVICE7 dev)
 
 // ==============================================================
 
-void vPlanet::RenderSphere (LPDIRECT3DDEVICE7 dev, const RenderPrm &prm)
+void vPlanet::RenderSphere (LPDIRECT3DDEVICE7 dev, const RenderPrm &prm, bool &using_zbuf)
 {
+	using_zbuf = false;
+
 	if (mipmap_mode) {
 		float fBias = (float)gc->Cfg()->PlanetMipmapBias;
 		dev->SetTextureStageState (0, D3DTSS_MIPFILTER, mipmap_mode == 1 ? D3DTFP_POINT:D3DTFP_LINEAR);
@@ -507,6 +516,7 @@ void vPlanet::RenderSphere (LPDIRECT3DDEVICE7 dev, const RenderPrm &prm)
 			surfmgr2->Render (dmWorld, true, prm);
 			dev->SetRenderState (D3DRENDERSTATE_ZENABLE, FALSE);
 			dev->SetRenderState (D3DRENDERSTATE_ZWRITEENABLE, FALSE);
+			using_zbuf = true;
 		}
 	} else {
 		surfmgr->Render (dev, mWorld, dist_scale, patchres, 0.0, prm.bFog); // surface

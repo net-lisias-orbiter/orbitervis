@@ -214,7 +214,7 @@ bool SurfTile::LoadElevationData ()
 	if (!mode) return false;
 
 	int ndat = TILE_ELEVSTRIDE*TILE_ELEVSTRIDE;
-	elev = ReadElevationFile (mgr->CbodyName(), lvl+4, ilat, ilng, &mean_elev);
+	elev = ReadElevationFile (mgr->CbodyName(), lvl+4, ilat, ilng);
 	if (elev) {
 
 		has_elevfile = true;
@@ -240,7 +240,7 @@ bool SurfTile::LoadElevationData ()
 			}
 			elev = new INT16[ndat];
 			// submit ancestor data to elevation manager for interpolation
-			mgr->GClient()->ElevationGrid (hElev, ilat, ilng, lvl, pilat, pilng, plvl, pelev, elev, &mean_elev);
+			mgr->GClient()->ElevationGrid (hElev, ilat, ilng, lvl, pilat, pilng, plvl, pelev, elev);
 		} else elev = 0;
 
 	}
@@ -258,7 +258,6 @@ INT16 *SurfTile::ElevationData () const
 				if (ggparent->Entry()->LoadElevationData ()) {
 					// compute pixel offset into great-grandparent tile set
 					int ofs = ((7 - ilat & 7) * TILE_ELEVSTRIDE + (ilng & 7)) * TILE_PATCHRES;
-					mean_elev = ggparent->Entry()->mean_elev; // not quite true, since the ancestor covers a larger area
 					ggelev = ggparent->Entry()->elev + ofs;
 				}
 			}
@@ -266,12 +265,28 @@ INT16 *SurfTile::ElevationData () const
 			SurfTile *ggp = smgr->GlobalTile(lvl);
 			if (ggp->LoadElevationData ()) {
 				int ofs = ((7 - ilat & 7) * TILE_ELEVSTRIDE + (ilng & 7)) * TILE_PATCHRES;
-				mean_elev = ggp->mean_elev; // not quite true, since the ancestor covers a larger area
 				ggelev = ggp->elev + ofs;
 			}
 		}
+		if (ggelev)
+			mean_elev = GetMeanElevation (ggelev);
 	}
 	return ggelev;
+}
+
+// -----------------------------------------------------------------------
+
+double SurfTile::GetMeanElevation (const INT16 *elev) const
+{
+	int i, j;
+	double melev = 0.0;
+	for (j = 0; j <= TILE_PATCHRES; j++) {
+		for (i = 0; i <= TILE_PATCHRES; i++) {
+			melev += elev[i];
+		}
+		elev += TILE_ELEVSTRIDE;
+	}
+	return melev / ((TILE_PATCHRES+1)*(TILE_PATCHRES+1));	
 }
 
 // -----------------------------------------------------------------------
@@ -279,8 +294,9 @@ INT16 *SurfTile::ElevationData () const
 void SurfTile::Render ()
 {
 	bool render_lights = mgr->Cprm().bLights;
+	bool render_shadows = (mgr->GetPlanet()->CloudMgr2() && !mgr->prm.rprm->bCloudFlatShadows);
 
-	static float spec_base = 0.7f; // 0.95f;
+	static float spec_base = 0.4f; // 0.95f;
 	static D3DMATERIAL7 pmat, watermat = {{1,1,1,1},{1,1,1,1},{spec_base*1.2f,spec_base*1.0f,spec_base*0.8f,1},{0,0,0,0},50.0f};
 
 	if (!mesh) return; // DEBUG : TEMPORARY
@@ -302,174 +318,182 @@ void SurfTile::Render ()
 	TileManager2Base::Dev()->DrawIndexedPrimitiveVB (D3DPT_TRIANGLELIST, vb, 0,
 		mesh->nv, mesh->idx, mesh->ni, 0);
 
-	if (ltex) {
+	static const double rad0 = sqrt(2.0)*PI05;
+	double sdist, rad;
+	bool has_specular = false;
+	bool has_shadows = false;
+	bool has_lights = false;
+	if (ltex || render_shadows) {
+		sdist = acos (dotp (mgr->prm.sdir, cnt));
+		rad = rad0/(double)(2<<lvl); // tile radius
+		has_specular = (ltex && sdist < PI05+rad);
+		has_shadows = (render_shadows && sdist < PI05+rad);
+		has_lights = (render_lights && ltex && sdist > 1.45);
+	}
 
-		double sdist = acos (dotp (mgr->prm.sdir, cnt));
-		static const double rad0 = sqrt(2.0)*PI05;
-		double rad = rad0/(double)(2<<lvl); // tile radius
+	// render specular water reflections
+	if (has_specular) {
+		TileManager2Base::Dev()->GetMaterial (&pmat);
+		TileManager2Base::Dev()->SetMaterial (&watermat);
+		TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_SPECULARENABLE, TRUE);
+		TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_ALPHABLENDENABLE, TRUE);
 
-		bool has_specular = (sdist < PI05+rad);
-		bool render_cloud_shadows = (sdist < PI05+rad && !mgr->prm.rprm->bCloudFlatShadows /*&& mgr->prm.cloudmgr*/);
-		render_lights = (render_lights && sdist > 1.45);
-
-		if (has_specular) {
-			TileManager2Base::Dev()->GetMaterial (&pmat);
-			TileManager2Base::Dev()->SetMaterial (&watermat);
-			TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_SPECULARENABLE, TRUE);
-			TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_ALPHABLENDENABLE, TRUE);
-
-			DWORD dns;
-			if (mgr->prm.fog) {
-				// increase fog density to simulate sky reflection on water surface
-				TileManager2Base::Dev()->GetRenderState (D3DRENDERSTATE_FOGDENSITY, &dns);
-				float fFogDns = *((float*)&dns) * (float)(1.0 + 3.0*exp(-4e2*(mgr->prm.cdist-1.0)));
-				TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_FOGDENSITY, *((LPDWORD) (&fFogDns)));
-			}
-
-			// use water mask to limit specular reflection to water surfaces
-			TileManager2Base::Dev()->SetTexture (1, ltex);
-			TileManager2Base::Dev()->SetTextureStageState (1, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
-			TileManager2Base::Dev()->SetTextureStageState (1, D3DTSS_ALPHAARG1, D3DTA_TEXTURE|D3DTA_COMPLEMENT); // need to invert alpha channel of mask
-			if (!mgr->prm.tint) { // just pass colour through this stage
-				TileManager2Base::Dev()->SetTextureStageState (1, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
-				TileManager2Base::Dev()->SetTextureStageState (1, D3DTSS_COLORARG1, D3DTA_CURRENT);
-			}
-			TileManager2Base::Dev()->DrawIndexedPrimitiveVB (D3DPT_TRIANGLELIST, vb, 0,
-				mesh->nv, mesh->idx, mesh->ni, 0);
-
-			TileManager2Base::Dev()->SetTextureStageState (1, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
-			TileManager2Base::Dev()->SetTextureStageState (1, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
-			TileManager2Base::Dev()->SetTextureStageState (1, D3DTSS_COLOROP, D3DTOP_DISABLE);
-			TileManager2Base::Dev()->SetTextureStageState (1, D3DTSS_COLORARG1, D3DTA_TEXTURE);
-			TileManager2Base::Dev()->SetTextureStageState (1, D3DTSS_COLORARG2, D3DTA_CURRENT);
-			TileManager2Base::Dev()->SetTexture (1, 0);
-			if (mgr->prm.fog)
-				TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_FOGDENSITY, dns);
-			TileManager2Base::Dev()->SetMaterial (&pmat);
-			TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_SPECULARENABLE, FALSE);
-			TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_ALPHABLENDENABLE, FALSE);
+		DWORD dns;
+		if (mgr->prm.fog) {
+			// increase fog density to simulate sky reflection on water surface
+			TileManager2Base::Dev()->GetRenderState (D3DRENDERSTATE_FOGDENSITY, &dns);
+			float fFogDns = *((float*)&dns) * (float)(1.0 + 3.0*exp(-4e2*(mgr->prm.cdist-1.0)));
+			TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_FOGDENSITY, *((LPDWORD) (&fFogDns)));
 		}
 
-		// add cloud shadows
-		if (render_cloud_shadows) {
-			const TileManager2<CloudTile> *cmgr = mgr->GetPlanet()->CloudMgr2();
-			if (cmgr) {
-				int nlng = 2 << lvl;
-				int nlat = 1 << lvl;
-				double minlat = PI * (double)(nlat/2-ilat-1)/(double)nlat;
-				double maxlat = PI * (double)(nlat/2-ilat)/(double)nlat;
-				double minlng = PI2 * (double)(ilng-nlng/2)/(double)nlng;
-				double maxlng = PI2 * (double)(ilng-nlng/2+1)/(double)nlng;
+		// use water mask to limit specular reflection to water surfaces
+		TileManager2Base::Dev()->SetTexture (1, ltex);
+		TileManager2Base::Dev()->SetTextureStageState (1, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
+		TileManager2Base::Dev()->SetTextureStageState (1, D3DTSS_ALPHAARG1, D3DTA_TEXTURE|D3DTA_COMPLEMENT); // need to invert alpha channel of mask
+		if (!mgr->prm.tint) { // just pass colour through this stage
+			TileManager2Base::Dev()->SetTextureStageState (1, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
+			TileManager2Base::Dev()->SetTextureStageState (1, D3DTSS_COLORARG1, D3DTA_CURRENT);
+		}
+		TileManager2Base::Dev()->DrawIndexedPrimitiveVB (D3DPT_TRIANGLELIST, vb, 0,
+			mesh->nv, mesh->idx, mesh->ni, 0);
 
-				const Tile *tbuf[2];
-				int maxlvl = min(lvl,9);
-				int ncloud = cmgr->Coverage(minlat, maxlat, minlng, maxlng, maxlvl, tbuf, 2);
-				if (ncloud > 0) {
-					D3DMATERIAL7 pmat;
-					static D3DMATERIAL7 cloudmat = {{0,0,0,1},{0,0,0,1},{0,0,0,0},{0,0,0,0},0};
-	
-					float alpha = (float)mgr->prm.rprm->shadowalpha;
-					//if (alpha < 0.01f) return; // don't render cloud shadows for this planet
-					cloudmat.diffuse.a = cloudmat.ambient.a = alpha;
+		TileManager2Base::Dev()->SetTextureStageState (1, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
+		TileManager2Base::Dev()->SetTextureStageState (1, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
+		TileManager2Base::Dev()->SetTextureStageState (1, D3DTSS_COLOROP, D3DTOP_DISABLE);
+		TileManager2Base::Dev()->SetTextureStageState (1, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+		TileManager2Base::Dev()->SetTextureStageState (1, D3DTSS_COLORARG2, D3DTA_CURRENT);
+		TileManager2Base::Dev()->SetTexture (1, 0);
+		if (mgr->prm.fog)
+			TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_FOGDENSITY, dns);
+		TileManager2Base::Dev()->SetMaterial (&pmat);
+		TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_SPECULARENABLE, FALSE);
+		TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_ALPHABLENDENABLE, FALSE);
+	}
 
-					if (ncloud == 1) { // other cases still to be done
+	if (mgr->prm.tint) {
+		TileManager2Base::Dev()->SetTextureStageState (1, D3DTSS_COLOROP, D3DTOP_DISABLE);
+		TileManager2Base::Dev()->SetTextureStageState (1, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+		TileManager2Base::Dev()->SetTextureStageState (1, D3DTSS_COLORARG2, D3DTA_CURRENT);
+	}
 
-						mgr->Dev()->GetMaterial (&pmat);
-						mgr->Dev()->SetMaterial (&cloudmat);
+	// add cloud shadows
+	if (has_shadows) {
+		const TileManager2<CloudTile> *cmgr = mgr->GetPlanet()->CloudMgr2();
+		int nlng = 2 << lvl;
+		int nlat = 1 << lvl;
+		double minlat = PI * (double)(nlat/2-ilat-1)/(double)nlat;
+		double maxlat = PI * (double)(nlat/2-ilat)/(double)nlat;
+		double minlng = PI2 * (double)(ilng-nlng/2)/(double)nlng;
+		double maxlng = PI2 * (double)(ilng-nlng/2+1)/(double)nlng;
 
-						mgr->Dev()->SetRenderState (D3DRENDERSTATE_ALPHABLENDENABLE, TRUE);
-						mgr->Dev()->SetTextureStageState (0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
-		
-						for (int i = 0; i < ncloud; i++) {
-							mgr->Dev()->SetTexture (0, tbuf[i]->Tex());
+		const Tile *tbuf[2];
+		int maxlvl = min(lvl,9);
+		int ncloud = cmgr->Coverage(minlat, maxlat, minlng, maxlng, maxlvl, tbuf, 2);
+		if (ncloud > 0) {
+			float alpha = (float)mgr->prm.rprm->shadowalpha;
+			if (alpha >= 0.01f) { // otherwise don't render cloud shadows for this planet
 
-							// to be completed: create new mesh with modified texture coordinates
-							const TEXCRDRANGE2 *ctexrange = tbuf[i]->GetTexRange();
-							double cminlat, cmaxlat, cminlng, cmaxlng;
-							float tu0, tu1, tv0, tv1, tuscale, tvscale;
-							tbuf[i]->Extents (&cminlat, &cmaxlat, &cminlng, &cmaxlng);
+				if (ncloud == 1) { // other cases still to be done
+					mgr->Dev()->SetRenderState (D3DRENDERSTATE_ALPHABLENDENABLE, TRUE);
 
-							cminlng -= mgr->prm.rprm->cloudrot;
-							cmaxlng -= mgr->prm.rprm->cloudrot;
-							if (cmaxlng < -PI) {
-								cminlng += PI2;
-								cmaxlng += PI2;
-							}
+					// set the shadow colour and opacity
+					mgr->Dev()->SetRenderState (D3DRENDERSTATE_TEXTUREFACTOR, mgr->prm.tint ?
+						D3DRGBA(mgr->prm.atm_tint.x, mgr->prm.atm_tint.y, mgr->prm.atm_tint.z, alpha) :
+					    D3DRGBA(0, 0, 0, alpha));
 
-							static int ncvtx = (TILE_PATCHRES+3)*(TILE_PATCHRES+3);
-							static VERTEX_2TEX *cvtx = new VERTEX_2TEX[ncvtx];
-							if (mesh->nv > ncvtx) {
-								delete []cvtx;
-								cvtx = new VERTEX_2TEX[ncvtx=mesh->nv];
-							}
-							memcpy(cvtx, mesh->vtx, mesh->nv*sizeof(VERTEX_2TEX));
-							tu0 = ctexrange->tumin + (ctexrange->tumax-ctexrange->tumin)*(float)((minlng-cminlng)/(cmaxlng-cminlng));
-							tu1 = ctexrange->tumin + (ctexrange->tumax-ctexrange->tumin)*(float)((maxlng-cminlng)/(cmaxlng-cminlng));
-							tv0 = ctexrange->tvmin + (ctexrange->tvmax-ctexrange->tvmin)*(float)((maxlat-cmaxlat)/(cminlat-cmaxlat));
-							tv1	= ctexrange->tvmin + (ctexrange->tvmax-ctexrange->tvmin)*(float)((minlat-cmaxlat)/(cminlat-cmaxlat));
-							tuscale = (tu1-tu0)/(texrange.tumax-texrange.tumin);
-							tvscale = (tv1-tv0)/(texrange.tvmax-texrange.tvmin);
-							for (int j = 0; j < mesh->nv; j++) {
-								cvtx[j].tu0 = tu0 + tuscale * (cvtx[j].tu0-texrange.tumin);
-								cvtx[j].tv0 = tv0 + tvscale * (cvtx[j].tv0-texrange.tvmin);
-							}
-						
-							mgr->Dev()->DrawIndexedPrimitive (D3DPT_TRIANGLELIST, FVF_2TEX, cvtx, mesh->nv, mesh->idx, mesh->ni, 0);
+					TileManager2Base::Dev()->SetTextureStageState (0, D3DTSS_COLOROP, D3DTOP_MODULATE);
+					TileManager2Base::Dev()->SetTextureStageState (0, D3DTSS_COLORARG1, D3DTA_DIFFUSE);
+					TileManager2Base::Dev()->SetTextureStageState (0, D3DTSS_COLORARG2, D3DTA_TFACTOR);
+					TileManager2Base::Dev()->SetTextureStageState (0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
+					TileManager2Base::Dev()->SetTextureStageState (0, D3DTSS_ALPHAARG1, D3DTA_TEXTURE);
+					TileManager2Base::Dev()->SetTextureStageState (0, D3DTSS_ALPHAARG2, D3DTA_TFACTOR);
+
+					for (int i = 0; i < ncloud; i++) {
+						mgr->Dev()->SetTexture (0, tbuf[i]->Tex());
+
+						// to be completed: create new mesh with modified texture coordinates
+						const TEXCRDRANGE2 *ctexrange = tbuf[i]->GetTexRange();
+						double cminlat, cmaxlat, cminlng, cmaxlng;
+						float tu0, tu1, tv0, tv1, tuscale, tvscale;
+						tbuf[i]->Extents (&cminlat, &cmaxlat, &cminlng, &cmaxlng);
+
+						cminlng -= mgr->prm.rprm->cloudrot;
+						cmaxlng -= mgr->prm.rprm->cloudrot;
+						if (cmaxlng < -PI) {
+							cminlng += PI2;
+							cmaxlng += PI2;
 						}
-	
-						mgr->Dev()->SetRenderState (D3DRENDERSTATE_ALPHABLENDENABLE, FALSE);
-						mgr->Dev()->SetTextureStageState (0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
 
-						mgr->Dev()->SetMaterial (&pmat);
+						static int ncvtx = (TILE_PATCHRES+3)*(TILE_PATCHRES+3);
+						static VERTEX_2TEX *cvtx = new VERTEX_2TEX[ncvtx];
+						if (mesh->nv > ncvtx) {
+							delete []cvtx;
+							cvtx = new VERTEX_2TEX[ncvtx=mesh->nv];
+						}
+						memcpy(cvtx, mesh->vtx, mesh->nv*sizeof(VERTEX_2TEX));
+						tu0 = ctexrange->tumin + (ctexrange->tumax-ctexrange->tumin)*(float)((minlng-cminlng)/(cmaxlng-cminlng));
+						tu1 = ctexrange->tumin + (ctexrange->tumax-ctexrange->tumin)*(float)((maxlng-cminlng)/(cmaxlng-cminlng));
+						tv0 = ctexrange->tvmin + (ctexrange->tvmax-ctexrange->tvmin)*(float)((maxlat-cmaxlat)/(cminlat-cmaxlat));
+						tv1	= ctexrange->tvmin + (ctexrange->tvmax-ctexrange->tvmin)*(float)((minlat-cmaxlat)/(cminlat-cmaxlat));
+						tuscale = (tu1-tu0)/(texrange.tumax-texrange.tumin);
+						tvscale = (tv1-tv0)/(texrange.tvmax-texrange.tvmin);
+						for (int j = 0; j < mesh->nv; j++) {
+							cvtx[j].tu0 = tu0 + tuscale * (cvtx[j].tu0-texrange.tumin);
+							cvtx[j].tv0 = tv0 + tvscale * (cvtx[j].tv0-texrange.tvmin);
+						}
+
+						mgr->Dev()->DrawIndexedPrimitive (D3DPT_TRIANGLELIST, FVF_2TEX, cvtx, mesh->nv, mesh->idx, mesh->ni, 0);
 					}
+
+					mgr->Dev()->SetRenderState (D3DRENDERSTATE_ALPHABLENDENABLE, FALSE);
+					mgr->Dev()->SetTextureStageState (0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+					mgr->Dev()->SetTextureStageState (0, D3DTSS_COLORARG2, D3DTA_CURRENT);
+					mgr->Dev()->SetTextureStageState (0, D3DTSS_ALPHAOP, D3DTOP_SELECTARG1);
+					mgr->Dev()->SetTextureStageState (0, D3DTSS_ALPHAARG2, D3DTA_CURRENT);
 				}
+
 			}
 		}
+	}
 
-		// disable fog on additional render passes
+	// add city lights
+	if (has_lights) {
+		// disable fog
 		if (mgr->prm.fog) {
 			TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_FOGENABLE, FALSE);
 			TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_FOGTABLEMODE, D3DFOG_NONE);
 		}
 
-		// add city lights
-		if (render_lights) {
-			double fac = mgr->Cprm().lightfac;
-			if (sdist < 1.9) fac *= (sdist-1.45)/(1.9-1.45);
-			TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_TEXTUREFACTOR, D3DRGBA(fac,fac,fac,1));
-			TileManager2Base::Dev()->SetTextureStageState (0, D3DTSS_COLOROP, D3DTOP_MODULATE);
-			TileManager2Base::Dev()->SetTextureStageState (0, D3DTSS_COLORARG2, D3DTA_TFACTOR);
-			TileManager2Base::Dev()->SetTextureStageState (1, D3DTSS_COLOROP, D3DTOP_DISABLE);
-			TileManager2Base::Dev()->SetTexture (0, ltex);
-			TileManager2Base::Dev()->SetTextureStageState (0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
-			TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_ALPHABLENDENABLE, TRUE);
-			TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_DESTBLEND, D3DBLEND_ONE);
-			TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_SRCBLEND, D3DBLEND_ONE);
-			TileManager2Base::Dev()->DrawIndexedPrimitiveVB (D3DPT_TRIANGLELIST, vb, 0,
-				mesh->nv, mesh->idx, mesh->ni, 0);
-			TileManager2Base::Dev()->SetTextureStageState (0, D3DTSS_COLOROP, D3DTOP_MODULATE);
-			TileManager2Base::Dev()->SetTextureStageState (0, D3DTSS_COLORARG2, D3DTA_CURRENT);
-			TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_ALPHABLENDENABLE, FALSE);
-			TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_SRCBLEND, D3DBLEND_SRCALPHA);
-			TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_DESTBLEND, D3DBLEND_INVSRCALPHA);
-		}
+		double fac = mgr->Cprm().lightfac;
+		if (sdist < 1.9) fac *= (sdist-1.45)/(1.9-1.45);
+		TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_TEXTUREFACTOR, D3DRGBA(fac,fac,fac,1));
+		TileManager2Base::Dev()->SetTextureStageState (0, D3DTSS_COLOROP, D3DTOP_MODULATE);
+		TileManager2Base::Dev()->SetTextureStageState (0, D3DTSS_COLORARG2, D3DTA_TFACTOR);
+		TileManager2Base::Dev()->SetTextureStageState (1, D3DTSS_COLOROP, D3DTOP_DISABLE);
+		TileManager2Base::Dev()->SetTexture (0, ltex);
+		TileManager2Base::Dev()->SetTextureStageState (0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+		TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_ALPHABLENDENABLE, TRUE);
+		TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_DESTBLEND, D3DBLEND_ONE);
+		TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_SRCBLEND, D3DBLEND_ONE);
+		TileManager2Base::Dev()->DrawIndexedPrimitiveVB (D3DPT_TRIANGLELIST, vb, 0,
+			mesh->nv, mesh->idx, mesh->ni, 0);
+		TileManager2Base::Dev()->SetTextureStageState (0, D3DTSS_COLOROP, D3DTOP_MODULATE);
+		TileManager2Base::Dev()->SetTextureStageState (0, D3DTSS_COLORARG2, D3DTA_CURRENT);
+		TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_ALPHABLENDENABLE, FALSE);
+		TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_SRCBLEND, D3DBLEND_SRCALPHA);
+		TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_DESTBLEND, D3DBLEND_INVSRCALPHA);
 
+		// turn fog back on
 		if (mgr->prm.fog) {
-			// turn fog back on
 			TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_FOGENABLE, TRUE);
 			TileManager2Base::Dev()->SetRenderState (D3DRENDERSTATE_FOGTABLEMODE, D3DFOG_EXP);
 		}
 	}
 
 	// reset the atmospheric tint
-	if (mgr->prm.tint) {
-		TileManager2Base::Dev()->SetTextureStageState (0, D3DTSS_COLOROP, D3DTOP_MODULATE);
-		TileManager2Base::Dev()->SetTextureStageState (0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
-		TileManager2Base::Dev()->SetTextureStageState (0, D3DTSS_COLORARG2, D3DTA_CURRENT);
-		TileManager2Base::Dev()->SetTextureStageState (1, D3DTSS_COLOROP, D3DTOP_DISABLE);
-		TileManager2Base::Dev()->SetTextureStageState (1, D3DTSS_COLORARG1, D3DTA_TEXTURE);
-		TileManager2Base::Dev()->SetTextureStageState (1, D3DTSS_COLORARG2, D3DTA_CURRENT);
-	}
+	TileManager2Base::Dev()->SetTextureStageState (0, D3DTSS_COLOROP, D3DTOP_MODULATE);
+	TileManager2Base::Dev()->SetTextureStageState (0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+	TileManager2Base::Dev()->SetTextureStageState (0, D3DTSS_COLORARG2, D3DTA_CURRENT);
 }
 
 // -----------------------------------------------------------------------
