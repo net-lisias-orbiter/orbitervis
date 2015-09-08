@@ -382,10 +382,12 @@ void D3D7Mesh::RenderGroup (LPDIRECT3DDEVICE7 dev, GROUPREC *grp)
 	}
 #endif
 
-	if (FAILED (dev->DrawIndexedPrimitiveVB (
-		D3DPT_TRIANGLELIST,
-		grp->VtxBuf, 0, grp->nVtx, grp->Idx, grp->nIdx, 0)))
-			LOGOUT_ERR("Render error\n");
+	if (grp->nVtx && grp->nIdx) {
+		if (FAILED (dev->DrawIndexedPrimitiveVB (
+			D3DPT_TRIANGLELIST,
+			grp->VtxBuf, 0, grp->nVtx, grp->Idx, grp->nIdx, 0)))
+				LOGOUT_ERR("Render error\n");
+	}
 }
 
 void D3D7Mesh::Render (LPDIRECT3DDEVICE7 dev)
