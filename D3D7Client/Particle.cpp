@@ -616,7 +616,7 @@ void ExhaustStream::Update ()
 					static const double eps = 1e-2;
 					oapiGlobalToEqu (hPlanet, p->pos, &lng, &lat, &alt);
 					//planet->GlobalToEquatorial (MakeVector(p->pos), lng, lat, alt);
-					alt -= oapiGetSize(hPlanet);
+					alt -= oapiGetSize(hPlanet) + oapiSurfaceElevation (hPlanet, lng, lat);
 					if (alt*eps < vessel->GetSize()) p->flag |= 1; // render shadow
 				}
 
@@ -640,7 +640,7 @@ void ExhaustStream::RenderGroundShadow (LPDIRECT3DDEVICE7 dev, LPDIRECTDRAWSURFA
 
 	bool needsetup = true;
 	ParticleSpec *p;
-	double R;
+	double rad, r, lng, lat;
 	float *u, *v, alpha;
 	int n, j, i0; 
 	VECTOR3 sd, hn;
@@ -653,13 +653,20 @@ void ExhaustStream::RenderGroundShadow (LPDIRECT3DDEVICE7 dev, LPDIRECTDRAWSURFA
 		if (!(p->flag & 1)) continue;
 
 		if (needsetup) {
-			R = oapiGetSize(hPlanet);
+			rad = oapiGetSize(hPlanet);
+			MATRIX3 Rp;
+			oapiGetRotationMatrix (hPlanet, &Rp);
 			sd = unit(p->pos);  // shadow projection direction
 			VECTOR3 pv0 = p->pos - pp;   // rel. particle position
+
+			VECTOR3 pr0 = tmul (Rp, pv0);
+			oapiLocalToEqu (hPlanet, pr0, &lng, &lat, &r);
+			rad += oapiSurfaceElevation (hPlanet, lng, lat);
+
 			// calculate the intersection of the vessel's shadow with the planet surface
 			double fac1 = dotp (sd, pv0);
 			if (fac1 > 0.0) return;       // shadow doesn't intersect planet surface
-			double arg  = fac1*fac1 - (dotp (pv0, pv0) - R*R);
+			double arg  = fac1*fac1 - (dotp (pv0, pv0) - rad*rad);
 			if (arg <= 0.0) return;       // shadow doesn't intersect with planet surface
 			double a = -fac1 - sqrt(arg);
 			VECTOR3 shp = sd*a;           // projection point in global frame
@@ -680,7 +687,7 @@ void ExhaustStream::RenderGroundShadow (LPDIRECT3DDEVICE7 dev, LPDIRECTDRAWSURFA
 		// calculate the intersection of the vessel's shadow with the planet surface
 		double fac1 = dotp (sd, pvr);
 		if (fac1 > 0.0) break;       // shadow doesn't intersect planet surface
-		double arg  = fac1*fac1 - (dotp (pvr, pvr) - R*R);
+		double arg  = fac1*fac1 - (dotp (pvr, pvr) - rad*rad);
 		if (arg <= 0.0) break;       // shadow doesn't intersect with planet surface
 		double a = -fac1 - sqrt(arg);
 
