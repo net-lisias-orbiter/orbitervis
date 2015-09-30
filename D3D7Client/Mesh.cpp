@@ -161,6 +161,7 @@ bool D3D7Mesh::CopyGroup (GROUPREC *tgt, const GROUPREC *src)
 	memcpy (tgt->TexMixEx, src->TexMixEx, MAXTEX*sizeof(float));
 	tgt->MtrlIdx = src->MtrlIdx;
 	tgt->UsrFlag = src->UsrFlag;
+	tgt->zBias   = src->zBias;
 	tgt->IntFlag = src->IntFlag;
 
 	// create the vertex buffer
@@ -198,6 +199,7 @@ bool D3D7Mesh::CopyGroup (GROUPREC *grp, const MESHGROUPEX *mg)
 		if (grp->TexIdxEx[n] != SPEC_DEFAULT) grp->TexIdxEx[n]++;
 	grp->MtrlIdx = mg->MtrlIdx;
 	grp->UsrFlag = mg->UsrFlag;
+	grp->zBias   = mg->zBias;
 	grp->IntFlag = mg->Flags;
 
 	// create the vertex buffer
@@ -396,7 +398,7 @@ void D3D7Mesh::Render (LPDIRECT3DDEVICE7 dev)
 	if (bModulateMatAlpha)
 		dev->SetTextureStageState (0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
 
-	DWORD g, j, n, mi, pmi, ti, pti, uflag, wrap, owrap = 0;
+	DWORD g, j, n, mi, pmi, ti, pti, uflag, wrap, zb = 0, owrap = 0;
 	bool skipped = false;
 	bool texstage[MAXTEX] = {false};
 	BOOL specular = FALSE;
@@ -453,6 +455,9 @@ void D3D7Mesh::Render (LPDIRECT3DDEVICE7 dev)
 			}
 		}
 
+		if (zb != Grp[g]->zBias)
+			dev->SetRenderState (D3DRENDERSTATE_ZBIAS, zb = Grp[g]->zBias);
+
 		wrap = 0;
 		if (Grp[g]->IntFlag & 0x03) { // wrap flag
 			if (Grp[g]->IntFlag & 0x01) wrap |= D3DWRAP_U;
@@ -488,6 +493,7 @@ void D3D7Mesh::Render (LPDIRECT3DDEVICE7 dev)
 	}
 
 	if (owrap)     dev->SetRenderState (D3DRENDERSTATE_WRAP0, 0);
+	if (zb)        dev->SetRenderState (D3DRENDERSTATE_ZBIAS, 0);
 	if (specular)  dev->SetRenderState (D3DRENDERSTATE_SPECULARENABLE, FALSE);
 	if (!lighting) dev->SetRenderState (D3DRENDERSTATE_LIGHTING, TRUE);
 	for (n = 0; n < MAXTEX; n++) {

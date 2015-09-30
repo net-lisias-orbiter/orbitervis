@@ -39,6 +39,7 @@ public:
 		DWORD MtrlIdx;        // material index
 		DWORD TexIdx;         // texture indices
 		DWORD UsrFlag;        // user-defined flag
+		WORD zBias;           // z-bias value
 		WORD IntFlag;         // internal flags
 		DWORD TexIdxEx[MAXTEX];
 		float TexMixEx[MAXTEX];
