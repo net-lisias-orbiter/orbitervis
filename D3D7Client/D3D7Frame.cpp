@@ -475,7 +475,6 @@ HRESULT CD3DFramework7::CreateZBuffer (GUID* pDeviceGUID)
 	// If we were looking for stencil support and no match was found,
 	// try again without stencil
 	if (0 == ddsd.ddpfPixelFormat.dwSize && m_bTryStencil) {
-		strcpy(oapiDebugString(), "no stencil found");
 		ddsd.ddpfPixelFormat.dwStencilBitDepth = 0;
 	    m_pD3D->EnumZBufferFormats (*pDeviceGUID, EnumZBufferFormatsCallback,
 		     (VOID*)&ddsd.ddpfPixelFormat);
