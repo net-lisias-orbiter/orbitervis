@@ -196,7 +196,7 @@ public:
 	 *   (see SetBackgroundColor). In transparent mode, text background
 	 *   and line gaps are not modified.
 	 * \note The default background mode (before the first call of
-	 *   SetBackgroundMode) should be transparent.
+	 *   SetBackgroundMode) is transparent.
 	 * \sa SetBackgroundColor, Text, GDIClient::clbkCreatePen
 	 */
 	void SetBackgroundMode (BkgMode mode);

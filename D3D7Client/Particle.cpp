@@ -742,7 +742,11 @@ void ReentryStream::Update ()
 
 	double simt = oapiGetSimTime();
 	double simdt = oapiGetSimStep();
-	double friction = (vessel ? vessel->GetDynPressure() * vessel->GetAirspeed() : 0.0);
+	double friction = 0.0;
+	if (vessel) {
+		double spd = vessel->GetAirspeed();
+		friction = 0.5*pow(vessel->GetAtmDensity(),0.6) * pow(spd,3);
+	}
 	double alpha0;
 
 	if (np) {
