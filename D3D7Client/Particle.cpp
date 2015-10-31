@@ -731,8 +731,8 @@ void ReentryStream::SetMaterial (D3DCOLORVALUE &col)
 {
 	// should be heating-dependent
 	col.r = 1.0f;
-	col.g = 0.7f;
-	col.b = 0.5f; 
+	col.g = 0.8f;
+	col.b = 0.6f; 
 }
 
 void ReentryStream::Update ()
