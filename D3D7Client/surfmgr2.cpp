@@ -223,25 +223,25 @@ bool SurfTile::LoadElevationData ()
 
 		// construct elevation grid by interpolating ancestor data
 		ELEVHANDLE hElev = mgr->ElevMgr();
-		if (hElev) {
-			int plvl = lvl-1;
-			int pilat = ilat >> 1;
-			int pilng = ilng >> 1;
-			INT16 *pelev;
-			QuadTreeNode<SurfTile> *parent = node->Parent();
-			for (; plvl >= 0; plvl--) { // find ancestor with elevation data
-				if (parent && parent->Entry()->has_elevfile) {
-					pelev = parent->Entry()->elev;
-					break;
-				}
-				parent = parent->Parent();
-				pilat >>= 1;
-				pilng >>= 1;
+		if (!hElev) return false;
+		int plvl = lvl-1;
+		int pilat = ilat >> 1;
+		int pilng = ilng >> 1;
+		INT16 *pelev = 0;
+		QuadTreeNode<SurfTile> *parent = node->Parent();
+		for (; plvl >= 0; plvl--) { // find ancestor with elevation data
+			if (parent && parent->Entry()->has_elevfile) {
+				pelev = parent->Entry()->elev;
+				break;
 			}
-			elev = new INT16[ndat];
-			// submit ancestor data to elevation manager for interpolation
-			mgr->GClient()->ElevationGrid (hElev, ilat, ilng, lvl, pilat, pilng, plvl, pelev, elev);
-		} else elev = 0;
+			parent = parent->Parent();
+			pilat >>= 1;
+			pilng >>= 1;
+		}
+		if (!pelev) return false;
+		elev = new INT16[ndat];
+		// submit ancestor data to elevation manager for interpolation
+		mgr->GClient()->ElevationGrid (hElev, ilat, ilng, lvl, pilat, pilng, plvl, pelev, elev);
 
 	}
 	return (elev != 0);
