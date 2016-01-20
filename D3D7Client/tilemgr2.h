@@ -26,8 +26,9 @@
 #define TILE_VALID  0x0001
 #define TILE_ACTIVE 0x0002
 
-#define TILE_PATCHRES 32
-#define TILE_ELEVSTRIDE (TILE_PATCHRES*8+3)
+//#define TILE_PATCHRES 32
+#define TILE_FILERES 256
+#define TILE_ELEVSTRIDE (TILE_FILERES+3)
 
 // =======================================================================
 // Type definitions
@@ -152,6 +153,7 @@ class TileManager2Base {
 
 public:
 	struct configPrm {				// global configuration parameters
+		int gridRes;                    // mesh grid resolution. must be multiple of 2. Default: 64 for surfaces, 32 for clouds
 		int elevMode;                   // elevation mode (0=none, 1=linear, 2=cubic)
 		bool bSpecular;					// render specular surface reflections?
 		bool bLights;					// render planet night lights?
@@ -177,7 +179,7 @@ public:
 		VECTOR3 atm_tint;  // atmospheric RGB surface tint at high atmosphere
 	} prm;
 
-	TileManager2Base (const vPlanet *vplanet, int _maxres);
+	TileManager2Base (const vPlanet *vplanet, int _maxres, int _gridres);
 
 	static void GlobalInit (oapi::D3D7Client *gclient);
 	static void GlobalExit ();
@@ -240,7 +242,7 @@ class TileManager2: public TileManager2Base {
 	friend class Tile;
 
 public:
-	TileManager2 (const vPlanet *vplanet, int _maxres);
+	TileManager2 (const vPlanet *vplanet, int _maxres, int _gridres);
 	~TileManager2 ();
 
 	void Render (MATRIX4 &dwmat, bool use_zbuf, const vPlanet::RenderPrm &rprm);

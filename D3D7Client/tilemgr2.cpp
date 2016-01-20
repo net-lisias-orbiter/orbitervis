@@ -671,7 +671,8 @@ LPDIRECT3D7 TileManager2Base::d3d = NULL;
 LPDIRECT3DDEVICE7 TileManager2Base::dev = NULL;
 DWORD TileManager2Base::vbMemCaps = 0;
 TileManager2Base::configPrm TileManager2Base::cprm = {
-	1,                  // elevInterpol
+	32,                 // gridRes
+	2,                  // elevInterpol
 	false,				// bSpecular
 	false,				// bLights
 	false,              // bCloudShadow
@@ -684,11 +685,12 @@ bool TileManager2Base::bTileLoadThread = false;
 
 // -----------------------------------------------------------------------
 
-TileManager2Base::TileManager2Base (const vPlanet *vplanet, int _maxres)
+TileManager2Base::TileManager2Base (const vPlanet *vplanet, int _maxres, int _gridres)
 : vp(vplanet)
 {
 	// set persistent parameters
 	prm.maxlvl = max (0, _maxres-4);
+	cprm.gridRes = _gridres;
 
 	obj = vp->Object();
 	obj_size = oapiGetSize (obj);
