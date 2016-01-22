@@ -30,6 +30,10 @@ char *D3D7ClientCfg::Description ()
 }
 
 
+D3D7PlanetRenderCfg::D3D7PlanetRenderCfg (oapi::D3D7Client *_gc, D3D7Config *_cfg)
+: LaunchpadItem (), gc(_gc), cfg(_cfg)
+{}
+
 char *D3D7PlanetRenderCfg::Name ()
 {
 	static char *name = "Planet Rendering Options";
@@ -62,6 +66,12 @@ void D3D7PlanetRenderCfg::InitDialog (HWND hDlg)
 	SendDlgItemMessage (hDlg, IDC_SLIDER1, TBM_SETRANGE, FALSE, MAKELONG(-10,10));
 	SendDlgItemMessage (hDlg, IDC_SLIDER1, TBM_SETTICFREQ, 1, 0);
 	SendDlgItemMessage (hDlg, IDC_SLIDER1, TBM_SETPOS, TRUE, (LONG)(cfg->PlanetMipmapBias*10.0));
+	SendDlgItemMessage (hDlg, IDC_SLIDER2, TBM_SETRANGE, FALSE, MAKELONG(-10,10));
+	SendDlgItemMessage (hDlg, IDC_SLIDER2, TBM_SETTICFREQ, 1, 0);
+	SendDlgItemMessage (hDlg, IDC_SLIDER2, TBM_SETPOS, TRUE, (LONG)(*(double*)gc->GetConfigParam (CFGPRM_RESOLUTIONBIAS)*5.0));
+	SendDlgItemMessage (hDlg, IDC_SLIDER3, TBM_SETRANGE, FALSE, MAKELONG(4,6));
+	SendDlgItemMessage (hDlg, IDC_SLIDER3, TBM_SETTICFREQ, 1, 0);
+	SendDlgItemMessage (hDlg, IDC_SLIDER3, TBM_SETPOS, TRUE, (LONG)(*(int*)gc->GetConfigParam (CFGPRM_TILEPATCHRES)));
 	sprintf (cbuf, "%d", cfg->PlanetLoadFrequency);
 	SetWindowText (GetDlgItem (hDlg, IDC_EDIT1), cbuf);
 
@@ -106,6 +116,9 @@ void D3D7PlanetRenderCfg::Apply (HWND hDlg)
 		if (SendDlgItemMessage (hDlg, IDC_RADIO1+mode, BM_GETCHECK, 0, 0) == BST_CHECKED) break;
 	cfg->PlanetMipmapMode = mode;
 	cfg->PlanetMipmapBias = 0.1 * SendDlgItemMessage (hDlg, IDC_SLIDER1, TBM_GETPOS, 0, 0);
+	*(double*)gc->GetConfigParam (CFGPRM_RESOLUTIONBIAS) = 0.2 * SendDlgItemMessage (hDlg, IDC_SLIDER2, TBM_GETPOS, 0, 0);
+	*(int*)gc->GetConfigParam (CFGPRM_TILEPATCHRES) = SendDlgItemMessage (hDlg, IDC_SLIDER3, TBM_GETPOS, 0, 0);
+
 	GetWindowText (GetDlgItem (hDlg, IDC_EDIT1), cbuf, 64);
 	if (sscanf (cbuf, "%d", &cfg->PlanetLoadFrequency) == 0)
 		cfg->PlanetLoadFrequency = 20;

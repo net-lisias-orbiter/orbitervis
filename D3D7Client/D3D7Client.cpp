@@ -94,7 +94,7 @@ D3D7Client::D3D7Client (HINSTANCE hInstance): GDIClient (hInstance)
 	// Register the "Extra" entries for the client
 	lpiCfg = new D3D7ClientCfg;
 	LAUNCHPADITEM_HANDLE hL = oapiRegisterLaunchpadItem (lpiCfg);
-	lpiPlanetRender = new D3D7PlanetRenderCfg (cfg);
+	lpiPlanetRender = new D3D7PlanetRenderCfg (this, cfg);
 	oapiRegisterLaunchpadItem (lpiPlanetRender, hL);
 }
 

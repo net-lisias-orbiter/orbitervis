@@ -15,6 +15,7 @@
 #define __D3D7EXTRA_H
 
 #include "orbitersdk.h"
+#include "D3D7Client.h"
 
 class D3D7Config;
 
@@ -27,7 +28,7 @@ public:
 
 class D3D7PlanetRenderCfg: public LaunchpadItem {
 public:
-	D3D7PlanetRenderCfg (D3D7Config *_cfg): LaunchpadItem (), cfg(_cfg) {}
+	D3D7PlanetRenderCfg (oapi::D3D7Client *_gc, D3D7Config *_cfg);
 	char *Name ();
 	char *Description ();
 	void InitDialog (HWND hDlg);
@@ -37,6 +38,7 @@ public:
 	bool clbkOpen (HWND hLaunchpad);
 
 private:
+	oapi::D3D7Client *gc;
 	D3D7Config *cfg;
 	static BOOL CALLBACK DlgProc (HWND, UINT, WPARAM, LPARAM);
 };

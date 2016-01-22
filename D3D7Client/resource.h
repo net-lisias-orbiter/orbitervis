@@ -14,6 +14,14 @@
 #define IDC_RADIO3                      1102
 #define IDC_RADIO4                      1103
 #define IDC_RADIO5                      1104
+#define IDC_SLIDER2                     1150
+#define IDC_SLIDER3                     1151
+#define IDC_STATIC6                     1166
+#define IDC_STATIC7                     1167
+#define IDC_STATIC8                     1168
+#define IDC_STATIC9                     1169
+#define IDC_STATIC10                    1170
+#define IDC_STATIC11                    1171
 #define IDC_SLIDER1                     1200
 #define IDC_STATIC1                     1300
 #define IDC_STATIC2                     1301
