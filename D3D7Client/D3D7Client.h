@@ -213,6 +213,15 @@ public:
 	int clbkSetMeshMaterial (DEVMESHHANDLE hMesh, DWORD matidx, const MATERIAL *mat);
 
 	/**
+	 * \brief Retrieve properties of a mesh material.
+	 * \param hMesh device mesh handle
+	 * \param matidx material index (>= 0)
+	 * \param mat pointer to material structure to be filled by the method
+	 * \return Error flag: 0="success", 4="material index out of range"
+	 */
+	int clbkMeshMaterial (DEVMESHHANDLE hMesh, DWORD matidx, MATERIAL *mat);
+
+	/**
      * \brief Set custom properties for a device-specific mesh.
 	 * \param hMesh device mesh handle
 	 * \param property property tag

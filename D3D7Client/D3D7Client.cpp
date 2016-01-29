@@ -358,6 +358,18 @@ int D3D7Client::clbkSetMeshMaterial (DEVMESHHANDLE hMesh, DWORD matidx, const MA
 
 // ==============================================================
 
+int D3D7Client::clbkMeshMaterial (DEVMESHHANDLE hMesh, DWORD matidx, MATERIAL *mat)
+{
+	D3D7Mesh *mesh = (D3D7Mesh*)hMesh;
+	DWORD nmat = mesh->MaterialCount();
+	if (matidx >= nmat) return 4; // "index out of range"
+	D3DMATERIAL7 *meshmat = mesh->GetMaterial (matidx);
+	memcpy (mat, meshmat, sizeof(D3DMATERIAL7)); // relies on D3DMATERIAL7 and MATERIAL to be equivalent
+	return 0;
+}
+
+// ==============================================================
+
 bool D3D7Client::clbkSetMeshProperty (DEVMESHHANDLE hMesh, DWORD property, DWORD value)
 {
 	D3D7Mesh *mesh = (D3D7Mesh*)hMesh;
