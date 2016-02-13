@@ -1,7 +1,7 @@
 // ==============================================================
 //   ORBITER VISUALISATION PROJECT (OVP)
 //   D3D7 Client module
-//   Copyright (C) 2006-2015 Martin Schweiger
+//   Copyright (C) 2006-2016 Martin Schweiger
 //   Dual licensed under GPL v3 and LGPL v3
 // ==============================================================
 
@@ -172,22 +172,24 @@ INT16 *SurfTile::ReadElevationFile (const char *name, int lvl, int ilat, int iln
 			case 0: // overwrite the entire tile with a flat offset
 				for (i = 0; i < ndat; i++) e[i] = (INT16)hdr.offset;
 				break;
-			case 8: { // mask flag is 0xFF
-				const UINT8 mask = 0xFF;
+			case 8: {
+				const UINT8 mask = UCHAR_MAX;
 				UINT8 *tmp = new UINT8[ndat];
 				fread (tmp, sizeof(UINT8), ndat, f);
 				for (i = 0; i < ndat; i++)
-					if (tmp[i] != mask) e[i] = (INT16)(tmp[i]+hdr.offset);
+					if (tmp[i] != mask)
+						e[i] = (INT16)(tmp[i]+hdr.offset);
 				delete []tmp;
 				}
 				break;
-			case -16: { // mask flag = 0xFFFF
-				const INT16 mask = (INT16)0xFFFF;
+			case -16: {
+				const INT16 mask = SHRT_MAX;
 				INT16 *tmp = new INT16[ndat];
 				INT16 ofs = (INT16)hdr.offset;
 				fread (tmp, sizeof(INT16), ndat, f);
 				for (i = 0; i < ndat; i++)
-					if (tmp[i] != mask) e[i] = tmp[i]+ofs;
+					if (tmp[i] != mask)
+						e[i] = tmp[i]+ofs;
 				delete []tmp;
 				}
 				break;
@@ -601,7 +603,6 @@ void SurfTile::FixLongitudeBoundary (const SurfTile *nbr, bool keep_corner)
 	int i, i0, i1, j, vtx_ofs, nbrlvl, dlvl;
 	int res = mgr->Cprm().gridRes;
 	VERTEX_2TEX *vtx_store;
-	static int subidxmask[4] = {0,1,3,7};
 
 	vtx_ofs = (ilng & 1 ? res : 0); // check if neighbour is at left or right edge
 	if (nbr && nbr->mesh && nbr->mesh->vtx) {
@@ -624,8 +625,9 @@ void SurfTile::FixLongitudeBoundary (const SurfTile *nbr, bool keep_corner)
 					int nsub = 1 << dlvl;    // number of tiles fitting alongside the lowres neighbour
 					int vtx_skip = nsub*(res+1);  // interleave factor for nodes attaching to neigbour nodes
 					int nbr_range = res/nsub; // number of neighbour vertices attaching to us - 1
-					int subidx = ilat & subidxmask[dlvl];
-					int nbr_ofs = (subidxmask[dlvl]-subidx) * nbr_range * TILE_ELEVSTRIDE;
+					int subidxmask = (1<<dlvl)-1;
+					int subidx = ilat & subidxmask;
+					int nbr_ofs = (subidxmask-subidx) * nbr_range * TILE_ELEVSTRIDE;
 					nbr_elev += TILE_ELEVSTRIDE+1 + nbr_ofs + (res-vtx_ofs);
 					double rad = mgr->CbodySize();
 					// match nodes to neighbour elevations
@@ -659,7 +661,6 @@ void SurfTile::FixLatitudeBoundary (const SurfTile *nbr, bool keep_corner)
 	int i, i0, i1, j, nbrlvl, dlvl;
 	int res = mgr->Cprm().gridRes;
 	VERTEX_2TEX *vtx_store;
-	static int subidxmask[4] = {0,1,3,7};
 
 	int line = (ilat & 1 ? 0 : res);
 	int vtx_ofs = (ilat & 1 ? 0 : line*(res+1));
@@ -683,7 +684,8 @@ void SurfTile::FixLatitudeBoundary (const SurfTile *nbr, bool keep_corner)
 					int nsub = 1 << dlvl;    // number of tiles fitting alongside the lowres neighbour
 					int vtx_skip = nsub;     // interleave factor for nodes attaching to neigbour nodes
 					int nbr_range = res/nsub; // number of neighbour vertices attaching to us - 1
-					int subidx = ilng & subidxmask[dlvl];
+					int subidxmask = (1<<dlvl)-1;
+					int subidx = ilng & subidxmask;
 					int nbr_ofs = subidx * nbr_range;
 					nbr_elev += TILE_ELEVSTRIDE+1 + nbr_ofs + (res-line)*TILE_ELEVSTRIDE;
 					double rad = mgr->CbodySize();
