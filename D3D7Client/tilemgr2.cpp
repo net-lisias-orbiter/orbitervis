@@ -415,7 +415,7 @@ VBMESH *Tile::CreateMesh_hemisphere (int grd, INT16 *elev, double globelev)
 			if (ilng) lng += PI;
 			slng = sin(lng), clng = cos(lng);
 			eradius = radius + globelev; // radius including node elevation
-			if (elev) eradius += (double)elev[(33-y)*TILE_ELEVSTRIDE + x+1];
+			if (elev) eradius += (double)elev[(grd+1-y)*TILE_ELEVSTRIDE + x+1];
 			nml = _V(slat*clng, clat, slat*slng);
 			pos = nml*eradius;
 			vtx->x = D3DVAL(pos.x);  vtx->nx = D3DVAL(nml.x);
@@ -446,7 +446,7 @@ VBMESH *Tile::CreateMesh_hemisphere (int grd, INT16 *elev, double globelev)
 	eradius = radius + globelev;
 	if (elev) {
 		double mn = 0.0;
-		for (x = 0; x < x2; x++) mn += (double)elev[TILE_ELEVSTRIDE*33 + x+1];
+		for (x = 0; x < x2; x++) mn += (double)elev[TILE_ELEVSTRIDE*(grd+1) + x+1];
 		eradius += mn/x2;
 	}
 	nml = _V(0,1,0);
@@ -514,7 +514,7 @@ VBMESH *Tile::CreateMesh_hemisphere (int grd, INT16 *elev, double globelev)
 				lng = x*fDAng;
 				if (!ilng) lng -= PI;
 				slng = sin(lng), clng = cos(lng);
-				en = (33-y)*TILE_ELEVSTRIDE + x+1;
+				en = (grd+1-y)*TILE_ELEVSTRIDE + x+1;
 				VECTOR3 nml = {2.0*dydz, dz*(elev[en-TILE_ELEVSTRIDE]-elev[en+TILE_ELEVSTRIDE]), dy*(elev[en-1]-elev[en+1])};
 				normalise(nml);
 				// rotate into place
