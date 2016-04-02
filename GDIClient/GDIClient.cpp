@@ -22,7 +22,11 @@ using namespace oapi;
 // ======================================================================
 
 GDIClient::GDIClient (HINSTANCE hInstance): GraphicsClient (hInstance)
-{}
+{
+	refCountPen = 0;
+	refCountBrush = 0;
+	refCountFont = 0;
+}
 
 oapi::Sketchpad *GDIClient::clbkGetSketchpad (SURFHANDLE surf)
 {
@@ -42,31 +46,37 @@ void GDIClient::clbkReleaseSketchpad (oapi::Sketchpad *sp)
 
 Font *GDIClient::clbkCreateFont (int height, bool prop, const char *face, Font::Style style, int orientation) const
 {
+	refCountFont++;
 	return new GDIFont (height, prop, face, style, orientation);
 }
 
 void GDIClient::clbkReleaseFont (Font *font) const
 {
+	refCountFont--;
 	delete font;
 }
 
 Pen *GDIClient::clbkCreatePen (int style, int width, DWORD col) const
 {
+	refCountPen++;
 	return new GDIPen (style, width, col);
 }
 
 void GDIClient::clbkReleasePen (Pen *pen) const
 {
+	refCountPen--;
 	delete pen;
 }
 
 Brush *GDIClient::clbkCreateBrush (DWORD col) const
 {
+	refCountBrush++;
 	return new GDIBrush (col);
 }
 
 void GDIClient::clbkReleaseBrush (Brush *brush) const
 {
+	refCountBrush--;
 	delete brush;
 }
 

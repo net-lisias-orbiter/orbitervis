@@ -124,6 +124,26 @@ public:
 	 * \return \e true on success
 	 */
 	bool clbkSaveSurfaceToImage (SURFHANDLE surf, const char *fname, oapi::ImageFileFormat fmt, float quality=0.7f);
+
+	/**
+	 * \brief Return the number of allocated pens
+	 */
+	inline int GetPenCount() const { return refCountPen; }
+
+	/**
+	 * \brief Return the number of allocated brushes
+	 */
+	inline int GetBrushCount() const { return refCountBrush; }
+
+	/**
+	 * \brief Return the number of allocated fonts
+	 */
+	inline int GetFontCount() const { return refCountFont; }
+
+private:
+	mutable int refCountPen;
+	mutable int refCountBrush;
+	mutable int refCountFont;
 };
 
 

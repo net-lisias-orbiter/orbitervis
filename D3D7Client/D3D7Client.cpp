@@ -117,6 +117,13 @@ D3D7Client::~D3D7Client ()
 	if (scene) delete scene;
 	if (meshmgr) delete meshmgr;
 	if (texmgr) delete texmgr;
+
+	if (GetPenCount())
+		oapiWriteLogV("D3D7Client: Sketchpad pens still allocated: %d", GetPenCount());
+	if (GetBrushCount())
+		oapiWriteLogV("D3D7Client: Sketchpad brushes still allocated: %d", GetBrushCount());
+	if (GetFontCount())
+		oapiWriteLogV("D3D7Client: Sketchpad fonts still allocated: %d", GetFontCount());
 }
 
 // ==============================================================
