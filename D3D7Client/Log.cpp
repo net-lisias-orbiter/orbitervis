@@ -49,11 +49,11 @@ void LogOut_Error (const char *func, const char *file, int line, const char *msg
 	oapiWriteLogV ("===============================================================");
 }
 
-void LogOut_DDErr (HRESULT hr, const char *func, const char *file, int line) {
+HRESULT LogOut_DDErr (HRESULT hr, const char *func, const char *file, int line) {
+	if (hr == DD_OK) return DD_OK;
 	static char errmsg[256] = ">>> ERROR: DDraw error ";
 	static char *err = errmsg+23;
 	switch (hr) {
-	case DD_OK:                             return; // nothing to do
 	case DDERR_ALREADYINITIALIZED:			strcpy (err, "DDERR_ALREADYINITIALIZED"); break;
 	case DDERR_CANNOTATTACHSURFACE:			strcpy (err, "DDERR_CANNOTATTACHSURFACE"); break;
 	case DDERR_CANNOTDETACHSURFACE:			strcpy (err, "DDERR_CANNOTDETACHSURFACE"); break;
@@ -180,6 +180,7 @@ void LogOut_DDErr (HRESULT hr, const char *func, const char *file, int line) {
 	sprintf (logs, ">>> [%s | %s | %d]", func, file, line);
 	LogOut();
 	LogOut ("---------------------------------------------------------------");
+	return hr;
 }
 
 void LogOut_DIErr (HRESULT hr, const char *func, const char *file, int line) {

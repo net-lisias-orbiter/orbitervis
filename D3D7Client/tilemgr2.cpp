@@ -632,7 +632,7 @@ bool TileLoader::Unqueue (Tile *tile)
 }
 
 // -----------------------------------------------------------------------
-
+#ifdef UNDEF
 DWORD WINAPI TileLoader::Load_ThreadProc (void *data)
 {
 	TileLoader *loader = (TileLoader*)data;
@@ -662,6 +662,41 @@ DWORD WINAPI TileLoader::Load_ThreadProc (void *data)
 	}
 	return 0;
 }
+#endif
+// -----------------------------------------------------------------------
+
+DWORD WINAPI TileLoader::Load_ThreadProc (void *data)
+{
+	const int tile_packet_size = 8; // max number of tiles to process from queue
+	TileLoader *loader = (TileLoader*)data;
+	DWORD idle = 1000/loader->load_frequency;
+	Tile *tile[tile_packet_size];
+	int nload, i;
+
+	while (bRunThread) {
+		WaitForMutex ();
+		for (nload = 0; nqueue > 0 && nload < tile_packet_size; nload++) {
+			tile[nload] = queue[queue_out].tile;
+			tile[nload]->state = Tile::Loading; // lock tile and its ancestor tree
+			queue_out = (queue_out+1) % MAXQUEUE2; // remove from queue
+			nqueue--;
+		}
+		ReleaseMutex ();
+
+		if (nload) {
+			for (i = 0; i < nload; i++)
+				tile[i]->Load(); // load/create the tile
+
+			WaitForMutex ();
+			for (i = 0; i < nload; i++)
+				tile[i]->state = Tile::Inactive; // unlock tile
+			ReleaseMutex ();
+		} else {
+			Sleep (idle);
+		}
+	}
+	return 0;
+}
 
 // =======================================================================
 // =======================================================================
@@ -676,7 +711,8 @@ TileManager2Base::configPrm TileManager2Base::cprm = {
 	false,				// bSpecular
 	false,				// bLights
 	false,              // bCloudShadow
-	0.5                 // lightfac
+	0.5,                // lightfac
+	0x0003              // tileLoadFlags
 };
 TileLoader *TileManager2Base::loader = NULL;
 double TileManager2Base::resolutionBias = 4.0;
@@ -716,6 +752,7 @@ void TileManager2Base::GlobalInit (oapi::D3D7Client *gclient)
 	cprm.bCloudShadow = *(bool*)gclient->GetConfigParam (CFGPRM_CLOUDSHADOWS);
 	cprm.lightfac = *(double*)gclient->GetConfigParam (CFGPRM_SURFACELIGHTBRT);
 	cprm.elevMode = *(int*)gclient->GetConfigParam (CFGPRM_ELEVATIONMODE);
+	cprm.tileLoadFlags = *(DWORD*)gclient->GetConfigParam (CFGPRM_TILELOADFLAGS);
 	bTileLoadThread = true; // TODO: g_pOrbiter->Cfg()->CfgPRenderPrm.bLoadOnThread;
 
 	loader = new TileLoader (gc);

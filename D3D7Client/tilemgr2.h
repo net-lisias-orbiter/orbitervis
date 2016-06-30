@@ -20,6 +20,7 @@
 #include "VPlanet.h"
 #include "spherepatch.h"
 #include "qtree.h"
+#include "ztreemgr.h"
 
 #define MAXQUEUE2 20
 
@@ -159,6 +160,8 @@ public:
 		bool bLights;					// render planet night lights?
 		bool bCloudShadow;				// render cloud shadows?
 		double lightfac;				// city light brightness factor
+		DWORD tileLoadFlags;            // 0x0001: load tiles from directory tree
+		                                // 0x0002: load tiles from compressed archive
 	};
 
 	struct RenderPrm {
@@ -263,11 +266,18 @@ public:
 	// The tile pointers are only valid for the current render pass. They are not guaranteed to exist any more
 	// after the next call to Render.
 
+	inline ZTreeMgr *ZTreeManager(int i) { return treeMgr[i]; }
+
 protected:
 	TileType *globtile[3];              // full-sphere tiles for resolution levels 1-3
 	QuadTreeNode<TileType> tiletree[2]; // quadtree roots for western and eastern hemisphere
 
+	ZTreeMgr **treeMgr;  // access to tile layers in compressed archives
+	int ntreeMgr;
+
 	void CheckCoverage (const QuadTreeNode<TileType> *node, double latmin, double latmax, double lngmin, double lngmax, int maxlvl, const Tile **tbuf, int nt, int *nfound) const;
+
+	void LoadZTrees();
 };
 
 #endif // !__TILEMGR2_H

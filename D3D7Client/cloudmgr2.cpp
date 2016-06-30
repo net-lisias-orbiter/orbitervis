@@ -37,14 +37,26 @@ CloudTile::~CloudTile ()
 void CloudTile::Load ()
 {
 	bool bLoadMip = true; // for now
+	bool ok = false;
 
 	DWORD flag = (bLoadMip ? 0:4);
 	char path[256];
 
 	// Load cloud texture
-	sprintf (path, "%s\\Cloud\\%02d\\%06d\\%06d.dds", mgr->CbodyName(), lvl+4, ilat, ilng);
 	owntex = true;
-	if (mgr->GClient()->GetTexMgr()->LoadTexture (path, &tex, flag) != S_OK) {
+	if (mgr->Cprm().tileLoadFlags & 0x0001) { // try loading from individual tile file
+		sprintf (path, "%s\\Cloud\\%02d\\%06d\\%06d.dds", mgr->CbodyName(), lvl+4, ilat, ilng);
+		ok = (mgr->GClient()->GetTexMgr()->LoadTexture (path, &tex, flag) == S_OK);
+	}
+	if (!ok && cmgr->ZTreeManager(0)) { // try loading from compressed archive
+		BYTE *buf;
+		DWORD ndata = cmgr->ZTreeManager(0)->ReadData(lvl+4, ilat, ilng, &buf);
+		if (ndata) {
+			ok = (mgr->GClient()->GetTexMgr()->ReadTextureFromMemory (buf, ndata, &tex, flag) == S_OK);
+			cmgr->ZTreeManager(0)->ReleaseData(buf);
+		}
+	}
+	if (!ok) { // no texture found - interpolate subregion from ancestor
 		if (GetParentSubTexRange (&texrange)) {
 			tex = getParent()->Tex();
 			owntex = false;
@@ -228,4 +240,18 @@ int TileManager2<CloudTile>::Coverage (double latmin, double latmax, double lngm
 		CheckCoverage (tiletree+i, latmin, latmax, lngmin, lngmax, maxlvl, tbuf, nt, &nfound);
 	}
 	return nfound;
+}
+
+// -----------------------------------------------------------------------
+
+template<>
+void TileManager2<CloudTile>::LoadZTrees()
+{
+	treeMgr = new ZTreeMgr*[ntreeMgr = 1];
+	if (cprm.tileLoadFlags & 0x0002) {
+		char cbuf[256];
+		sprintf(cbuf, "Textures\\%s", CbodyName());
+		treeMgr[0] = ZTreeMgr::CreateFromFile(cbuf, ZTreeMgr::LAYER_CLOUD);
+	} else
+		treeMgr[0] = 0;
 }

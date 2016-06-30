@@ -43,7 +43,11 @@ public:
 
 	HRESULT ReadTexture (FILE *file, LPDIRECTDRAWSURFACE7 *ppdds, DWORD flags);
 	// Read a single texture from open file stream 'file' into the
-	// the DX7 surface pointed to by 'ppdds'.
+	// DX7 surface pointed to by 'ppdds'.
+
+	HRESULT ReadTextureFromMemory (const BYTE *buf, DWORD nbuf, LPDIRECTDRAWSURFACE7 *ppdds, DWORD flags);
+	// Read a single texture from memory buffer 'buf' into the
+	// DX7 surface pointed to by 'ppdds'.
 
 	bool GetTexture (const char *fname, LPDIRECTDRAWSURFACE7 *ppdds, DWORD flags);
 	// Retrieve a texture. First scans the repository of loaded textures.
@@ -67,6 +71,15 @@ protected:
 	HRESULT ReadDDSSurface (FILE *file,
 		DDSURFACEDESC2 *pddsd, LPDIRECTDRAWSURFACE7 *ppddsDXT, DWORD flags = 0);
 	// Read a compressed DDS surface from an open stream
+	// pddsdComp    : DDS surface description
+	// pppddsCompTop: DDS surface
+	// flags: bit 0 set: force creation in system memory
+	//        bit 1 set: decompress, even if format is supported by device
+	//        bit 2 set: don't load mipmaps, even if supported by device
+
+	HRESULT ReadDDSSurfaceFromMemory (const BYTE *buf, DWORD nbuf,
+		DDSURFACEDESC2 *pddsd, LPDIRECTDRAWSURFACE7* ppddsDXT, DWORD flags);
+	// Read a compressed DDS surface from a memory buffer
 	// pddsdComp    : DDS surface description
 	// pppddsCompTop: DDS surface
 	// flags: bit 0 set: force creation in system memory

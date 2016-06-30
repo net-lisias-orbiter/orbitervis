@@ -142,6 +142,7 @@
 				AdditionalIncludeDirectories="..\..\Orbitersdk\include;c:\mssdk\include;C:\dx7asdk\DXF\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;D3D7CLIENT_EXPORTS;_CRT_SECURE_NO_WARNINGS"
 				RuntimeLibrary="2"
+				EnableEnhancedInstructionSet="2"
 				PrecompiledHeaderFile=""
 			/>
 			<Tool
@@ -738,6 +739,10 @@
 					/>
 				</FileConfiguration>
 			</File>
+			<File
+				RelativePath=".\ztreemgr.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -877,6 +882,10 @@
 			</File>
 			<File
 				RelativePath="VVessel.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ztreemgr.h"
 				>
 			</File>
 		</Filter>

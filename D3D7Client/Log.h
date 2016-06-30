@@ -24,11 +24,18 @@
 #define LOGOUT_DPERR(hr) LogOut_DPErr(hr,__FUNCTION__,__FILE__,__LINE__)
 #define LOGOUT_OBSOLETE {static bool bout=true; if(bout) {LogOut_Obsolete(__FUNCTION__);bout=false;}}
 
+#define LOG_DD_ERRORS
+#ifdef LOG_DD_ERRORS
+#define DDLOG(func) LogOut_DDErr((func),__FUNCTION__,__FILE__,__LINE__)
+#else
+#define DDLOG(func) (func)
+#endif
+
 // The following routines are for message output into a log file
 void LogOut (const char *msg, ...);   // Write a message to the log file
 void LogOut ();                       // Write current message to log file
 void LogOut_Error (const char *func, const char *file, int line, const char *msg, ...);  // Write error message to log file
-void LogOut_DDErr (HRESULT hr, const char *func, const char *file, int line);     // Write DirectDraw error to log file
+HRESULT LogOut_DDErr (HRESULT hr, const char *func, const char *file, int line);     // Write DirectDraw error to log file
 void LogOut_DIErr (HRESULT hr, const char *func, const char *file, int line);     // Write DirectInput error to log file
 void LogOut_DPErr (HRESULT hr, const char *func, const char *file, int line);     // Write DirectPlay error to log file
 void LogOut_Obsolete (char *func, char *msg = 0);      // Write obsolete-function warning to log file

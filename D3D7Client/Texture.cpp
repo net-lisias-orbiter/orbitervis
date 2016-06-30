@@ -101,6 +101,57 @@ HRESULT TextureManager::ReadTexture (FILE *file, LPDIRECTDRAWSURFACE7 *ppdds, DW
 
 // =======================================================================
 
+HRESULT TextureManager::ReadTextureFromMemory (const BYTE *buf, DWORD nbuf, LPDIRECTDRAWSURFACE7 *ppdds, DWORD flags)
+{
+	HRESULT              hr;
+	DDSURFACEDESC2       ddsd;
+	DDPIXELFORMAT        ddpfBestMatch;
+	LPDIRECTDRAWSURFACE7 pddsDXT    = NULL;
+	LPDIRECTDRAWSURFACE7 pddsUncomp = NULL;
+
+	if (devMemType != DDSCAPS_VIDEOMEMORY) flags |= 1; // load to system memory
+	if (!bMipmap)                          flags |= 4; // don't load mipmaps
+
+	if (FAILED (hr = ReadDDSSurfaceFromMemory (buf, nbuf, &ddsd, &pddsDXT, flags))) {
+		return hr;
+	}
+	if (FAILED (hr = LookupPixelFormat (ddsd.ddpfPixelFormat, &ddpfBestMatch))) {
+		//LOGOUT_DDERR(hr);
+		return hr;
+	}
+
+	// not sure whether here is the best place to do this
+	if (ddpfBestMatch.dwFlags & DDPF_ALPHAPREMULT) {
+		pDev->SetRenderState (D3DRENDERSTATE_SRCBLEND, D3DBLEND_ONE);
+	} else {
+        pDev->SetRenderState (D3DRENDERSTATE_SRCBLEND, D3DBLEND_SRCALPHA);
+  }
+
+	if ((ddsd.ddpfPixelFormat.dwFourCC == ddpfBestMatch.dwFourCC) && !(flags&2)) {
+		// device supports pixel format directly
+		*ppdds = pddsDXT;
+	} else {
+		// convert into compatible pixel format
+
+		// Retrieve the pixel format from the render surface - may need some thought
+		memset (&ddpfBestMatch, 0, sizeof(DDPIXELFORMAT));
+		ddpfBestMatch.dwSize = sizeof (DDPIXELFORMAT);
+		gc->GetFramework()->GetBackBuffer()->GetPixelFormat (&ddpfBestMatch);
+
+		ddsd.ddpfPixelFormat = ddpfBestMatch;
+		if (FAILED (hr = BltToUncompressedSurface (ddsd, ddpfBestMatch,
+			pddsDXT, &pddsUncomp))) {
+			//LOGOUT_DDERR(hr);
+			return hr;
+		}
+		pddsDXT->Release();
+		*ppdds = pddsUncomp;
+	}
+	return hr;
+}
+
+// =======================================================================
+
 HRESULT TextureManager::LoadTexture (const char *fname, LPDIRECTDRAWSURFACE7 *ppdds, DWORD flags)
 {
 	HRESULT hr = S_FALSE;
@@ -496,6 +547,109 @@ HRESULT TextureManager::ReadDDSSurface (FILE *file,
 			LONG dataBytesPerRow = ddsd.dwWidth * ddsd.ddpfPixelFormat.dwRGBBitCount / 8;
 			for (yp = 0; yp < ddsd.dwHeight; yp++) {
 				fread (pbDest, dataBytesPerRow, 1, file);
+				pbDest += ddsd.lPitch;
+			}
+		}
+		pdds->Unlock (NULL);
+
+		if (flags&4) {
+			// For mipless hardware, don't copy mipmaps
+			pdds->Release();
+			break;
+		}
+		ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_MIPMAP | DDSCAPS_COMPLEX;
+		ddsd.ddsCaps.dwCaps2 = 0;
+		ddsd.ddsCaps.dwCaps3 = 0;
+		ddsd.ddsCaps.dwCaps4 = 0;
+
+		if (FAILED (hr = pdds->GetAttachedSurface (&ddsd.ddsCaps, &pddsAttached))) {
+			pdds->Release();
+			break;
+		}
+		pdds->Release();
+		pdds = pddsAttached;
+	}
+	hr = S_OK; // Everything worked
+
+LFail:
+	return hr;
+}
+
+// =======================================================================
+// Read a compressed DDS surface from a memory buffer
+
+HRESULT TextureManager::ReadDDSSurfaceFromMemory (const BYTE *buf, DWORD nbuf,
+	DDSURFACEDESC2 *pddsd, LPDIRECTDRAWSURFACE7* ppddsDXT, DWORD flags)
+{
+	HRESULT              hr = E_FAIL;
+	LPDIRECTDRAWSURFACE7 pdds         = NULL;
+	LPDIRECTDRAWSURFACE7 pddsAttached = NULL;
+	DDSURFACEDESC2       ddsd;
+	DWORD                dwMagic;
+
+	// Read the magic number
+	if (nbuf >= sizeof(DWORD)) {
+		memcpy(&dwMagic, buf, sizeof(DWORD));
+		buf += sizeof(DWORD);
+		nbuf -= sizeof(DWORD);
+	} else goto LFail;
+	if (dwMagic != MAKEFOURCC('D','D','S',' ')) {
+		//LOGOUT_ERR("Invalid DDS signature");
+		goto LFail;
+	}
+
+	// Read the surface description
+	memcpy(pddsd, buf, sizeof(DDSURFACEDESC2));
+	buf += sizeof(DDSURFACEDESC2);
+	nbuf -= sizeof(DDSURFACEDESC2);
+
+	// Mask/set surface caps appropriately for the application
+	if (flags&1) pddsd->ddsCaps.dwCaps |= DDSCAPS_SYSTEMMEMORY;
+	else         pddsd->ddsCaps.dwCaps2 |= DDSCAPS2_TEXTUREMANAGE;
+
+	// this should only be set for textures which will never be
+	// locked for dynamic modification
+	pddsd->ddsCaps.dwCaps2 |= DDSCAPS2_OPAQUE;
+
+    // Handle special case for hardware that doesn't support mipmaping
+    if (flags&4) {
+        pddsd->dwMipMapCount = 0;
+        pddsd->dwFlags &= ~DDSD_MIPMAPCOUNT;
+        pddsd->ddsCaps.dwCaps &= ~(DDSCAPS_MIPMAP | DDSCAPS_COMPLEX);
+    }
+
+	// Clear unwanted flags
+	pddsd->dwFlags &= (~DDSD_PITCH);
+	pddsd->dwFlags &= (~DDSD_LINEARSIZE);
+
+    // create a new surface based on the surface description
+    if (FAILED (hr = pDD->CreateSurface(pddsd, ppddsDXT, NULL))) {
+		//LOGOUT_DDERR(hr);
+        goto LFail;
+	}
+    pdds = *ppddsDXT;
+    pdds->AddRef();
+
+	while (TRUE) {
+		ZeroMemory (&ddsd, sizeof (DDSURFACEDESC2));
+		ddsd.dwSize = sizeof (DDSURFACEDESC2);
+
+		if (FAILED (hr = pdds->Lock (NULL, &ddsd, DDLOCK_WAIT, NULL))) {
+			//LOGOUT_DDERR(hr);
+			goto LFail;
+		}
+		if (ddsd.dwFlags & DDSD_LINEARSIZE) {
+			memcpy(ddsd.lpSurface, buf, ddsd.dwLinearSize);
+			buf += ddsd.dwLinearSize;
+			nbuf -= ddsd.dwLinearSize;
+		} else {
+			DWORD yp;
+			BYTE *pbDest = (BYTE*)ddsd.lpSurface;
+			LONG dataBytesPerRow = ddsd.dwWidth * ddsd.ddpfPixelFormat.dwRGBBitCount / 8;
+			for (yp = 0; yp < ddsd.dwHeight; yp++) {
+				memcpy(pbDest, buf, dataBytesPerRow);
+				buf += dataBytesPerRow;
+				nbuf -= dataBytesPerRow;
 				pbDest += ddsd.lPitch;
 			}
 		}

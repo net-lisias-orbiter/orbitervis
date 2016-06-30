@@ -85,6 +85,13 @@ void D3D7PlanetRenderCfg::InitDialog (HWND hDlg)
 	for (i = 0, j = 1; j < mode; i++, j*=2);
 	SendDlgItemMessage (hDlg, IDC_COMBO1, CB_SETCURSEL, i, 0);
 
+	SendDlgItemMessage (hDlg, IDC_COMBO2, CB_RESETCONTENT, 0, 0);
+	SendDlgItemMessage (hDlg, IDC_COMBO2, CB_ADDSTRING, 0, (LPARAM)"Load from tile cache only");
+	SendDlgItemMessage (hDlg, IDC_COMBO2, CB_ADDSTRING, 0, (LPARAM)"Load from compressed archive only");
+	SendDlgItemMessage (hDlg, IDC_COMBO2, CB_ADDSTRING, 0, (LPARAM)"Try cache first, then archive");
+	DWORD m = cfg->PlanetTileLoadFlags;
+	SendDlgItemMessage (hDlg, IDC_COMBO2, CB_SETCURSEL, m-1, 0);
+
 	Update (hDlg);
 }
 
@@ -126,6 +133,9 @@ void D3D7PlanetRenderCfg::Apply (HWND hDlg)
 	i = SendDlgItemMessage (hDlg, IDC_COMBO1, CB_GETCURSEL, 0, 0);
 	for (mode = 1; i > 0; mode *= 2, i--);
 	cfg->PlanetAnisoMode = mode;
+
+	i = SendDlgItemMessage (hDlg, IDC_COMBO2, CB_GETCURSEL, 0, 0);
+	cfg->PlanetTileLoadFlags = (DWORD)i+1;
 }
 
 void D3D7PlanetRenderCfg::CloseDialog (HWND hDlg)
