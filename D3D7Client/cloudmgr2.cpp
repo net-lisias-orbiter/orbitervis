@@ -65,7 +65,7 @@ void CloudTile::Load ()
 	}
 
 	bool shift_origin = (lvl >= 4);
-	int res = mgr->Cprm().gridRes;
+	int res = mgr->GridRes();
 
 	if (!lvl) {
 		// create hemisphere mesh for western or eastern hemispheres

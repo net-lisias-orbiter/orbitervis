@@ -27,7 +27,6 @@
 #define TILE_VALID  0x0001
 #define TILE_ACTIVE 0x0002
 
-//#define TILE_PATCHRES 32
 #define TILE_FILERES 256
 #define TILE_ELEVSTRIDE (TILE_FILERES+3)
 
@@ -154,7 +153,6 @@ class TileManager2Base {
 
 public:
 	struct configPrm {				// global configuration parameters
-		int gridRes;                    // mesh grid resolution. must be multiple of 2. Default: 64 for surfaces, 32 for clouds
 		int elevMode;                   // elevation mode (0=none, 1=linear, 2=cubic)
 		bool bSpecular;					// render specular surface reflections?
 		bool bLights;					// render planet night lights?
@@ -203,12 +201,13 @@ public:
 
 	void SetRenderPrm (MATRIX4 &dwmat, double prerot, bool use_zbuf, const vPlanet::RenderPrm &rprm);
 
-	const oapi::D3D7Client *GClient() const { return gc; }
-	const vPlanet *GetPlanet() const { return vp; }
-	const configPrm &Cprm() const { return cprm; }
-	const char *CbodyName() const { return cbody_name; }
-	const double CbodySize() const { return obj_size; }
-	const ELEVHANDLE ElevMgr() const { return emgr; }
+	inline const oapi::D3D7Client *GClient() const { return gc; }
+	inline const vPlanet *GetPlanet() const { return vp; }
+	inline const configPrm &Cprm() const { return cprm; }
+	inline const char *CbodyName() const { return cbody_name; }
+	inline const double CbodySize() const { return obj_size; }
+	inline const ELEVHANDLE ElevMgr() const { return emgr; }
+	inline const int GridRes() const { return gridRes; }
 
 protected:
 	MATRIX4 WorldMatrix (int ilng, int nlng, int ilat, int nlat);
@@ -228,6 +227,7 @@ private:
 	char cbody_name[256];
 	ELEVHANDLE emgr;                 // elevation data query handle
 	Camera *camera;
+	int gridRes;                     // mesh grid resolution. must be multiple of 2. Default: 64 for surfaces, 32 for clouds
 
 	static oapi::D3D7Client *gc;
 	static DWORD vbMemCaps;

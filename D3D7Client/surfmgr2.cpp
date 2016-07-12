@@ -131,7 +131,7 @@ void SurfTile::Load ()
 	// Load elevation data
 	INT16 *elev = ElevationData ();
 	bool shift_origin = (lvl >= 4);
-	int res = mgr->Cprm().gridRes;
+	int res = mgr->GridRes();
 
 	if (!lvl) {
 		// create hemisphere mesh for western or eastern hemispheres
@@ -347,11 +347,11 @@ INT16 *SurfTile::ElevationData () const
 {
 	if (!ggelev) {
 		int ancestor_dlvl = 3;
-		while (1 << (8-ancestor_dlvl) < mgr->Cprm().gridRes) ancestor_dlvl--;
+		while (1 << (8-ancestor_dlvl) < mgr->GridRes()) ancestor_dlvl--;
 		if (lvl >= ancestor_dlvl) { // traverse quadtree back to great-grandparent
 			QuadTreeNode<SurfTile> *ancestor = node; // start at my own node
 			int blockRes = TILE_FILERES;
-			while (blockRes > mgr->Cprm().gridRes && ancestor) {
+			while (blockRes > mgr->GridRes() && ancestor) {
 				ancestor = ancestor->Parent();
 				blockRes >>= 1;
 			}
@@ -365,7 +365,7 @@ INT16 *SurfTile::ElevationData () const
 		} else {
 			SurfTile *ggp = smgr->GlobalTile(lvl-ancestor_dlvl+3);
 			if (ggp->LoadElevationData ()) {
-				int blockRes = mgr->Cprm().gridRes;
+				int blockRes = mgr->GridRes();
 				int nblock = TILE_FILERES/blockRes;
 				int mask = nblock-1;
 				int ofs = ((mask - ilat & mask) * TILE_ELEVSTRIDE + (ilng & mask)) * blockRes;
@@ -383,7 +383,7 @@ INT16 *SurfTile::ElevationData () const
 double SurfTile::GetMeanElevation (const INT16 *elev) const
 {
 	int i, j;
-	int res = mgr->Cprm().gridRes;
+	int res = mgr->GridRes();
 	double melev = 0.0;
 	for (j = 0; j <= res; j++) {
 		for (i = 0; i <= res; i++) {
@@ -529,7 +529,7 @@ void SurfTile::Render ()
 							cmaxlng += PI2;
 						}
 
-						static int ncvtx = (mgr->Cprm().gridRes+3)*(mgr->Cprm().gridRes+3);
+						static int ncvtx = (mgr->GridRes()+3)*(mgr->GridRes()+3);
 						static VERTEX_2TEX *cvtx = new VERTEX_2TEX[ncvtx];
 						if (mesh->nv > ncvtx) {
 							delete []cvtx;
@@ -666,7 +666,7 @@ void SurfTile::FixCorner (const SurfTile *nbr)
 {
 	if (!mesh) return; // sanity check
 
-	int res = mgr->Cprm().gridRes;
+	int res = mgr->GridRes();
 	int vtx_idx = (ilat & 1 ? 0 : (res+1)*res) + (ilng & 1 ? res : 0);
 	VERTEX_2TEX &vtx_store = mesh->vtx[mesh->nv + (ilat & 1 ? 0 : res)];
 
@@ -694,7 +694,7 @@ void SurfTile::FixLongitudeBoundary (const SurfTile *nbr, bool keep_corner)
 {
 	// Fix the left or right edge
 	int i, i0, i1, j, vtx_ofs, nbrlvl, dlvl;
-	int res = mgr->Cprm().gridRes;
+	int res = mgr->GridRes();
 	VERTEX_2TEX *vtx_store;
 
 	vtx_ofs = (ilng & 1 ? res : 0); // check if neighbour is at left or right edge
@@ -752,7 +752,7 @@ void SurfTile::FixLatitudeBoundary (const SurfTile *nbr, bool keep_corner)
 {
 	// Fix the top or bottom edge
 	int i, i0, i1, j, nbrlvl, dlvl;
-	int res = mgr->Cprm().gridRes;
+	int res = mgr->GridRes();
 	VERTEX_2TEX *vtx_store;
 
 	int line = (ilat & 1 ? 0 : res);

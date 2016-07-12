@@ -182,6 +182,10 @@ DWORD ZTreeMgr::ReadData(DWORD idx, BYTE **outp)
 {
 	if (idx == (DWORD)-1) return 0; // sanity check
 
+	DWORD esize = NodeSizeInflated(idx);
+	if (!esize) // node doesn't have data, but has descendants with data
+		return 0;
+
 	if (_fseeki64(treef, toc[idx].pos+dofs, SEEK_SET))
 		return 0;
 
@@ -189,7 +193,6 @@ DWORD ZTreeMgr::ReadData(DWORD idx, BYTE **outp)
 	BYTE *zbuf = new BYTE[zsize];	
 	fread(zbuf, 1, zsize, treef);
 
-	DWORD esize = NodeSizeInflated(idx);
 	BYTE *ebuf = new BYTE[esize];
 
 	DWORD ndata = Inflate(zbuf, zsize, ebuf, esize);
