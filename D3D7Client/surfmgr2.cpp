@@ -154,15 +154,14 @@ INT16 *SurfTile::ReadElevationFile (const char *name, int lvl, int ilat, int iln
 	ELEVFILEHEADER hdr;
 	INT16 *e = NULL;
 	INT16 ofs;
-	char path[256];
+	char path[256], texpath[256];
 	FILE *f;
 	int i;
 
 	// Elevation data
 	if (mgr->Cprm().tileLoadFlags & 0x0001) { // try loading from individual tile file
-		sprintf (path, "Textures\\%s\\Elev\\%02d\\%06d\\%06d.elv", name, lvl, ilat, ilng);
-		f = fopen (path, "rb");
-		if (f) {
+		sprintf (path, "%s\\Elev\\%02d\\%06d\\%06d.elv", name, lvl, ilat, ilng);
+		if (mgr->GClient()->TexturePath(path, texpath) && (f = fopen(texpath, "rb"))) {
 			e = new INT16[ndat];
 			// read the elevation file header
 			fread (&hdr, sizeof(ELEVFILEHEADER), 1, f);
@@ -223,9 +222,8 @@ INT16 *SurfTile::ReadElevationFile (const char *name, int lvl, int ilat, int iln
 	if (e) {
 		bool ok = false;
 		if (mgr->Cprm().tileLoadFlags & 0x0001) { // try loading from individual tile file
-			sprintf (path, "Textures\\%s\\Elev_mod\\%02d\\%06d\\%06d.elv", name, lvl, ilat, ilng);
-			f = fopen (path, "rb");
-			if (f) {
+			sprintf (path, "%s\\Elev_mod\\%02d\\%06d\\%06d.elv", name, lvl, ilat, ilng);
+			if (mgr->GClient()->TexturePath(path, texpath) && (f = fopen(texpath, "rb"))) {
 				fread (&hdr, sizeof(ELEVFILEHEADER), 1, f);
 				if (hdr.hdrsize != sizeof(ELEVFILEHEADER)) {
 					fseek (f, hdr.hdrsize, SEEK_SET);
@@ -872,7 +870,7 @@ void TileManager2<SurfTile>::LoadZTrees()
 	treeMgr = new ZTreeMgr*[ntreeMgr = 4];
 	if (cprm.tileLoadFlags & 0x0002) {
 		char cbuf[256];
-		sprintf(cbuf, "Textures\\%s", CbodyName());
+		GClient()->TexturePath (CbodyName(), cbuf);
 		treeMgr[0] = ZTreeMgr::CreateFromFile(cbuf, ZTreeMgr::LAYER_SURF);
 		treeMgr[1] = ZTreeMgr::CreateFromFile(cbuf, ZTreeMgr::LAYER_MASK);
 		treeMgr[2] = ZTreeMgr::CreateFromFile(cbuf, ZTreeMgr::LAYER_ELEV);

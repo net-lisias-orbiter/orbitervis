@@ -1088,7 +1088,22 @@ bool D3D7Client::clbkBlt (SURFHANDLE tgt, DWORD tgtx, DWORD tgty, SURFHANDLE src
 	DWORD bltflag = DDBLTFAST_WAIT;
 	if (flag & BLT_SRCCOLORKEY) bltflag |= DDBLTFAST_SRCCOLORKEY;
 	if (flag & BLT_TGTCOLORKEY) bltflag |= DDBLTFAST_DESTCOLORKEY;
-	return (ps_tgt->BltFast (tgtx, tgty, ps_src, NULL, bltflag) == S_OK);
+	HRESULT hr;
+	if ((hr = ps_tgt->BltFast (tgtx, tgty, ps_src, NULL, bltflag)) != S_OK) {
+		DDSURFACEDESC2 ddsd;
+		memset (&ddsd, 0, sizeof(DDSURFACEDESC2));
+		ddsd.dwSize = sizeof(DDSURFACEDESC2);
+		ddsd.dwFlags = DDSD_HEIGHT | DDSD_WIDTH;
+		ps_src->GetSurfaceDesc (&ddsd);
+		bltflag = DDBLT_WAIT;
+		if (flag & BLT_SRCCOLORKEY) bltflag |= DDBLT_KEYSRC;
+		if (flag & BLT_TGTCOLORKEY) bltflag |= DDBLT_KEYDEST;
+		RECT dstrct = {tgtx, tgty, tgtx+ddsd.dwWidth, tgty+ddsd.dwHeight};
+		hr = ps_tgt->Blt (&dstrct, ps_src, NULL, bltflag, NULL);
+		if (hr != S_OK)
+			LOGOUT_DDERR (hr);
+	}
+	return (hr == S_OK);
 }
 
 bool D3D7Client::clbkBlt (SURFHANDLE tgt, DWORD tgtx, DWORD tgty, SURFHANDLE src, DWORD srcx, DWORD srcy, DWORD w, DWORD h, DWORD flag) const
@@ -1099,7 +1114,18 @@ bool D3D7Client::clbkBlt (SURFHANDLE tgt, DWORD tgtx, DWORD tgty, SURFHANDLE src
 	DWORD bltflag = DDBLTFAST_WAIT;
 	if (flag & BLT_SRCCOLORKEY) bltflag |= DDBLTFAST_SRCCOLORKEY;
 	if (flag & BLT_TGTCOLORKEY) bltflag |= DDBLTFAST_DESTCOLORKEY;
-	return (ps_tgt->BltFast (tgtx, tgty, ps_src, &srcr, bltflag) == S_OK);
+	HRESULT hr;
+	if ((hr = ps_tgt->BltFast (tgtx, tgty, ps_src, &srcr, bltflag)) != S_OK) {
+		bltflag = DDBLT_WAIT;
+		if (flag & BLT_SRCCOLORKEY) bltflag |= DDBLT_KEYSRC;
+		if (flag & BLT_TGTCOLORKEY) bltflag |= DDBLT_KEYDEST;
+		RECT dstrct = {tgtx, tgty, tgtx+w, tgty+h};
+		RECT srcrct = {srcx, srcy, srcx+w, srcy+h};
+		hr = ps_tgt->Blt (&dstrct, ps_src, &srcrct, bltflag, NULL);
+		if (hr != S_OK)
+			LOGOUT_DDERR (hr);
+	}
+	return (hr == S_OK);
 }
 
 bool D3D7Client::clbkScaleBlt (SURFHANDLE tgt, DWORD tgtx, DWORD tgty, DWORD tgtw, DWORD tgth,

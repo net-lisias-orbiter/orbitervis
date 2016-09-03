@@ -87,8 +87,8 @@ void HazeManager::Render (LPDIRECT3DDEVICE7 dev, D3DMATRIX &wmat, bool dual)
 	r1 = (float)sinv, r2 = (1.0f+hralt)*r1;
 	
 	if (!dual) { // pull lower horizon edge below surface to avoid problems with elevations < 0
-		h1 *= (1.0-hralt*0.05);
-		r1 *= (1.0-hralt*0.05);
+		h1 *= vp->prm.horizon_minrad;
+		r1 *= vp->prm.horizon_minrad;
 	}
 
 	if (hshift) {
