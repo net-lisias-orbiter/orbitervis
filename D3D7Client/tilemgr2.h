@@ -93,7 +93,7 @@ protected:
 	VECTOR3 Centre () const;
 	// Returns the direction of the tile centre from the planet centre in local planet coordinates
 
-	VBMESH *CreateMesh_quadpatch (int grdlat, int grdlng, INT16 *elev=0, double globelev=0.0, 
+	VBMESH *CreateMesh_quadpatch (int grdlat, int grdlng, INT16 *elev=0, double elev_scale = 1.0, double globelev=0.0, 
 		const TEXCRDRANGE2 *range=0, bool shift_origin=false, VECTOR3 *shift=0, double bb_excess=0.0);
 	// Creates a quadrilateral patch mesh
 
@@ -208,6 +208,7 @@ public:
 	inline const double CbodySize() const { return obj_size; }
 	inline const ELEVHANDLE ElevMgr() const { return emgr; }
 	inline const int GridRes() const { return gridRes; }
+	inline const double ElevRes() const { return elevRes; }
 
 protected:
 	MATRIX4 WorldMatrix (int ilng, int nlng, int ilat, int nlat);
@@ -228,6 +229,7 @@ private:
 	ELEVHANDLE emgr;                 // elevation data query handle
 	Camera *camera;
 	int gridRes;                     // mesh grid resolution. must be multiple of 2. Default: 64 for surfaces, 32 for clouds
+	double elevRes;                  // target elevation resolution
 
 	static oapi::D3D7Client *gc;
 	static DWORD vbMemCaps;

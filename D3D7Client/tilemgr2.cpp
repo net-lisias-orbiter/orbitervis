@@ -152,7 +152,7 @@ void Tile::Extents (double *latmin, double *latmax, double *lngmin, double *lngm
 
 // -----------------------------------------------------------------------
 
-VBMESH *Tile::CreateMesh_quadpatch (int grdlat, int grdlng, INT16 *elev, double globelev,
+VBMESH *Tile::CreateMesh_quadpatch (int grdlat, int grdlng, INT16 *elev, double elev_scale, double globelev,
 	const TEXCRDRANGE2 *range, bool shift_origin, VECTOR3 *shift, double bb_excess)
 {
 	const float TEX2_MULTIPLIER = 4.0f; // was: 16.0f
@@ -215,7 +215,7 @@ VBMESH *Tile::CreateMesh_quadpatch (int grdlat, int grdlng, INT16 *elev, double 
 			slng = sin(lng), clng = cos(lng);
 
 			eradius = radius + globelev; // radius including node elevation
-			if (elev) eradius += (double)elev[(i+1)*TILE_ELEVSTRIDE + j+1];
+			if (elev) eradius += (double)elev[(i+1)*TILE_ELEVSTRIDE + j+1]*elev_scale;
 			nml = _V(clat*clng, slat, clat*slng);
 			pos = nml*eradius;
 			tpos = mul (R, pos-pref);
@@ -318,7 +318,7 @@ VBMESH *Tile::CreateMesh_quadpatch (int grdlat, int grdlng, INT16 *elev, double 
 
 				// This version avoids the normalisation of the 4 intermediate face normals
 				// It's faster and doesn't seem to make much difference
-				VECTOR3 nml = {2.0*dydz, dz*(elev[en-TILE_ELEVSTRIDE]-elev[en+TILE_ELEVSTRIDE]), dy*(elev[en-1]-elev[en+1])};
+				VECTOR3 nml = {2.0*dydz, dz*elev_scale*(elev[en-TILE_ELEVSTRIDE]-elev[en+TILE_ELEVSTRIDE]), dy*elev_scale*(elev[en-1]-elev[en+1])};
 				normalise (nml);
 				// rotate into place
 				nx1 = nml.x*clat - nml.y*slat;
@@ -729,6 +729,7 @@ TileManager2Base::TileManager2Base (const vPlanet *vplanet, int _maxres, int _gr
 	oapiGetObjectName (obj, cbody_name, 256);
 	camera = gc->GetScene()->GetCamera();
 	emgr = oapiElevationManager(obj);
+	elevRes = *(double*)oapiGetObjectParam (obj, OBJPRM_PLANET_ELEVRESOLUTION);
 }
 
 // -----------------------------------------------------------------------

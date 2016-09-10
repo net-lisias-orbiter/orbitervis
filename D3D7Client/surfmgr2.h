@@ -35,7 +35,7 @@ protected:
 	// Return pointer to parent tile, if exists
 
 	void Load ();
-	INT16 *SurfTile::ReadElevationFile (const char *name, int lvl, int ilat, int ilng, double *mean_elev=0);
+	INT16 *ReadElevationFile (const char *name, int lvl, int ilat, int ilng, double tgt_res, double *mean_elev=0);
 	bool LoadElevationData ();
 	void Render ();
 
