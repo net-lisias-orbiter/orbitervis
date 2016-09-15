@@ -290,7 +290,7 @@ INT16 *SurfTile::ReadElevationFile (const char *name, int lvl, int ilat, int iln
 				ELEVFILEHEADER *phdr = (ELEVFILEHEADER*)p;
 				p += phdr->hdrsize;
 				rescale = (do_rescale = (phdr->scale != tgt_res)) ? phdr->scale/tgt_res : 1.0;
-				offset  = (do_shift   = (phdr->offset != 0.0) ? (INT16)(phdr->offset/tgt_res) : 0);
+				offset  = (do_shift   = (phdr->offset != 0.0)) ? (INT16)(phdr->offset/tgt_res) : 0;
 				switch(phdr->dtype) {
 				case 0:
 					for (i = 0; i < ndat; i++) e[i] = offset;
