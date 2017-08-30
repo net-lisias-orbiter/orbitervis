@@ -191,6 +191,23 @@ void TileManager2Base::RenderNode (QuadTreeNode<TileType> *node)
 	}
 }
 
+template<class TileType>
+void TileManager2Base::RenderNodeLabels (QuadTreeNode<TileType> *node, oapi::Sketchpad *skp)
+{
+	TileType *tile = node->Entry();
+	if (tile->state == Tile::ForRender || tile->state == Tile::Active) {
+		tile->RenderLabels(skp);
+
+		// step down to next quadtree level
+		if (tile->state == Tile::Active) {
+			for (int i = 0; i < 4; i++)
+				if (node->Child(i))
+					if (node->Child(i)->Entry() && (node->Child(i)->Entry()->state & TILE_ACTIVE))
+						RenderNodeLabels (node->Child(i), skp);
+		}
+	}
+}
+
 
 // =======================================================================
 // =======================================================================
@@ -204,8 +221,10 @@ TileManager2<TileType>::TileManager2 (const vPlanet *vplanet, int _maxres, int _
 	LoadZTrees();
 
 	// Load the low-res full-sphere tiles
-	for (int i = 0; i < 3; i++)
+	for (int i = 0; i < 3; i++) {
 		globtile[i] = new TileType (this, i-3, 0, 0);
+		globtile[i]->Load();
+	}
 
 	// Set the root tiles for level 0
 	for (int i = 0; i < 2; i++) {

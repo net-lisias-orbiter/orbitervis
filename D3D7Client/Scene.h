@@ -139,6 +139,7 @@ private:
 	D3D7Light *light;          // only one for now
 	D3DCOLOR bg_rgba;          // ambient background colour
 	bool locallight;           // enable local light sources
+	bool surfLabelsActive;     // v.2 surface labels activated?
 	DWORD maxlight;            // max number of light sources
 
 	struct VOBJREC {           // linked list of object visuals
@@ -170,6 +171,8 @@ private:
 	HPEN hLabelPen[6];
 	HFONT hLabelFont[1];
 	int labelSize[1];
+	oapi::Font *label_font;
+	oapi::Pen *label_pen;
 
 	void InitGDIResources();
 	void ExitGDIResources();

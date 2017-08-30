@@ -41,6 +41,7 @@ public:
 	void CheckResolution ();
 	void RenderZRange (double *nplane, double *fplane);
 	bool Render (LPDIRECT3DDEVICE7 dev);
+	void RenderLabels(LPDIRECT3DDEVICE7 dev, oapi::Sketchpad *skp);
 
 	struct RenderPrm { // misc. parameters for rendering the planet
 		// persistent options
@@ -71,6 +72,8 @@ public:
 	// Access functions
 	const TileManager2<SurfTile> *SurfMgr2() const { return surfmgr2; }
 	const TileManager2<CloudTile> *CloudMgr2() const { return cloudmgr2; }
+
+	void ActivateLabels(bool activate);
 
 protected:
 	void RenderDot (LPDIRECT3DDEVICE7 dev);

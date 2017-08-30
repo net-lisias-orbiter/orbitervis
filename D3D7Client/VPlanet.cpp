@@ -477,6 +477,24 @@ bool vPlanet::Render (LPDIRECT3DDEVICE7 dev)
 
 // ==============================================================
 
+void vPlanet::ActivateLabels(bool activate)
+{
+	if (surfmgr2 && *(int*)oapiGetObjectParam(hObj, OBJPRM_PLANET_LABELENGINE) == 2) {
+		if (activate) surfmgr2->CreateLabels();
+		else          surfmgr2->DeleteLabels();
+	}
+}
+
+// ==============================================================
+
+void vPlanet::RenderLabels(LPDIRECT3DDEVICE7 dev, oapi::Sketchpad *skp)
+{
+	if (surfmgr2 && *(int*)oapiGetObjectParam(hObj, OBJPRM_PLANET_LABELENGINE) == 2)
+		surfmgr2->RenderLabels(skp);
+}
+
+// ==============================================================
+
 void vPlanet::RenderDot (LPDIRECT3DDEVICE7 dev)
 {
 	// to do

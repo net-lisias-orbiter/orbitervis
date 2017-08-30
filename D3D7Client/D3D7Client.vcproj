@@ -600,6 +600,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\tilelabel.cpp"
+				>
+			</File>
+			<File
 				RelativePath="TileMgr.cpp"
 				>
 				<FileConfiguration
@@ -846,6 +850,10 @@
 			</File>
 			<File
 				RelativePath="Texture.h"
+				>
+			</File>
+			<File
+				RelativePath=".\tilelabel.h"
 				>
 			</File>
 			<File

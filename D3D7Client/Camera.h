@@ -45,6 +45,8 @@ public:
 	inline const VECTOR3 *GetGDir () const { return &gdir; }
 	inline const MATRIX3 *GetGRot () const { return &grot; }
 
+	bool Direction2Viewport(const VECTOR3 &dir, int &x, int &y);
+
 	inline double GetTanAp () const { return tan_ap; }
 	inline double GetNearlimit () const { return nearplane; }
 	inline double GetFarlimit () const { return farplane; }

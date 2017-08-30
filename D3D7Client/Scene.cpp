@@ -55,6 +55,7 @@ Scene::Scene (D3D7Client *_gc, DWORD w, DWORD h)
 	vobjFirst = vobjLast = NULL;
 	nstream = 0;
 	iVCheck = 0;
+	surfLabelsActive = false;
 	if (!gc->clbkGetRenderParam (RP_MAXLIGHTS, &maxlight)) maxlight = 8;
 	DWORD maxlight_request = *(DWORD*)gc->GetConfigParam (CFGPRM_MAXLIGHT);
 	if (maxlight_request) maxlight = min (maxlight, maxlight_request);
@@ -476,7 +477,8 @@ void Scene::Render ()
 				RenderObjectMarker (0, pp, name, 0, 0, viewH/80);
 			}
 			if ((plnmode & PLN_SURFMARK) && (oapiGetObjectType (hObj) == OBJTP_PLANET)) {
-				if (plnmode & PLN_LMARK) { // user-defined planetary surface labels
+				int label_format = *(int*)oapiGetObjectParam(hObj, OBJPRM_PLANET_LABELENGINE);
+				if (label_format < 2 && (plnmode & PLN_LMARK)) { // user-defined planetary surface labels
 					double rad = oapiGetSize (hObj);
 					double apprad = rad/(plist[i].dist * cam->GetTanAp());
 					const GraphicsClient::LABELLIST *list;
@@ -517,6 +519,33 @@ void Scene::Render ()
 			}
 		}
 	}
+
+	// render new-style surface markers
+	if ((plnmode & PLN_ENABLE) && (plnmode & PLN_LMARK)) {
+		oapi::Sketchpad *skp = 0;
+		for (i = 0; i < np; i++) {
+			OBJHANDLE hObj = plist[i].vo->Object();
+			if (oapiGetObjectType(hObj) != OBJTP_PLANET) continue;
+			if (!surfLabelsActive)
+				plist[i].vo->ActivateLabels(true);
+			int label_format = *(int*)oapiGetObjectParam(hObj, OBJPRM_PLANET_LABELENGINE);
+			if (label_format == 2) {
+				if (!skp) {
+					skp = gc->clbkGetSketchpad(0);
+					skp->SetPen(label_pen);
+					skp->SetFont(label_font);
+				}
+				((vPlanet*)plist[i].vo)->RenderLabels(dev, skp);
+			}
+		}
+		surfLabelsActive = true;
+		if (skp)
+			gc->clbkReleaseSketchpad(skp);
+	} else {
+		if (surfLabelsActive)
+			surfLabelsActive = false;
+	}
+
 
 	// turn z-buffer back on
 	dev->SetRenderState (D3DRENDERSTATE_ZENABLE, TRUE);
@@ -772,6 +801,9 @@ void Scene::InitGDIResources ()
 		hLabelPen[i] = CreatePen (PS_SOLID, 0, labelCol[i]);
 	labelSize[0] = max (viewH/60, 14);
 	hLabelFont[0] = CreateFont (labelSize[0], 0, 0, 0, 400, TRUE, 0, 0, 0, 3, 2, 1, 49, "Arial");
+
+	label_font = gc->clbkCreateFont(18, true, "Arial", oapi::Font::BOLD);
+	label_pen = gc->clbkCreatePen(1, 0, RGB(255,255,255));
 }
 
 void Scene::ExitGDIResources ()
@@ -781,6 +813,9 @@ void Scene::ExitGDIResources ()
 		DeleteObject (hLabelPen[i]);
 	for (i = 0; i < 1; i++)
 		DeleteObject (hLabelFont[i]);
+
+	gc->clbkReleaseFont(label_font);
+	gc->clbkReleasePen(label_pen);
 }
 
 int distcomp (const void *arg1, const void *arg2)

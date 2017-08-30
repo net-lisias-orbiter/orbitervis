@@ -199,10 +199,14 @@ public:
 	template<class TileType>
 	void RenderNode (QuadTreeNode<TileType> *node);
 
+	template<class TileType>
+	void RenderNodeLabels (QuadTreeNode<TileType> *node, oapi::Sketchpad *skp);
+
 	void SetRenderPrm (MATRIX4 &dwmat, double prerot, bool use_zbuf, const vPlanet::RenderPrm &rprm);
 
 	inline const oapi::D3D7Client *GClient() const { return gc; }
 	inline const vPlanet *GetPlanet() const { return vp; }
+	inline const OBJHANDLE &Cbody() const { return obj; }
 	inline const configPrm &Cprm() const { return cprm; }
 	inline const char *CbodyName() const { return cbody_name; }
 	inline const double CbodySize() const { return obj_size; }
@@ -251,14 +255,19 @@ public:
 	~TileManager2 ();
 
 	void Render (MATRIX4 &dwmat, bool use_zbuf, const vPlanet::RenderPrm &rprm);
+	void RenderLabels (oapi::Sketchpad *skp);
 	void RenderFlatCloudShadows (MATRIX4 &dwmat, const vPlanet::RenderPrm &rprm);
+
+	void CreateLabels();
+	void DeleteLabels();
+	void SetSubtreeLabels(QuadTreeNode<TileType> *node, bool activate);
 
 	QuadTreeNode<TileType> *FindNode (int lvl, int ilng, int ilat)
 	{ return TileManager2Base::FindNode<TileType> (tiletree, lvl, ilng, ilat); }
 	// Returns the node at the specified position, or 0 if it doesn't exist
 
 	inline TileType *GlobalTile (int lvl)
-	{ return globtile[lvl]; }
+	{ return (lvl >= -3 && lvl < 0 ? globtile[lvl+3] : 0); }
 	// Returns a low-res global tile
 
 	int Coverage (double latmin, double latmax, double lngmin, double lngmax, int maxlvl, const Tile **tbuf, int nt) const;

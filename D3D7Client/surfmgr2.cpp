@@ -14,6 +14,7 @@
 // ==============================================================
 
 #include "surfmgr2.h"
+#include "tilelabel.h"
 #include "Texture.h"
 #include "Camera.h"
 
@@ -63,6 +64,7 @@ SurfTile::SurfTile (TileManager2Base *_mgr, int _lvl, int _ilat, int _ilng)
 	ggelev = 0;
 	ltex = 0;
 	has_elevfile = false;
+	label = 0;
 }
 
 // -----------------------------------------------------------------------
@@ -71,6 +73,7 @@ SurfTile::~SurfTile ()
 {
 	if (elev) delete []elev;
 	if (ltex && owntex) ltex->Release();
+	DeleteLabels();
 }
 
 // -----------------------------------------------------------------------
@@ -133,17 +136,21 @@ void SurfTile::Load ()
 	bool shift_origin = (lvl >= 4);
 	int res = mgr->GridRes();
 
-	if (!lvl) {
-		// create hemisphere mesh for western or eastern hemispheres
-		mesh = CreateMesh_hemisphere (res, elev, 0.0);
-	//} else if (ilat == 0 || ilat == (1<<lvl)-1) {
-		// create triangular patch for north/south pole region
-	//	mesh = CreateMesh_tripatch (patch_res, elev, shift_origin, &vtxshift);
+	if (lvl <= 0) {
+		if (!lvl) { // create hemisphere mesh for western or eastern hemispheres
+			mesh = CreateMesh_hemisphere (res, elev, 0.0);
+		} else {    // create full sphere mesh
+			// TODO
+		}
 	} else {
 		// create rectangular patch
 		mesh = CreateMesh_quadpatch (res, res, elev, mgr->ElevRes(), 0.0, &texrange, shift_origin, &vtxshift, mgr->GetPlanet()->prm.tilebb_excess);
 	}
 
+	static const DWORD label_enable = PLN_ENABLE | PLN_LMARK;
+	DWORD plnmode = *(DWORD*)smgr->GClient()->GetConfigParam (CFGPRM_PLANETARIUMFLAG);
+	if ((plnmode & label_enable) == label_enable)
+		CreateLabels();
 }
 
 // -----------------------------------------------------------------------
@@ -394,8 +401,8 @@ INT16 *SurfTile::ElevationData () const
 				ggelev = ancestor->Entry()->elev + ofs;
 			}
 		} else {
-			SurfTile *ggp = smgr->GlobalTile(lvl-ancestor_dlvl+3);
-			if (ggp->LoadElevationData ()) {
+			SurfTile *ggp = smgr->GlobalTile(lvl-ancestor_dlvl);
+			if (ggp && ggp->LoadElevationData ()) {
 				int blockRes = mgr->GridRes();
 				int nblock = TILE_FILERES/blockRes;
 				int mask = nblock-1;
@@ -836,6 +843,21 @@ void SurfTile::FixLatitudeBoundary (const SurfTile *nbr, bool keep_corner)
 	}
 }
 
+// -----------------------------------------------------------------------
+
+void SurfTile::CreateLabels()
+{
+	if (!label) label = TileLabel::Create(this);
+}
+
+// -----------------------------------------------------------------------
+
+void SurfTile::RenderLabels (oapi::Sketchpad *skp)
+{
+	if (!label) return;
+	label->Render(skp);
+}
+
 // =======================================================================
 // =======================================================================
 
@@ -898,9 +920,58 @@ void TileManager2<SurfTile>::Render (MATRIX4 &dwmat, bool use_zbuf, const vPlane
 // -----------------------------------------------------------------------
 
 template<>
+void TileManager2<SurfTile>::RenderLabels (oapi::Sketchpad *skp)
+{
+	for (int i = 0; i < 2; i++)
+		RenderNodeLabels (tiletree+i, skp);
+}
+
+// -----------------------------------------------------------------------
+
+template<>
+void TileManager2<SurfTile>::CreateLabels()
+{
+	loader->WaitForMutex();
+
+	for (int i = 0; i < 2; i++)
+		SetSubtreeLabels(tiletree+i, true);
+
+	loader->ReleaseMutex();
+}
+
+// -----------------------------------------------------------------------
+
+template<>
+void TileManager2<SurfTile>::DeleteLabels()
+{
+	loader->WaitForMutex();
+
+	for (int i = 0; i < 2; i++)
+		SetSubtreeLabels(tiletree+i, false);
+
+	loader->ReleaseMutex();
+}
+
+// -----------------------------------------------------------------------
+
+template<>
+void TileManager2<SurfTile>::SetSubtreeLabels(QuadTreeNode<SurfTile> *node, bool activate)
+{
+	if (node->Entry()) {
+		if (activate) node->Entry()->CreateLabels();
+		else          node->Entry()->DeleteLabels();
+	}
+	for (int i = 0; i < 4; i++)
+		if (node->Child(i))
+			SetSubtreeLabels(node->Child(i), activate);
+}
+
+// -----------------------------------------------------------------------
+
+template<>
 void TileManager2<SurfTile>::LoadZTrees()
 {
-	treeMgr = new ZTreeMgr*[ntreeMgr = 4];
+	treeMgr = new ZTreeMgr*[ntreeMgr = 5];
 	if (cprm.tileLoadFlags & 0x0002) {
 		char cbuf[256];
 		GClient()->TexturePath (CbodyName(), cbuf);
@@ -908,6 +979,7 @@ void TileManager2<SurfTile>::LoadZTrees()
 		treeMgr[1] = ZTreeMgr::CreateFromFile(cbuf, ZTreeMgr::LAYER_MASK);
 		treeMgr[2] = ZTreeMgr::CreateFromFile(cbuf, ZTreeMgr::LAYER_ELEV);
 		treeMgr[3] = ZTreeMgr::CreateFromFile(cbuf, ZTreeMgr::LAYER_ELEVMOD);
+		treeMgr[4] = ZTreeMgr::CreateFromFile(cbuf, ZTreeMgr::LAYER_LABEL);
 	} else {
 		for (int i = 0; i < ntreeMgr; i++)
 			treeMgr[i] = 0;
