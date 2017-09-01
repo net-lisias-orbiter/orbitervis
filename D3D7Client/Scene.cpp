@@ -523,6 +523,7 @@ void Scene::Render ()
 	// render new-style surface markers
 	if ((plnmode & PLN_ENABLE) && (plnmode & PLN_LMARK)) {
 		oapi::Sketchpad *skp = 0;
+		int fontidx = -1;
 		for (i = 0; i < np; i++) {
 			OBJHANDLE hObj = plist[i].vo->Object();
 			if (oapiGetObjectType(hObj) != OBJTP_PLANET) continue;
@@ -533,9 +534,8 @@ void Scene::Render ()
 				if (!skp) {
 					skp = gc->clbkGetSketchpad(0);
 					skp->SetPen(label_pen);
-					skp->SetFont(label_font);
 				}
-				((vPlanet*)plist[i].vo)->RenderLabels(dev, skp);
+				((vPlanet*)plist[i].vo)->RenderLabels(dev, skp, label_font, &fontidx);
 			}
 		}
 		surfLabelsActive = true;
@@ -802,7 +802,9 @@ void Scene::InitGDIResources ()
 	labelSize[0] = max (viewH/60, 14);
 	hLabelFont[0] = CreateFont (labelSize[0], 0, 0, 0, 400, TRUE, 0, 0, 0, 3, 2, 1, 49, "Arial");
 
-	label_font = gc->clbkCreateFont(18, true, "Arial", oapi::Font::BOLD);
+	const int fsize[4] = {12, 16, 20, 26};
+	for (int i = 0; i < 4; i++)
+		label_font[i] = gc->clbkCreateFont(fsize[i], true, "Arial", oapi::Font::BOLD);
 	label_pen = gc->clbkCreatePen(1, 0, RGB(255,255,255));
 }
 
@@ -814,7 +816,8 @@ void Scene::ExitGDIResources ()
 	for (i = 0; i < 1; i++)
 		DeleteObject (hLabelFont[i]);
 
-	gc->clbkReleaseFont(label_font);
+	for (int i = 0; i < 4; i++)
+		gc->clbkReleaseFont(label_font[i]);
 	gc->clbkReleasePen(label_pen);
 }
 

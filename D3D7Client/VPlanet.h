@@ -41,7 +41,7 @@ public:
 	void CheckResolution ();
 	void RenderZRange (double *nplane, double *fplane);
 	bool Render (LPDIRECT3DDEVICE7 dev);
-	void RenderLabels(LPDIRECT3DDEVICE7 dev, oapi::Sketchpad *skp);
+	void RenderLabels(LPDIRECT3DDEVICE7 dev, oapi::Sketchpad *skp, oapi::Font **labelfont, int *fontidx);
 
 	struct RenderPrm { // misc. parameters for rendering the planet
 		// persistent options

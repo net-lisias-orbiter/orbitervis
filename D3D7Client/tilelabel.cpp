@@ -64,37 +64,38 @@ bool TileLabel::Read()
 		tile->mgr->GClient()->TexturePath(path, texpath);
 
 		std::ifstream ifs(texpath);
-		if (ifs.fail()) return false;
-		ifs >> typestr >> lat >> lng >> altstr;
-		if (!stricmp(altstr, "nan")) alt = std::numeric_limits<double>::quiet_NaN();
-		else alt = std::atof(altstr);
-		ifs.getline(name, 256);
-		while(ifs.good()) {
-			if (nlabel == nbuf) { // grow buffer
-				TLABEL **tmp = new TLABEL*[nbuf+=16];
-				if (nlabel) {
-					memcpy(tmp, label, nlabel*sizeof(TLABEL*));
-					delete []label;
-				}
-				label = tmp;
-			}
-			label[nlabel] = new TLABEL;
-			lat *= RAD;
-			lng *= RAD;
-			label[nlabel]->lat = lat;
-			label[nlabel]->lng = lng;
-			label[nlabel]->alt = alt;
-			label[nlabel]->labeltype = typestr[0];
-			label[nlabel]->pos.x = label[nlabel]->pos.y = label[nlabel]->pos.z = 0.0;
-			char *lb = name;
-			int len = strlen(lb);
-			label[nlabel]->label = new char[len+1];
-			strcpy(label[nlabel]->label, lb);
-			nlabel++;
+		if (ifs.good()) {
 			ifs >> typestr >> lat >> lng >> altstr;
 			if (!stricmp(altstr, "nan")) alt = std::numeric_limits<double>::quiet_NaN();
 			else alt = std::atof(altstr);
 			ifs.getline(name, 256);
+			while(ifs.good()) {
+				if (nlabel == nbuf) { // grow buffer
+					TLABEL **tmp = new TLABEL*[nbuf+=16];
+					if (nlabel) {
+						memcpy(tmp, label, nlabel*sizeof(TLABEL*));
+						delete []label;
+					}
+					label = tmp;
+				}
+				label[nlabel] = new TLABEL;
+				lat *= RAD;
+				lng *= RAD;
+				label[nlabel]->lat = lat;
+				label[nlabel]->lng = lng;
+				label[nlabel]->alt = alt;
+				label[nlabel]->labeltype = typestr[0];
+				label[nlabel]->pos.x = label[nlabel]->pos.y = label[nlabel]->pos.z = 0.0;
+				char *lb = name;
+				int len = strlen(lb);
+				label[nlabel]->label = new char[len+1];
+				strcpy(label[nlabel]->label, lb);
+				nlabel++;
+				ifs >> typestr >> lat >> lng >> altstr;
+				if (!stricmp(altstr, "nan")) alt = std::numeric_limits<double>::quiet_NaN();
+				else alt = std::atof(altstr);
+				ifs.getline(name, 256);
+			}
 		}
 	}
 	if (!nlabel && tile->smgr->ZTreeManager(4)) { // try loading from compressed archive
@@ -195,15 +196,15 @@ double TileLabel::Elevation(double lat, double lng, double latmin, double latmax
 	return e*elev_res;
 }
 
-void TileLabel::Render(oapi::Sketchpad *skp)
+void TileLabel::Render(oapi::Sketchpad *skp, oapi::Font **labelfont, int *fontidx)
 {
 	if (!nrenderlabel) return; // nothing to render
 
-	const int scale = 7;
+	const int symscale[4] = {5, 6, 8, 10};
 	DWORD i;
 	COLORREF col, pcol = 0;
 	char symbol;
-	int x, y, nl;
+	int x, y, nl, scale;
 	const oapi::GraphicsClient::LABELTYPE *lspec;
 	VECTOR3 sp, dir;
 	D3DVECTOR homog;
@@ -219,7 +220,15 @@ void TileLabel::Render(oapi::Sketchpad *skp)
 	VECTOR3 campos = tmul(Rpl, *Pcam - Ppl); // camera pos in planet frame
 
 	for (i = 0; i < nrenderlabel; i++) {
-		if (dotp (renderlabel[i]->pos, campos-renderlabel[i]->pos) >= 0.0) {
+		VECTOR3 camlabelpos = campos-renderlabel[i]->pos;
+		if (dotp (renderlabel[i]->pos, camlabelpos) >= 0.0) {
+			double fontscale = 1e4/length(camlabelpos)*(13-min(tile->lvl,12)*1);
+			int idx = max(0, min(3, (int)fontscale));
+			if (idx != *fontidx) {
+				skp->SetFont(labelfont[idx]);
+				*fontidx = idx;
+			}
+			scale = symscale[idx];
 			sp = mul(Rpl, renderlabel[i]->pos) + Ppl - *Pcam;
 			dir = unit(sp);
 			if (cam->Direction2Viewport(dir, x, y)) {

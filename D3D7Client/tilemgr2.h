@@ -200,7 +200,7 @@ public:
 	void RenderNode (QuadTreeNode<TileType> *node);
 
 	template<class TileType>
-	void RenderNodeLabels (QuadTreeNode<TileType> *node, oapi::Sketchpad *skp);
+	void RenderNodeLabels (QuadTreeNode<TileType> *node, oapi::Sketchpad *skp, oapi::Font **labelfont, int *fontidx);
 
 	void SetRenderPrm (MATRIX4 &dwmat, double prerot, bool use_zbuf, const vPlanet::RenderPrm &rprm);
 
@@ -255,7 +255,7 @@ public:
 	~TileManager2 ();
 
 	void Render (MATRIX4 &dwmat, bool use_zbuf, const vPlanet::RenderPrm &rprm);
-	void RenderLabels (oapi::Sketchpad *skp);
+	void RenderLabels (oapi::Sketchpad *skp, oapi::Font **labelfont, int *fontidx);
 	void RenderFlatCloudShadows (MATRIX4 &dwmat, const vPlanet::RenderPrm &rprm);
 
 	void CreateLabels();

@@ -171,7 +171,7 @@ private:
 	HPEN hLabelPen[6];
 	HFONT hLabelFont[1];
 	int labelSize[1];
-	oapi::Font *label_font;
+	oapi::Font *label_font[4];
 	oapi::Pen *label_pen;
 
 	void InitGDIResources();

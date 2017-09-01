@@ -192,18 +192,18 @@ void TileManager2Base::RenderNode (QuadTreeNode<TileType> *node)
 }
 
 template<class TileType>
-void TileManager2Base::RenderNodeLabels (QuadTreeNode<TileType> *node, oapi::Sketchpad *skp)
+void TileManager2Base::RenderNodeLabels (QuadTreeNode<TileType> *node, oapi::Sketchpad *skp, oapi::Font **labelfont, int *fontidx)
 {
 	TileType *tile = node->Entry();
 	if (tile->state == Tile::ForRender || tile->state == Tile::Active) {
-		tile->RenderLabels(skp);
+		tile->RenderLabels(skp, labelfont, fontidx);
 
 		// step down to next quadtree level
 		if (tile->state == Tile::Active) {
 			for (int i = 0; i < 4; i++)
 				if (node->Child(i))
 					if (node->Child(i)->Entry() && (node->Child(i)->Entry()->state & TILE_ACTIVE))
-						RenderNodeLabels (node->Child(i), skp);
+						RenderNodeLabels (node->Child(i), skp, labelfont, fontidx);
 		}
 	}
 }

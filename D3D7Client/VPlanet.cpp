@@ -487,10 +487,10 @@ void vPlanet::ActivateLabels(bool activate)
 
 // ==============================================================
 
-void vPlanet::RenderLabels(LPDIRECT3DDEVICE7 dev, oapi::Sketchpad *skp)
+void vPlanet::RenderLabels(LPDIRECT3DDEVICE7 dev, oapi::Sketchpad *skp, oapi::Font **labelfont, int *fontidx)
 {
 	if (surfmgr2 && *(int*)oapiGetObjectParam(hObj, OBJPRM_PLANET_LABELENGINE) == 2)
-		surfmgr2->RenderLabels(skp);
+		surfmgr2->RenderLabels(skp, labelfont, fontidx);
 }
 
 // ==============================================================

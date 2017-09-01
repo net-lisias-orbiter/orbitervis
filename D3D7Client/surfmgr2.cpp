@@ -852,10 +852,10 @@ void SurfTile::CreateLabels()
 
 // -----------------------------------------------------------------------
 
-void SurfTile::RenderLabels (oapi::Sketchpad *skp)
+void SurfTile::RenderLabels (oapi::Sketchpad *skp, oapi::Font **labelfont, int *fontidx)
 {
 	if (!label) return;
-	label->Render(skp);
+	label->Render(skp, labelfont, fontidx);
 }
 
 // =======================================================================
@@ -920,10 +920,10 @@ void TileManager2<SurfTile>::Render (MATRIX4 &dwmat, bool use_zbuf, const vPlane
 // -----------------------------------------------------------------------
 
 template<>
-void TileManager2<SurfTile>::RenderLabels (oapi::Sketchpad *skp)
+void TileManager2<SurfTile>::RenderLabels (oapi::Sketchpad *skp, oapi::Font **labelfont, int *fontidx)
 {
 	for (int i = 0; i < 2; i++)
-		RenderNodeLabels (tiletree+i, skp);
+		RenderNodeLabels (tiletree+i, skp, labelfont, fontidx);
 }
 
 // -----------------------------------------------------------------------

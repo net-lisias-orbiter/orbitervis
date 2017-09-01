@@ -11,7 +11,7 @@ public:
 
 	TileLabel(const SurfTile *stile);
 	~TileLabel();
-	void Render(oapi::Sketchpad *skp);
+	void Render(oapi::Sketchpad *skp, oapi::Font **labelfont, int *fontidx);
 
 	struct TLABEL {
 		TLABEL() { labeltype = 0; label = 0; }

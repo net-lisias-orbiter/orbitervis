@@ -39,7 +39,7 @@ protected:
 	INT16 *ReadElevationFile (const char *name, int lvl, int ilat, int ilng, double tgt_res, double *mean_elev=0);
 	bool LoadElevationData ();
 	void Render ();
-	void RenderLabels (oapi::Sketchpad *skp);
+	void RenderLabels (oapi::Sketchpad *skp, oapi::Font **labelfont, int *fontidx);
 
 	TileManager2<SurfTile> *smgr;	// surface tile manager interface
 	QuadTreeNode<SurfTile> *node;	// my node in the quad tree, if I'm part of a tree
