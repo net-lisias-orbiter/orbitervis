@@ -18,11 +18,9 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
+			InheritedPropertySheets="..\resources\PropertySheets\orbiter.vsprops;..\resources\PropertySheets\ovproot.vsprops;..\resources\PropertySheets\dx7sdk.vsprops;..\resources\PropertySheets\orbiter_debug.vsprops"
 			CharacterSet="0"
-			EnableManagedIncrementalBuild="0"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -41,16 +39,8 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				Optimization="0"
-				AdditionalIncludeDirectories="c:\mssdk\include,..\..\Orbitersdk\include;C:\dx7asdk\DXF\include"
+				AdditionalIncludeDirectories=""
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;GDICLIENT_EXPORTS"
-				MinimalRebuild="true"
-				BasicRuntimeChecks="3"
-				RuntimeLibrary="3"
-				UsePrecompiledHeader="0"
-				WarningLevel="3"
-				Detect64BitPortabilityProblems="false"
-				DebugInformationFormat="3"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -63,16 +53,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="orbiter.lib orbitersdk.lib"
-				OutputFile="$(ProjectDir)..\..\Modules\Server\$(ProjectName).dll"
-				LinkIncremental="1"
-				AdditionalLibraryDirectories="c:\mssdk\lib,..\..\Orbitersdk\lib;C:\dx7asdk\DXF\lib"
-				GenerateDebugInformation="true"
-				SubSystem="2"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
-				ImportLibrary="$(SolutionDir)Orbitersdk\lib\$(TargetName).lib"
-				TargetMachine="1"
+				OutputFile="$(BuildDir)\$(ProjectName).dll"
+				AdditionalLibraryDirectories=""
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -94,17 +76,15 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy $(ProjectDir)..\..\Modules\Server\$(ProjectName).dll $(SolutionDir)Debug_Server"
+				CommandLine="if not exist &quot;$(OrbiterModulesDir)\Server&quot; mkdir &quot;$(OrbiterModulesDir)\Server&quot;&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; &quot;$(OrbiterModulesDir)\Server&quot;&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
+			InheritedPropertySheets="..\resources\PropertySheets\orbiter.vsprops;..\resources\PropertySheets\ovproot.vsprops;..\resources\PropertySheets\dx7sdk.vsprops"
 			CharacterSet="0"
 			WholeProgramOptimization="1"
-			EnableManagedIncrementalBuild="0"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -123,12 +103,8 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="c:\mssdk\include,..\..\Orbitersdk\include;C:\dx7asdk\DXF\include"
+				AdditionalIncludeDirectories=""
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;GDICLIENT_EXPORTS"
-				RuntimeLibrary="2"
-				UsePrecompiledHeader="0"
-				WarningLevel="3"
-				DebugInformationFormat="0"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -141,18 +117,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="orbiter.lib orbitersdk.lib"
-				OutputFile="$(ProjectDir)..\..\Modules\Server\$(ProjectName).dll"
-				LinkIncremental="1"
-				AdditionalLibraryDirectories="c:\mssdk\lib,..\..\Orbitersdk\lib;C:\dx7asdk\DXF\lib"
-				GenerateDebugInformation="true"
-				SubSystem="2"
-				OptimizeReferences="2"
-				EnableCOMDATFolding="2"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
-				ImportLibrary="$(SolutionDir)Orbitersdk\lib\$(TargetName).lib"
-				TargetMachine="1"
+				OutputFile="$(BuildDir)\$(ProjectName).dll"
+				AdditionalLibraryDirectories=""
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -174,7 +140,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine=""
+				CommandLine="if not exist &quot;$(OrbiterModulesDir)\Server&quot; mkdir &quot;$(OrbiterModulesDir)\Server&quot;&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; &quot;$(OrbiterModulesDir)\Server&quot;&#x0D;&#x0A;"
 			/>
 		</Configuration>
 	</Configurations>

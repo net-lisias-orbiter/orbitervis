@@ -38,28 +38,35 @@ The installation requirements for the different clients may vary. Check the
 documentation in the individual client directories for installation and
 compilation prerequisites.
 
-Graphics clients are currently only supported by Orbiter beta snapshots. To
-install Orbiter-Beta:
+Compiling the D3D7 client requires Microsoft Visual Studio. It was tested with
+VS2008. Later versions should work, but you will have to convert the project
+files and property sheets to newer versions.
 
-- Create a new Orbiter 2006-P1 (v.060929) installation from the Orbiter Base
-  and SDK packages found at orbit.medphys.ucl.ac.uk
+Before building an OVP client, you should download the latest Orbiter beta snaphot
+(the OVP HEAD revision is usually linked against the latest Orbiter beta).
+See http://orbit.medphys.ucl.ac.uk/betainstall.html for Orbiter beta installation
+instructions.
 
-- Patch to an Orbiter Beta version by downloading one of the beta diffs
-  found at download.orbit.m6.net/betaNG/orbiter_beta.html. Note that different
-  clients may be compiled against different beta snapshots. Always check
-  the individual client documentation to get the right version.
+- Download the OVP sources. You need an SVN client:
 
-- Download the OVP sources from http://sourceforge.net/projects/orbitervis
-  You need a CVS client for this. Download the CVS source tree with
+  svn co svn://svn.code.sf.net/p/orbitervis/code ovp
 
-  cvs -d:pserver:anonymous@orbitervis.cvs.sourceforge.net:/cvsroot/orbitervis login
-  cvs -z3 -d:pserver:anonymous@orbitervis.cvs.sourceforge.net:/cvsroot/orbitervis co -P orbitervis
-
-  You should end up with a directory "orbitervis" inside you Orbiter root
-  directory.
-
-- Then consult the documentation of the individual clients for further
-  instructions.
+- Set the Orbiter installation directory: Open
+  ovp\resources\PropertySheets\orbiterroot.vsprops with a text editor and edit
+  the "Value" entry to point to your Orbiter root directory.
+  
+- Set the OVP source directory: Open ovp\resources\PropertySheets\ovproot.vsprops
+  and edit the "Value" entry to point to the main OVP directory you just checked
+  out.
+  
+- Open the solution file ovp\D3D7Client\D3D7Client.sln in Visual Studio and compile.
+  On successful completion, the client libraries will have been placed in the
+  correct locations of your Orbiter installation (provided you set the orbiterroot
+  entry correctly) and are ready to use.
+  
+- Launch orbiter_ng.exe from your Orbiter main directory, activate the D3D7Client
+  module on the Modules tab, set the parameters on the Video tab, and launch a
+  scenario.
 
 
 License

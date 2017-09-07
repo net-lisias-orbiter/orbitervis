@@ -20,6 +20,7 @@
 			OutputDirectory="$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
+			InheritedPropertySheets="..\resources\PropertySheets\orbiter.vsprops;..\resources\PropertySheets\ovproot.vsprops;..\resources\PropertySheets\dx7sdk.vsprops;..\resources\PropertySheets\orbiter_debug.vsprops"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
 			CharacterSet="0"
@@ -73,7 +74,7 @@
 				AdditionalDependencies="orbiter.lib orbitersdk.lib GDIClient.lib d3dim.lib ddraw.lib dxguid.lib"
 				OutputFile="..\..\Modules\Plugin\$(ProjectName).dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\Orbitersdk\lib;c:\mssdk\lib;C:\dx7asdk\DXF\lib;.\..\..\Modules\Server"
+				AdditionalLibraryDirectories="&quot;$(ObjectDir)\GDIClient&quot;"
 				IgnoreDefaultLibraryNames="libcmtd"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(ConfigurationName)\$(TargetName).pdb"
@@ -108,13 +109,11 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
+			InheritedPropertySheets="..\resources\PropertySheets\orbiter.vsprops;..\resources\PropertySheets\ovproot.vsprops;..\resources\PropertySheets\dx7sdk.vsprops"
 			UseOfMFC="0"
 			ATLMinimizesCRunTimeLibraryUsage="false"
 			CharacterSet="0"
-			EnableManagedIncrementalBuild="0"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -139,10 +138,8 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\..\Orbitersdk\include;c:\mssdk\include;C:\dx7asdk\DXF\include"
+				AdditionalIncludeDirectories=""
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;D3D7CLIENT_EXPORTS;_CRT_SECURE_NO_WARNINGS"
-				RuntimeLibrary="2"
-				EnableEnhancedInstructionSet="2"
 				PrecompiledHeaderFile=""
 			/>
 			<Tool
@@ -158,13 +155,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="orbiter.lib orbitersdk.lib GDIClient.lib d3dim.lib ddraw.lib dxguid.lib"
-				OutputFile="..\..\Modules\Plugin\$(ProjectName).dll"
-				AdditionalLibraryDirectories="..\..\Orbitersdk\lib;c:\mssdk\lib;C:\dx7asdk\DXF\lib;.\..\..\Modules\Server"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
-				ImportLibrary="$(ConfigurationName)\$(TargetName).lib"
-				TargetMachine="1"
+				AdditionalDependencies="GDIClient.lib d3dim.lib ddraw.lib dxguid.lib"
+				AdditionalLibraryDirectories="&quot;$(ObjectDir)\GDIClient&quot;"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -177,8 +169,6 @@
 			/>
 			<Tool
 				Name="VCBscMakeTool"
-				SuppressStartupBanner="true"
-				OutputFile=".\Release/D3D7Client.bsc"
 			/>
 			<Tool
 				Name="VCFxCopTool"
