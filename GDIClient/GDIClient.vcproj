@@ -55,6 +55,7 @@
 				Name="VCLinkerTool"
 				OutputFile="$(BuildDir)\$(ProjectName).dll"
 				AdditionalLibraryDirectories=""
+				ImportLibrary="$(OrbiterSdkLibDir)\$(TargetName).lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -119,6 +120,7 @@
 				Name="VCLinkerTool"
 				OutputFile="$(BuildDir)\$(ProjectName).dll"
 				AdditionalLibraryDirectories=""
+				ImportLibrary="$(OrbiterSdkLibDir)\$(TargetName).lib"
 			/>
 			<Tool
 				Name="VCALinkTool"

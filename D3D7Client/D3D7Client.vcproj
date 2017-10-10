@@ -17,8 +17,6 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
 			InheritedPropertySheets="..\resources\PropertySheets\orbiter.vsprops;..\resources\PropertySheets\ovproot.vsprops;..\resources\PropertySheets\dx7sdk.vsprops;..\resources\PropertySheets\orbiter_debug.vsprops"
 			UseOfMFC="0"
@@ -72,7 +70,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="orbiter.lib orbitersdk.lib GDIClient.lib d3dim.lib ddraw.lib dxguid.lib"
-				OutputFile="..\..\Modules\Plugin\$(ProjectName).dll"
+				OutputFile="$(OrbiterModulesDir)\Plugin\$(ProjectName).dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;$(ObjectDir)\GDIClient&quot;"
 				IgnoreDefaultLibraryNames="libcmtd"
@@ -156,6 +154,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="GDIClient.lib d3dim.lib ddraw.lib dxguid.lib"
+				OutputFile="$(OrbiterModulesDir)\Plugin\$(ProjectName).dll"
 				AdditionalLibraryDirectories="&quot;$(ObjectDir)\GDIClient&quot;"
 			/>
 			<Tool
