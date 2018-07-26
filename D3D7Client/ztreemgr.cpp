@@ -129,7 +129,7 @@ ZTreeMgr::~ZTreeMgr()
 
 bool ZTreeMgr::OpenArchive()
 {
-	const char *name[5] = { "Surf", "Mask", "Elev", "Elev_mod", "Cloud" };
+	const char *name[6] = { "Surf", "Mask", "Elev", "Elev_mod", "Label", "Cloud" };
 	char fname[256];
 	sprintf (fname, "%s\\Archive\\%s.tree", path, name[layer]);
 	treef = fopen(fname, "rb");

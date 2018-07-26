@@ -95,6 +95,16 @@ void CloudTile::Render ()
 // =======================================================================
 
 template<>
+void TileManager2<CloudTile>::SetRenderPrm(MATRIX4 &dwmat, double prerot, bool use_zbuf, const vPlanet::RenderPrm &rprm)
+{
+	TileManager2Base::SetRenderPrm(dwmat, prerot, use_zbuf, rprm);
+	double cloudrad = 1.0 + rprm.cloudalt / obj_size;
+	if (prm.cdist < cloudrad) {  // camera is below cloud layer - clouds rendered from below
+		prm.viewap += acos(rprm.horizon_minrad / cloudrad);  // extend visibility radius to planet horizon
+	}
+}
+
+template<>
 void TileManager2<CloudTile>::Render (MATRIX4 &dwmat, bool use_zbuf, const vPlanet::RenderPrm &rprm)
 {
 	// set generic parameters
@@ -111,6 +121,7 @@ void TileManager2<CloudTile>::Render (MATRIX4 &dwmat, bool use_zbuf, const vPlan
 	if (!use_zbuf) {
 		double R = obj_size;
 		double Rc = R+rprm.cloudalt;
+		R *= rprm.horizon_minrad;
 		double D = prm.cdist*R;
 		double zmin, zmax;
 		if (D > Rc) {
