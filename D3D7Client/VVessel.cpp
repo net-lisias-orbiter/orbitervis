@@ -631,7 +631,7 @@ bool vVessel::ModLighting (LPD3DLIGHT7 light)
 		if (p < s) {                                      // shadow only if planet closer than sun
 			double psize = oapiGetSize(hP);
 			double phi = acos (dotp(S,P)/(s*p));          // angular distance between sun and planet
-			double ap  = asin(psize/p);                   // apparent size of planet disc [rad]
+			double ap = (psize < p ? asin(psize / p) : PI05);  // apparent size of planet disc [rad]
 
 			const ATMCONST *atm = (oapiGetObjectType(hP)==OBJTP_PLANET ? oapiGetPlanetAtmConstants (hP) : NULL);
 			if (atm) {  // case 1: planet has atmosphere
