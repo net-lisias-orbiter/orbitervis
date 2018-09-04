@@ -334,6 +334,14 @@ void Scene::Render ()
 				for (j = 0; j < nemitter; j++) {
 					const LightEmitter *em = vessel->GetLightEmitter(j);
 					if (!em->IsActive() || !em->GetIntensity()) continue;
+					if (oapiCameraInternal()) {
+						if (em->GetVisibility() == LightEmitter::VIS_EXTERNAL)
+							continue;
+					}
+					else {
+						if (em->GetVisibility() == LightEmitter::VIS_COCKPIT)
+							continue;
+					}
 					const VECTOR3 *pos = em->GetPositionRef();
 					D3DVECTOR q, p = {(float)pos->x, (float)pos->y, (float)pos->z};
 					D3DMAT_VectorMatrixMultiply (&q, &p, &pv->vobj->MWorld());
